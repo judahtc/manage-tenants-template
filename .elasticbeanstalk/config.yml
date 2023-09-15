@@ -1,6 +1,8 @@
 branch-defaults:
   default:
     environment: test-dev
+  dev-test:
+    environment: test-dev
 environment-defaults:
   test-dev:
     branch: null
@@ -15,5 +17,5 @@ global:
   platform_name: null
   platform_version: null
   profile: null
-  sc: null
+  sc: git
   workspace_type: Application
