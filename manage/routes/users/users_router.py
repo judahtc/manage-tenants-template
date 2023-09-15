@@ -51,7 +51,7 @@ from routes.users import crud
 import google_auth
 import pyotp
 import qrcode
-router = APIRouter(prefix="/users", tags=["USER MANAGEMENT"])
+router = APIRouter(tags=["USER MANAGEMENT"])
 
 
 def get_db():
@@ -62,56 +62,7 @@ def get_db():
         db.close()
 
 
-@router.get("/")
-def read_root():
-    return {"Hello": "World, I am users"}
-
-
-@router.get("/users/")
-# dependencies=[Depends(JWTBearer())] ,
-def read_users(
-    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
-) -> list[schemas.UserBaseRead]:
-    user_id = current_user.get("user_id")
-    admin = db.query(models.Users).filter(
-        models.Users.user_id == user_id).first()
-    tenant_id = admin.tenant_id
-    # tenant_id='5'
-    users = crud.get_users(db, tenant_id=tenant_id)
-    print(users)
-    return users
-
-
-@router.get("/user/{email}", )
-async def read_user_by_email(email: str, db: Session = Depends(get_db)) -> Union[schemas.UserBaseRead, dict]:
-    try:
-        users = crud.get_user_by_email(db=db, email=email)
-        return users
-    except:
-        return {"response": "user does not exist "}
-
-
-@router.delete("/user-delete/{email}")
-async def delete_user_by_email(
-    email: str, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
-) -> dict:
-    try:
-        return crud.delete_by_email(db=db, email=email)
-    except:
-        return {"response": "user does not exist "}
-
-
-@router.put("/user/update/{email}")
-def update_user(
-    email: str,
-    edit_user: schemas.UserUpdate,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
-):
-    return crud.update_by_email(email, edit_user=edit_user, db=db)
-
-
-@router.post("/user/signup/")
+@router.post("/users/")
 async def create_user(user: schemas.UsersBaseCreate, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())):
     # try:
     body = user.email
@@ -138,3 +89,47 @@ async def create_user(user: schemas.UsersBaseCreate, db: Session = Depends(get_d
 
     # comment the next statement when you activate emails by uncommenting the above commented code
     return response
+
+
+@router.get("/users/")
+# dependencies=[Depends(JWTBearer())] ,
+def read_users(
+    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+) -> list[schemas.UserBaseRead]:
+    user_id = current_user.get("user_id")
+    admin = db.query(models.Users).filter(
+        models.Users.user_id == user_id).first()
+    tenant_id = admin.tenant_id
+    # tenant_id='5'
+    users = crud.get_users(db, tenant_id=tenant_id)
+    print(users)
+    return users
+
+
+@router.get("/users/{email}", )
+async def read_user_by_email(email: str, db: Session = Depends(get_db)) -> Union[schemas.UserBaseRead, dict]:
+    try:
+        users = crud.get_user_by_email(db=db, email=email)
+        return users
+    except:
+        return {"response": "user does not exist "}
+
+
+@router.delete("/users/{email}")
+async def delete_user_by_email(
+    email: str, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+) -> dict:
+    try:
+        return crud.delete_by_email(db=db, email=email)
+    except:
+        return {"response": "user does not exist "}
+
+
+@router.put("/users/{email}")
+def update_user(
+    email: str,
+    edit_user: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(JwtBearer()),
+):
+    return crud.update_by_email(email, edit_user=edit_user, db=db)

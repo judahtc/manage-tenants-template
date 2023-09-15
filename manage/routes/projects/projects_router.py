@@ -46,7 +46,7 @@ from database import SessionLocal, engine
 import io
 from aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
 from routes.projects import crud
-router = APIRouter(prefix="/projects", tags=["PROJECTS MANAGEMENT"])
+router = APIRouter(tags=["PROJECTS MANAGEMENT"])
 
 
 def get_db():
@@ -90,7 +90,7 @@ async def read_user_projects(
         return {"response": "token expired"}
 
 
-@router.get("/project/{project_id}", response_model=schemas.Projects)
+@router.get("/projects/{project_id}", response_model=schemas.Projects)
 def read_project(
     project_id: int,
     db: Session = Depends(get_db),

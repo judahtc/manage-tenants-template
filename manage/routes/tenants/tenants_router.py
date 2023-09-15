@@ -62,16 +62,19 @@ def get_db():
         db.close()
 
 
-router = APIRouter(prefix="/tenants", tags=["TENANTS MANAGEMENT"])
+router = APIRouter(tags=["TENANTS MANAGEMENT"])
 
 
-@router.get("/tenant/{tenant_name}")
-def get_tenant(tenant_name: str, db: Session = Depends(get_db)) -> Union[schemas.TenantBaseResponse, dict, None]:
-    # tenant_id=1
-    return crud.get_tenant_by_tenant_name(tenant_name=tenant_name, db=db)
+def generate_login_creds():
+    secret_key = google_auth.generate_random_key()
+    uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
+        name="Claxon", issuer_name='CBS IFRS17')
+    qrcode_image = crud.create_base64_qrcode_image(uri)
+
+    return secret_key, qrcode_image
 
 
-@router.post("/tenant/signup/{url}")
+@router.post("/tenants/")
 async def create_tenant(
     url: str, tenant: schemas.TenantBaseCreate, db: Session = Depends(get_db)
 ):
@@ -100,6 +103,12 @@ def read_tenants(
 ):
     tenants = crud.get_tenants(db)
     return tenants
+
+
+@router.get("/tenant/{tenant_name}")
+def get_tenant(tenant_name: str, db: Session = Depends(get_db)) -> Union[schemas.TenantBaseResponse, dict, None]:
+    # tenant_id=1
+    return crud.get_tenant_by_tenant_name(tenant_name=tenant_name, db=db)
 
 
 @router.delete("/tenants/{tenant_name}")
