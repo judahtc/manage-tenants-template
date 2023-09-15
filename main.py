@@ -42,7 +42,7 @@ models.Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"Hello": "World, l am CICD 1"}
 
 
 @app.post("/user/login")
