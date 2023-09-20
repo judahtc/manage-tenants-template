@@ -47,24 +47,16 @@ def get_projects_with_cb(db: Session, tenant_id: str):
 # from modeling import helper
 
 
-def create_projects(user_id: int, db: Session, project: schemas.ProjectsCreate):
+def create_projects(user_id: int, tenant_id: str, db: Session, project: schemas.ProjectsCreate):
 
-    user = db.query(models.Users).filter(
-        models.Users.user_id == user_id).first()
-    tenant_id = user.tenant_id
-
-    print(project)
-    c_date = datetime.now()
+    date_now = datetime.now()
     db_project = models.Projects(
         project_name=project.project_name,
         description=project.description,
-        created_at=c_date,
-        updated_at=c_date,
         user_id=user_id,
         tenant_id=tenant_id,
-        project_status=project.project_status,
+        project_status="PENDING",
         start_date=project.start_date,
-
     )
     db.add(db_project)
     db.commit()

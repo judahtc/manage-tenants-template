@@ -102,19 +102,33 @@ def read_project(
     return db_project
 
 
-@router.post("/projects/{token}")
+@router.post("/projects/")
 def create_project_metadata(
-    token: str,
     project: schemas.ProjectsCreate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(JwtBearer()),
 ):
-    # try:
-    payload = decodeJWT(token)
+    user_id = current_user['user_id']
+    email = current_user['email']
 
-    return crud.create_projects(payload["user_id"], db=db, project=project)
-    # except:
-    #     return {"response":"token expired"}
+    user = db.query(models.Users).filter(
+        (models.Users.user_id == user_id) & (models.Users.email == email)).first()
+
+    tenant = db.query(models.Tenant).filter(
+        models.Tenant.tenant_id == user.tenant_id).first()
+
+    # Create the projet on the database.
+    project = crud.create_projects(
+        user_id=user_id,
+        tenant_id=tenant.tenant_id,
+        db=db,
+        project=project
+    )
+
+    # Create the project s3 bucket.
+    if project:
+        bucket = create_project(project.project_id, tenant.company_name)
+    return project
 
 
 @router.put("/projects/{project_id}")
@@ -136,9 +150,10 @@ async def delete_project(project_id: str, db: Session = Depends(get_db)):
         return {"response": "project does not exist ", "statusCode": status.HTTP_404_NOT_FOUND}
 
 
-@router.post("/create_project/{tenant_name}/{project_id}")
+# @router.post("/create_project/{tenant_name}/{project_id}")
 def create_project(
-    project_id: int, tenant_name: str, current_user: dict = Depends(JwtBearer())
+    project_id: int, tenant_name: str
+
 ):
     response = {}
     try:
@@ -150,8 +165,7 @@ def create_project(
                 detail=f"project with id {project_id} already exists",
             )
     except ClientError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        print(e)
 
     try:
         S3_CLIENT.put_object(
@@ -170,10 +184,7 @@ def create_project(
         )
         response["message"] = f"Project with id {project_id} created successfully"
     except ClientError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Error Creating subfolders. {str(e)}",
-        )
+        print(e)
     except Exception as e:
         response["message"] = e
         return response

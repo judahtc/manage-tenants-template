@@ -60,9 +60,10 @@ class ProjectsBase(BaseModel):
     project_status: object
 
 
-class ProjectsCreate(ProjectsBase):
-    project_id: int
-    tenant_id: str
+class ProjectsCreate(BaseModel):
+    project_name: str
+    description: str
+    start_date: str
 
 
 class Projects(ProjectsBase):
