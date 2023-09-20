@@ -3,3 +3,6 @@
 
 mypython/
 beanstalk/
+venv/
+__pycache__/
+.vscode/
