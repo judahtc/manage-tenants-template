@@ -58,25 +58,15 @@ def read_root():
 
 @app.post("/user/login")
 def login(user: schemas.UserLoginSchema, db: Session = Depends(get_db)):
-    try:
-        # Get the current time
-        current_time = datetime.datetime.now().time()
+    user = crud.check_user(db=db, user=user)
 
-        # Define the start and end times for allowed access
-        start_time = datetime.time(7, 0)  # 8 am
-        end_time = datetime.time(22, 0)  # 10 pm
-
-        # Check if the current time is within the allowed time range
-        if start_time <= current_time <= end_time:
-            token = crud.check_user(db=db, user=user)
-            return token
-        # -----------------------------------------------------------------------------come back here till we done fixing-----------------
-        else:
-            return {"response": "Engine can only be accessed between 8am and 10pm."}
-
-    except Exception as e:
+    if not user:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email and password"
+        )
+
+    return user
 
 
 app.include_router(users_router.router)

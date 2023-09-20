@@ -29,17 +29,17 @@ def get_password_hash(password):
 
 
 def check_user(db: Session, user: schemas.UserLoginSchema):
-    user = db.query(models.Users).filter(
+    fbc_user = db.query(models.Users).filter(
         models.Users.email == user.email).first()
 
-    if user is None:
-        raise HTTPException(status_code=404, detail="user not found")
+    if fbc_user is None:
+        return False
 
-    if not verify_password(user.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="not authorized")
+    if not verify_password(user.password, fbc_user.hashed_password):
+        return False
 
-    response = signJWT0(user.user_id, user.email)
-    response['phone'] = user.phone_number
-    response['is_active'] = user.is_active
+    response = signJWT0(fbc_user.user_id, user.email)
+    response['phone'] = fbc_user.phone_number
+    response['is_active'] = fbc_user.is_active
 
     return response
