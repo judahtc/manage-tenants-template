@@ -57,15 +57,17 @@ def get_db():
         db.close()
 
 
-@router.get("/projects/{token}")
+@router.get("/projects")
 def all_projects(
-    token: str, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
 ):
     try:
-        payload = decodeJWT(token)
+        user_id = current_user['user_id']
+        email = current_user['email']
+
         user = (
             db.query(models.Users)
-            .filter(models.Users.user_id == payload["user_id"])
+            .filter(models.Users.user_id == user_id)
             .first()
         )
         # projects = crud.get_user_project(db=db,user_id=payload['user_id'])
@@ -77,14 +79,13 @@ def all_projects(
         return {"response": "token expired"}
 
 
-@router.get("/projects/user/{token}")
+@router.get("/projects/user")
 async def read_user_projects(
-    token: str, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
 ):
     try:
-        payload = decodeJWT(token)
-
-        projects = crud.get_user_project(db=db, user_id=payload["user_id"])
+        user_id = current_user['user_id']
+        projects = crud.get_user_project(db=db, user_id=user_id)
         return projects
     except:
         return {"response": "token expired"}
