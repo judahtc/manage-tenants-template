@@ -189,3 +189,35 @@ def create_project(
         response["message"] = e
         return response
     return response
+
+
+@router.post("/upload/{project_id}")
+async def upload_files(files: list[UploadFile], project_id: str,  current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
+    try:
+        user_id = current_user['user_id']
+        email = current_user['email']
+
+        user = db.query(models.Users).filter(
+            (models.Users.user_id == user_id) & (models.Users.email == email)).first()
+
+        tenant = db.query(models.Tenant).filter(
+            models.Tenant.tenant_id == user.tenant_id).first()
+    except:
+        raise HTTPException(
+            status_code=403, detail="authentication token expired")
+    for file in files:
+        try:
+            # Generate a unique S3 object key using the file's original name
+            object_key = f"project_{project_id}/raw/{file.filename}"
+
+            # Upload the file to S3
+            S3_CLIENT.upload_fileobj(
+                file.file, tenant.company_name, object_key)
+
+            # Optionally, you can set permissions on the uploaded object
+            # s3.put_object_acl(ACL='public-read', Bucket=S3_BUCKET_NAME, Key=object_key)
+
+        except Exception as e:
+            return {"message": str(e)}
+
+    return {"message": "Files uploaded successfully"}
