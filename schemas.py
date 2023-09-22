@@ -225,3 +225,16 @@ class AuditTrail(BaseModel):
     email_address: str
     action: str
     details: Optional[str] = None
+
+
+class Assumptions(BaseModel):
+    interest_calculation_method: str
+    depreciation_method: str
+    average_loan_term: float
+    inflation_rate: float
+    number_of_months_to_focast: float
+    administration_fee: float
+
+
+class AssumptionsRead(Assumptions):
+    isActive: str

@@ -65,6 +65,29 @@ def create_projects(user_id: int, tenant_id: str, db: Session, project: schemas.
     return db_project
 
 
+def add_Assumptions(project_id: str, db: Session, project_input: schemas.Assumptions):
+
+    try:
+        assumptions = models.Assumptions(
+            interest_calculation_method=project_input.interest_calculation_method,
+            depreciation_method=project_input.depreciation_method,
+            average_loan_term=project_input.average_loan_term,
+            inflation_rate=project_input.inflation_rate,
+            number_of_months_to_focast=project_input.number_of_months_to_focast,
+            administration_fee=project_input.administration_fee,
+            project_id=project_id
+
+        )
+        db.add(assumptions)
+        db.commit()
+        db.refresh(assumptions)
+        print(assumptions)
+
+    except:
+        return {"statusCode": status.HTTP_403_FORBIDDEN}
+    return assumptions
+
+
 def update_project(project_id: str, edit_project: schemas.ProjectUpdate, db: Session):
     # try:
 

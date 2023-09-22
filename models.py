@@ -103,3 +103,18 @@ class AuditTrail(Base):
     action = Column(String)
     details = Column(String, nullable=True)
     tenant_id = Column(String)
+
+
+class Assumptions(Base):
+    __tablename__ = "assumptions"
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now)
+    project_id = Column(String)
+    interest_calculation_method = Column(String)
+    depreciation_method = Column(String)
+    average_loan_term = Column(String)
+    inflation_rate = Column(String)
+    number_of_months_to_focast = Column(String)
+    administration_fee = Column(String)
+    isActive = Column(Boolean, default=True)
