@@ -32,6 +32,14 @@ def get_project(db: Session, project_id: int):
     )
 
 
+def get_assumptions(db: Session, project_id: int):
+    return (
+        db.query(models.Assumptions)
+        .filter(models.Assumptions.project_id == project_id)
+        .all()
+    )
+
+
 def get_user_project(db: Session, user_id: int):
     return db.query(models.Projects).filter(models.Projects.user_id == user_id).all()
 

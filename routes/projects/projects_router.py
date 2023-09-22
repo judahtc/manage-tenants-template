@@ -184,8 +184,7 @@ def create_project(
             Bucket=f"{tenant_name}", Key=f"project_{project_id}/results/", Body=""
         )
         response["message"] = f"Project with id {project_id} created successfully"
-    except ClientError as e:
-        print(e)
+
     except Exception as e:
         response["message"] = e
         return response

@@ -1,4 +1,6 @@
 import json
+from multiprocessing.dummy.connection import Listener
+from xmlrpc.server import list_public_methods
 import schemas
 from fastapi import APIRouter, HTTPException, status, Response
 import pandas as pd
@@ -13,7 +15,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from fastapi.responses import JSONResponse
 import boto3
-
+from typing import List
 import main
 import random
 import string
@@ -71,3 +73,15 @@ def add_assumptions(
         return assumption
     else:
         raise HTTPException(status_code=assumptions.statusCode)
+
+
+@router.get("/projects/{project_id}/assumptions")
+def read_assumptions(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(JwtBearer()),
+):
+    db_assumptions = crud.get_assumptions(db, project_id=project_id)
+    if db_assumptions is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return db_assumptions
