@@ -125,3 +125,43 @@ async def upload_files(files: list[UploadFile], project_id: str,  current_user: 
         return {"message": "Files uploaded successfully"}
     else:
         raise HTTPException(status_code=add_meta_data)
+
+
+@router.get("/list/{project_id}/assumptions")
+def list_objects_in_partition(bucket_name: str, project_id: str):
+    partition_prefix = f"project_{project_id}/assumptions/"
+    response = S3_CLIENT.list_objects_v2(
+        Bucket=bucket_name,
+        Prefix=partition_prefix
+    )
+
+    object_keys = []
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            object_key = obj['Key']
+            if object_key != partition_prefix:
+                file_name = object_key.split('/')[-1]
+                object_keys.append(file_name)
+
+    return object_keys
+
+
+@router.get("/assumptions/latest/{project_id}/{bucket_name}")
+def latest_assumption(project_id: str, bucket_name: str):
+    file_list = list_objects_in_partition(
+        bucket_name=bucket_name, project_id=project_id)
+    # Convert the file names to datetime objects
+    date_format = "%Y%m%d%H%M%S"
+    dates = [datetime.datetime.strptime(file_name.split(
+        "_")[0], date_format) for file_name in file_list]
+
+    # Find the maximum datetime object
+    max_date = max(dates)
+
+    # Find the index of the maximum datetime object
+    max_index = dates.index(max_date)
+
+    # Retrieve the most recent file name
+    most_recent_file = file_list[max_index]
+
+    return most_recent_file
