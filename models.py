@@ -118,3 +118,16 @@ class Assumptions(Base):
     number_of_months_to_focast = Column(String)
     administration_fee = Column(String)
     isActive = Column(Boolean, default=True)
+
+
+class Assumptionsfiles(Base):
+    __tablename__ = "assumptions_files"
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now)
+    project_id = Column(String)
+    input_object_key = Column(String)
+    output_object_key = Column(String)
+    input_filename = Column(String)
+    output_filename = Column(String)
+    isActive = Column(Boolean, default=True)

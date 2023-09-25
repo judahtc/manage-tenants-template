@@ -32,12 +32,12 @@ def get_project(db: Session, project_id: int):
     )
 
 
-def get_assumptions(db: Session, project_id: int):
-    return (
-        db.query(models.Assumptions)
-        .filter(models.Assumptions.project_id == project_id)
-        .all()
-    )
+# def get_assumptions(db: Session, project_id: int):
+#     return (
+#         db.query(models.Assumptions)
+#         .filter(models.Assumptions.project_id == project_id)
+#         .all()
+#     )
 
 
 def get_user_project(db: Session, user_id: int):
@@ -73,19 +73,16 @@ def create_projects(user_id: int, tenant_id: str, db: Session, project: schemas.
     return db_project
 
 
-def add_Assumptions(project_id: str, db: Session, project_input: schemas.Assumptions):
+def addAssumptionsMetadata(project_id: str, input_filename: str, input_object_key, db: Session):
 
     try:
-        assumptions = models.Assumptions(
-            interest_calculation_method=project_input.interest_calculation_method,
-            depreciation_method=project_input.depreciation_method,
-            average_loan_term=project_input.average_loan_term,
-            inflation_rate=project_input.inflation_rate,
-            number_of_months_to_focast=project_input.number_of_months_to_focast,
-            administration_fee=project_input.administration_fee,
-            project_id=project_id
+        assumptions = models.Assumptionsfiles(
+            project_id=project_id,
+            input_filename=input_filename,
+            input_object_key=input_object_key,
 
         )
+
         db.add(assumptions)
         db.commit()
         db.refresh(assumptions)
@@ -93,7 +90,8 @@ def add_Assumptions(project_id: str, db: Session, project_input: schemas.Assumpt
 
     except:
         return {"statusCode": status.HTTP_403_FORBIDDEN}
-    return assumptions
+
+    return status.HTTP_200_OK
 
 
 def update_project(project_id: str, edit_project: schemas.ProjectUpdate, db: Session):

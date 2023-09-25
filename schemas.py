@@ -238,3 +238,21 @@ class Assumptions(BaseModel):
 
 class AssumptionsRead(Assumptions):
     isActive: str
+
+
+class AssumptionsfilesBaseCreate(BaseModel):
+    project_id: str
+    input_object_key: str
+    input_filename: str
+
+
+class AssumptionsfilesRead(AssumptionsfilesBaseCreate):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    output_object_key: str
+    isActive: bool
+    output_filename: str
+
+    class Config:
+        orm_mode = True
