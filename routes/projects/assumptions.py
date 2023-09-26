@@ -127,7 +127,7 @@ async def upload_files(files: list[UploadFile], project_id: str,  current_user: 
         raise HTTPException(status_code=add_meta_data)
 
 
-@router.get("/list/{project_id}/assumptions")
+@router.get("/{project_id}/assumptions")
 def list_objects_in_partition(project_id: str, current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
     partition_prefix = f"project_{project_id}/assumptions/"
 
@@ -161,7 +161,7 @@ def list_objects_in_partition(project_id: str, current_user: dict = Depends(JwtB
     return object_keys
 
 
-@router.get("/assumptions/latest/{project_id}/{bucket_name}")
+@router.get("/{project_id}/assumptions/latest/")
 def latest_assumption(project_id: str, current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
     user_id = current_user['user_id']
     email = current_user['email']
@@ -196,7 +196,7 @@ def latest_assumption(project_id: str, current_user: dict = Depends(JwtBearer())
     return most_recent_files
 
 
-@router.get("/assumptions/download/{project_id}/{bucket_name}/{file_name}")
+@router.get("/{project_id}/assumptions/{file_name}")
 def read_s3_file(file_name: str, project_id: str, current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
     user_id = current_user['user_id']
     email = current_user['email']
