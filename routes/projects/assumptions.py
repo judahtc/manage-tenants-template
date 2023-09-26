@@ -163,5 +163,5 @@ def latest_assumption(project_id: str, bucket_name: str):
 
     # Retrieve the most recent file name
     most_recent_file = file_list[max_index]
-
-    return most_recent_file
+    most_recent_files=json.loads(most_recent_file)
+    return most_recent_files
