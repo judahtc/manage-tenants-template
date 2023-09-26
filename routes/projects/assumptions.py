@@ -128,10 +128,25 @@ async def upload_files(files: list[UploadFile], project_id: str,  current_user: 
 
 
 @router.get("/list/{project_id}/assumptions")
-def list_objects_in_partition(bucket_name: str, project_id: str):
+def list_objects_in_partition(project_id: str, current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
     partition_prefix = f"project_{project_id}/assumptions/"
+
+    user_id = current_user['user_id']
+    email = current_user['email']
+
+    user = (
+        db.query(models.Users)
+        .filter(models.Users.user_id == user_id)
+        .first()
+    )
+    # projects = crud.get_user_project(db=db,user_id=payload['user_id'])
+
+    tenant_id = user.tenant_id
+    tenant = db.query(models.Tenant).filter(
+        models.Tenant.tenant_id == tenant_id).first()
+
     response = S3_CLIENT.list_objects_v2(
-        Bucket=bucket_name,
+        Bucket=tenant,
         Prefix=partition_prefix
     )
 
@@ -147,9 +162,23 @@ def list_objects_in_partition(bucket_name: str, project_id: str):
 
 
 @router.get("/assumptions/latest/{project_id}/{bucket_name}")
-def latest_assumption(project_id: str, bucket_name: str):
+def latest_assumption(project_id: str, current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
+    user_id = current_user['user_id']
+    email = current_user['email']
+
+    user = (
+        db.query(models.Users)
+        .filter(models.Users.user_id == user_id)
+        .first()
+    )
+    # projects = crud.get_user_project(db=db,user_id=payload['user_id'])
+
+    tenant_id = user.tenant_id
+    tenant = db.query(models.Tenant).filter(
+        models.Tenant.tenant_id == tenant_id).first()
+
     file_list = list_objects_in_partition(
-        bucket_name=bucket_name, project_id=project_id)
+        bucket_name=tenant, project_id=project_id)
     # Convert the file names to datetime objects
     date_format = "%Y%m%d%H%M%S"
     dates = [datetime.datetime.strptime(file_name.split(
@@ -163,5 +192,33 @@ def latest_assumption(project_id: str, bucket_name: str):
 
     # Retrieve the most recent file name
     most_recent_file = file_list[max_index]
-    most_recent_files=json.loads(most_recent_file)
+    most_recent_files = json.loads(most_recent_file)
     return most_recent_files
+
+
+@router.get("/assumptions/download/{project_id}/{bucket_name}/{file_name}")
+def read_s3_file(file_name: str, project_id: str, current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
+    user_id = current_user['user_id']
+    email = current_user['email']
+
+    user = (
+        db.query(models.Users)
+        .filter(models.Users.user_id == user_id)
+        .first()
+    )
+    # projects = crud.get_user_project(db=db,user_id=payload['user_id'])
+
+    tenant_id = user.tenant_id
+    tenant = db.query(models.Tenant).filter(
+        models.Tenant.tenant_id == tenant_id).first()
+    object_key = f"project_{project_id}/assumptions/{file_name}"
+    obj = S3_CLIENT.get_object(Bucket=tenant, Key=object_key)
+    file_content = obj['Body'].read().decode('utf-8')
+
+    # Use StringIO to create a string buffer
+    csv_buffer = io.StringIO(file_content)
+
+    df = pd.read_csv(csv_buffer)
+    json_data = df.to_json(orient='records')
+    data = json.loads(json_data)
+    return data
