@@ -146,7 +146,7 @@ def list_objects_in_partition(project_id: str, current_user: dict = Depends(JwtB
         models.Tenant.tenant_id == tenant_id).first()
 
     response = S3_CLIENT.list_objects_v2(
-        Bucket=tenant,
+        Bucket=tenant.company_name,
         Prefix=partition_prefix
     )
 
@@ -178,7 +178,7 @@ def latest_assumption(project_id: str, current_user: dict = Depends(JwtBearer())
         models.Tenant.tenant_id == tenant_id).first()
 
     file_list = list_objects_in_partition(
-        bucket_name=tenant, project_id=project_id)
+        bucket_name=tenant.company_name, project_id=project_id)
     # Convert the file names to datetime objects
     date_format = "%Y%m%d%H%M%S"
     dates = [datetime.datetime.strptime(file_name.split(
@@ -212,7 +212,7 @@ def read_s3_file(file_name: str, project_id: str, current_user: dict = Depends(J
     tenant = db.query(models.Tenant).filter(
         models.Tenant.tenant_id == tenant_id).first()
     object_key = f"project_{project_id}/assumptions/{file_name}"
-    obj = S3_CLIENT.get_object(Bucket=tenant, Key=object_key)
+    obj = S3_CLIENT.get_object(Bucket=tenant.company_name, Key=object_key)
     file_content = obj['Body'].read().decode('utf-8')
 
     # Use StringIO to create a string buffer
