@@ -6,3 +6,6 @@ beanstalk/
 Dockerfile
 docker-compose.yaml
 .dockerignore
+venv/
+__pycache__/
+.vscode/
