@@ -3,3 +3,6 @@
 
 mypython/
 beanstalk/
+Dockerfile
+docker-compose.yaml
+.dockerignore
