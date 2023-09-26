@@ -32,6 +32,14 @@ def get_project(db: Session, project_id: int):
     )
 
 
+# def get_assumptions(db: Session, project_id: int):
+#     return (
+#         db.query(models.Assumptions)
+#         .filter(models.Assumptions.project_id == project_id)
+#         .all()
+#     )
+
+
 def get_user_project(db: Session, user_id: int):
     return db.query(models.Projects).filter(models.Projects.user_id == user_id).all()
 
@@ -63,6 +71,27 @@ def create_projects(user_id: int, tenant_id: str, db: Session, project: schemas.
     db.refresh(db_project)
     print(db_project)
     return db_project
+
+
+def addAssumptionsMetadata(project_id: str, input_filename: str, input_object_key, db: Session):
+
+    try:
+        assumptions = models.Assumptionsfiles(
+            project_id=project_id,
+            input_filename=input_filename,
+            input_object_key=input_object_key,
+
+        )
+
+        db.add(assumptions)
+        db.commit()
+        db.refresh(assumptions)
+        print(assumptions)
+
+    except:
+        return {"statusCode": status.HTTP_403_FORBIDDEN}
+
+    return status.HTTP_200_OK
 
 
 def update_project(project_id: str, edit_project: schemas.ProjectUpdate, db: Session):

@@ -2,6 +2,7 @@ from typing import Union
 from routes.users import users_router
 from routes.tenants import tenants_router
 from routes.projects import projects_router
+from routes.projects import assumptions
 from fastapi import FastAPI
 import datetime
 import json
@@ -72,3 +73,4 @@ def login(user: schemas.UserLoginSchema, db: Session = Depends(get_db)):
 app.include_router(users_router.router)
 app.include_router(tenants_router.router)
 app.include_router(projects_router.router)
+app.include_router(assumptions.router)

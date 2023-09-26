@@ -225,3 +225,34 @@ class AuditTrail(BaseModel):
     email_address: str
     action: str
     details: Optional[str] = None
+
+
+class Assumptions(BaseModel):
+    interest_calculation_method: str
+    depreciation_method: str
+    average_loan_term: float
+    inflation_rate: float
+    number_of_months_to_focast: float
+    administration_fee: float
+
+
+class AssumptionsRead(Assumptions):
+    isActive: str
+
+
+class AssumptionsfilesBaseCreate(BaseModel):
+    project_id: str
+    input_object_key: str
+    input_filename: str
+
+
+class AssumptionsfilesRead(AssumptionsfilesBaseCreate):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    output_object_key: str
+    isActive: bool
+    output_filename: str
+
+    class Config:
+        orm_mode = True
