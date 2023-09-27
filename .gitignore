@@ -10,3 +10,4 @@ venv/
 __pycache__/
 .vscode/
 .env
+__pycache__/main.cpython-311.pyc
