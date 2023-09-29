@@ -93,7 +93,7 @@ def read_users(
     db: Session = Depends(get_db)
 ):
     # user_id = current_user.get("user_id")
-    user_id=1
+    user_id = 1
     admin = db.query(models.Users).filter(
         models.Users.user_id == user_id).first()
     tenant_id = admin.tenant_id
@@ -101,15 +101,10 @@ def read_users(
     users = crud.get_users(db, tenant_id=tenant_id)
     print(users)
 
-    context={'headers': {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': 'true',
-        'Content-Type': 'application/json',
-    }}
-    return users,context
+    return users
 
 
-@router.get("/users/{email}" )
+@router.get("/users/{email}")
 async def read_user_by_email(email: str, db: Session = Depends(get_db)):
     try:
         users = crud.get_user_by_email(db=db, email=email)
