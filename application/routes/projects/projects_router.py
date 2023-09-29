@@ -1,10 +1,12 @@
 import json
+from typing import List
 from fastapi import APIRouter, HTTPException, status, Response
 import pandas as pd
 import boto3
 import awswrangler as wr
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from application.modeling import helper
 from application.utils import models
 from application.auth.jwt_handler import signJWT
 from application.utils import schemas
@@ -55,6 +57,57 @@ def get_db():
         db.close()
 
 
+@router.post("/projects/")
+def createProject(
+    project: schemas.ProjectsCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(JwtBearer()),
+):
+    user_id = current_user['user_id']
+    email = current_user['email']
+
+    user = db.query(models.Users).filter(
+        (models.Users.user_id == user_id) & (models.Users.email == email)).first()
+
+    tenant = db.query(models.Tenant).filter(
+        models.Tenant.tenant_id == user.tenant_id).first()
+
+    # Create the projet on the database.
+    project = crud.create_projects(
+        user_id=user_id,
+        tenant_id=tenant.tenant_id,
+        db=db,
+        project=project
+    )
+
+    # Create the project s3 bucket.
+    if project:
+        bucket = create_project(project.project_id, tenant.company_name)
+    return project
+
+
+# @router.post("/upload/{project_id}")
+# def upload_files(
+#     project_id: int, files: List[UploadFile] = File(...), current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)
+# ):
+
+#     user_id = current_user['user_id']
+#     email = current_user['email']
+
+#     user = db.query(models.Users).filter(
+#         (models.Users.user_id == user_id) & (models.Users.email == email)).first()
+
+#     tenant = db.query(models.Tenant).filter(
+#         models.Tenant.tenant_id == user.tenant_id).first()
+#     tenant_name = tenant.company_name
+#     return helper.upload_multiple_files(
+#         project_id=project_id,
+#         tenant_name=tenant_name,
+#         my_session=MY_SESSION,
+#         files=files,
+#     )
+
+
 @router.get("/projects")
 def all_projects(
     db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
@@ -99,35 +152,6 @@ def read_project(
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return db_project
-
-
-@router.post("/projects/")
-def create_project_metadata(
-    project: schemas.ProjectsCreate,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
-):
-    user_id = current_user['user_id']
-    email = current_user['email']
-
-    user = db.query(models.Users).filter(
-        (models.Users.user_id == user_id) & (models.Users.email == email)).first()
-
-    tenant = db.query(models.Tenant).filter(
-        models.Tenant.tenant_id == user.tenant_id).first()
-
-    # Create the projet on the database.
-    project = crud.create_projects(
-        user_id=user_id,
-        tenant_id=tenant.tenant_id,
-        db=db,
-        project=project
-    )
-
-    # Create the project s3 bucket.
-    if project:
-        bucket = create_project(project.project_id, tenant.company_name)
-    return project
 
 
 @router.put("/projects/{project_id}")
