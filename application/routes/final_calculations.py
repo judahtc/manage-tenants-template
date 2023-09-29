@@ -3,7 +3,7 @@ import io
 import pandas as pd
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-
+from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
 from application.modeling import (
     constants,
     direct_cashflow,
@@ -22,98 +22,98 @@ def read_files_for_generating_income(
     income_statement_index = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.income_statement_index,
         set_index=False,
     )
     variable_inputs_income_statement = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.variable_inputs_income_statement,
     )
 
     parameters = helper.read_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         valuation_date=valuation_date,
     )
 
     opening_balances = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.opening_balances,
     )
 
     depreciations_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.depreciations_df,
     )
 
     finance_costs_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.finance_costs_df,
     )
 
     static_inputs_income_statement = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.static_inputs_income_statement,
     )
 
     provision_for_credit_loss_for_all_new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.provision_for_credit_loss_for_all_new_disbursements_df,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
     provisions_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.provisions_df,
     )
 
     other_income_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.other_income_df,
     )
 
     interest_income_new_disbursement_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.interest_income_new_disbursement_df,
     )
 
     existing_loans_schedules_interest_incomes_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.existing_loans_schedules_interest_incomes_df,
     )
 
     salaries_and_pension_and_statutory_contributions_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.salaries_and_pension_and_statutory_contributions_df,
     )
 
@@ -136,14 +136,16 @@ def read_files_for_generating_income(
 
 
 def aggregate_expenses_in_income_statement(income_statement_df):
-    income_statement_df = income_statement.aggregate_staff_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_staff_costs(
+        income_statement_df)
     income_statement_df = income_statement.aggregate_travel_and_entertainment(
         income_statement_df
     )
     income_statement_df = income_statement.aggregate_marketing_and_public_relations(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_office_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_office_costs(
+        income_statement_df)
     income_statement_df = income_statement.aggregate_professional_fees(
         income_statement_df
     )
@@ -153,11 +155,13 @@ def aggregate_expenses_in_income_statement(income_statement_df):
     income_statement_df = income_statement.aggregate_motor_vehicle_costs(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_other_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_other_costs(
+        income_statement_df)
     income_statement_df = income_statement.aggregate_investment_income(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_finance_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_finance_costs(
+        income_statement_df)
 
     return income_statement_df
 
@@ -298,12 +302,15 @@ def generate_income_statement(tenant_name: str, project_id: str):
         income_statement_df=income_statement_df
     )
 
-    income_statement_df = income_statement.calculate_total_expenses(income_statement_df)
-    income_statement_df = income_statement.calculate_ebidta(income_statement_df)
+    income_statement_df = income_statement.calculate_total_expenses(
+        income_statement_df)
+    income_statement_df = income_statement.calculate_ebidta(
+        income_statement_df)
 
     income_statement_df.loc["Finance Costs"] = finance_costs_df.loc["total"]
 
-    income_statement_df = income_statement.aggregate_finance_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_finance_costs(
+        income_statement_df)
 
     income_statement_df = income_statement.calculate_profit_before_tax(
         income_statement_df
@@ -316,7 +323,7 @@ def generate_income_statement(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file=income_statement_df,
         file_name=constants.IntermediateFiles.income_statement_df,
         file_stage=constants.FileStage.intermediate,
@@ -334,98 +341,98 @@ def read_files_for_generating_direct_cashflow(
     parameters = helper.read_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         valuation_date=valuation_date,
     )
 
     interest_income_new_disbursement_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.interest_income_new_disbursement_df,
     )
 
     details_of_new_assets = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.details_of_new_assets,
     )
 
     details_of_new_long_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.details_of_new_long_term_borrowing,
     )
 
     details_of_new_short_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.details_of_new_short_term_borrowing,
     )
 
     opening_balances = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.opening_balances,
     )
 
     existing_loans_schedules_interest_incomes_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.existing_loans_schedules_interest_incomes_df,
     )
 
     other_income_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.other_income_df,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
     capital_repayment_new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.capital_repayment_new_disbursements_df,
     )
 
     existing_loans_schedules_capital_repayments_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.existing_loans_schedules_capital_repayments_df,
     )
 
     finance_costs_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.finance_costs_df,
     )
 
     income_statement_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.income_statement_df,
     )
 
     capital_repayment_on_borrowings_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.capital_repayment_on_borrowings_df,
     )
 
@@ -485,11 +492,12 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     ) = read_files_for_generating_direct_cashflow(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         valuation_date=VALUATION_DATE,
     )
 
-    parameters.columns = pd.PeriodIndex(parameters.columns, freq="M").strftime("%b-%Y")
+    parameters.columns = pd.PeriodIndex(
+        parameters.columns, freq="M").strftime("%b-%Y")
 
     direct_cashflow_df.loc["Receipts From Trade Receivables"] = parameters.loc[
         "RECEIPTS_FROM_TRADE_RECEIVABLES"
@@ -584,7 +592,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file=income_statement_df,
         file_name=constants.FinalFiles.income_statement_df,
         file_stage=constants.FileStage.final,
@@ -593,7 +601,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file=direct_cashflow_df,
         file_name=constants.FinalFiles.direct_cashflow_df,
         file_stage=constants.FileStage.final,
@@ -612,28 +620,28 @@ def generate_loan_book(tenant_name: str, project_id: str):
     capital_repayment_new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.capital_repayment_new_disbursements_df,
     )
 
     opening_balances = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.RawFiles.opening_balances,
     )
 
     existing_loans_schedules_capital_repayments_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.existing_loans_schedules_capital_repayments_df,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
@@ -650,7 +658,8 @@ def generate_loan_book(tenant_name: str, project_id: str):
 
     loan_book_df = direct_cashflow.insert_loan_book_items(
         loan_book=loan_book_df,
-        opening_balance_on_loan_book=float(opening_balances["LOAN_BOOK"].iat[0]),
+        opening_balance_on_loan_book=float(
+            opening_balances["LOAN_BOOK"].iat[0]),
         capital_repayment=capital_repayment,
         disbursements=get_total_disbursements(
             new_disbursements_df=new_disbursements_df
@@ -664,7 +673,7 @@ def generate_loan_book(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file=loan_book_df,
         file_name=constants.FinalFiles.loan_book_df,
         file_stage=constants.FileStage.final,
@@ -685,13 +694,14 @@ def download_final_file(
     df = helper.read_final_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=file_name,
     )
 
     stream = io.StringIO()
     df.to_csv(stream, index=False)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    response = StreamingResponse(
+        iter([stream.getvalue()]), media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; file_name={file_name}.csv"
     return response
 
@@ -703,12 +713,13 @@ def download_intermediate_file(
     df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=constants.MY_SESSION,
+        boto3_session=MY_SESSION,
         file_name=file_name,
     )
 
     stream = io.StringIO()
     df.to_csv(stream, index=False)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    response = StreamingResponse(
+        iter([stream.getvalue()]), media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; file_name={file_name}.csv"
     return response
