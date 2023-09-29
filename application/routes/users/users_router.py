@@ -90,10 +90,10 @@ async def create_user(user: object, db: Session = Depends(get_db), current_user:
 @router.get("/users/")
 # dependencies=[Depends(JWTBearer())] ,
 def read_users(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
 ):
-    # user_id = current_user.get("user_id")
-    user_id = 1
+    user_id = current_user.get("user_id")
+    # user_id = 1
     admin = db.query(models.Users).filter(
         models.Users.user_id == user_id).first()
     tenant_id = admin.tenant_id
