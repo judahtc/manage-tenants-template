@@ -1,0 +1,3 @@
+asset,depreciation,net_book_value,remaining_useful_life,cost,useful_life_when_purchased,method
+Vehicles,0.2,10000,5,20000,10,straight_line
+Buildings,0.1,50000,20,80000,25,reducing_balance

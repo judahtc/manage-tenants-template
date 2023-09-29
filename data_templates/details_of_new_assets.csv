@@ -1,0 +1,3 @@
+asset,depreciation,net_book_value,remaining_useful_life,method,purchase_date,cost
+Vehicle,0.25,10000,5,reducing_balance,01/06/2023,10000
+Building,0.1,50000,20,reducing_balance,01/09/2023,50000
