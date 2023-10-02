@@ -1,9 +1,16 @@
 import io
 
 import pandas as pd
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from application.utils import models
 from fastapi.responses import StreamingResponse
 from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
+from application.utils.database import get_db
+from application.auth import jwt_bearer, jwt_handler
+from application.auth.jwt_bearer import JwtBearer
+from sqlalchemy.orm import Session
+from application.utils.database import SessionLocal, engine
+
 from application.modeling import (
     constants,
     direct_cashflow,
@@ -12,6 +19,7 @@ from application.modeling import (
     income_statement,
     interest_income,
 )
+
 
 router = APIRouter(tags=["Final Calculations"])
 
@@ -682,16 +690,45 @@ def generate_loan_book(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/download-final-file")
-def download_final_file(
-    tenant_name: str, project_id: str, file_name: constants.FinalFiles
+@router.get("/{tenant_name}/{project_id}/intermediate-filenames")
+def get_intermediate_filenames(project_id: str, current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
+    partition_prefix = f"project_{project_id}/intermediate/"
+
+    user_id = current_user['user_id']
+    email = current_user['email']
+
+    user = (
+        db.query(models.Users)
+        .filter(models.Users.user_id == user_id)
+        .first()
+    )
+    # projects = crud.get_user_project(db=db,user_id=payload['user_id'])
+
+    tenant_id = user.tenant_id
+    tenant = db.query(models.Tenant).filter(
+        models.Tenant.tenant_id == tenant_id).first()
+
+    response = S3_CLIENT.list_objects_v2(
+        Bucket=tenant.company_name,
+        Prefix=partition_prefix
+    )
+
+    object_keys = []
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            object_key = obj['Key']
+            if object_key != partition_prefix:
+                file_name = object_key.split('/')[-1]
+                object_keys.append(file_name)
+
+    return object_keys
+
+
+@router.get("/{tenant_name}/{project_id}/download-intermediate-file")
+def download_intermediate_file(
+    tenant_name: str, project_id: str, file_name: constants.IntermediateFiles
 ):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
-
-    VALUATION_DATE = "2023-01"
-    MONTHS_TO_FORECAST = 12
-
-    df = helper.read_final_file(
+    df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=MY_SESSION,
@@ -706,11 +743,50 @@ def download_final_file(
     return response
 
 
-@router.get("/{tenant_name}/{project_id}/download-intermediate-file")
-def download_intermediate_file(
-    tenant_name: str, project_id: str, file_name: constants.IntermediateFiles
+@router.get("/{tenant_name}/{project_id}/final-filenames")
+def get_final_filenames(project_id: str, current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
+    partition_prefix = f"project_{project_id}/final/"
+
+    user_id = current_user['user_id']
+    email = current_user['email']
+
+    user = (
+        db.query(models.Users)
+        .filter(models.Users.user_id == user_id)
+        .first()
+    )
+    # projects = crud.get_user_project(db=db,user_id=payload['user_id'])
+
+    tenant_id = user.tenant_id
+    tenant = db.query(models.Tenant).filter(
+        models.Tenant.tenant_id == tenant_id).first()
+
+    response = S3_CLIENT.list_objects_v2(
+        Bucket=tenant.company_name,
+        Prefix=partition_prefix
+    )
+
+    object_keys = []
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            object_key = obj['Key']
+            if object_key != partition_prefix:
+                file_name = object_key.split('/')[-1]
+                object_keys.append(file_name)
+
+    return object_keys
+
+
+@router.get("/{tenant_name}/{project_id}/download-final-file")
+def download_final_file(
+    tenant_name: str, project_id: str, file_name: constants.FinalFiles
 ):
-    df = helper.read_intermediate_file(
+    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+
+    VALUATION_DATE = "2023-01"
+    MONTHS_TO_FORECAST = 12
+
+    df = helper.read_final_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=MY_SESSION,
