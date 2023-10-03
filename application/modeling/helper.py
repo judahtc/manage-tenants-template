@@ -63,13 +63,13 @@ def upload_file(
     tenant_name: str,
     boto3_session,
     file: pd.DataFrame,
-    file_name: str,
+    file_name: Enum,
     file_stage: constants.FileStage,
 ):
     try:
         wr.s3.to_parquet(
             df=file,
-            path=f"s3://{tenant_name}/project_{project_id}/{file_stage.value}/{file_name}.parquet",
+            path=f"s3://{tenant_name}/project_{project_id}/{file_stage.value}/{file_name.value}.parquet",
             boto3_session=boto3_session,
             index=True,
         )
@@ -85,11 +85,11 @@ def read_raw_file(
     tenant_name: str,
     project_id: int,
     boto3_session,
-    file_name: str,
+    file_name: Enum,
 ):
     try:
         df = wr.s3.read_parquet(
-            f"s3://{tenant_name}/project_{project_id}/raw/{file_name}.parquet",
+            f"s3://{tenant_name}/project_{project_id}/raw/{file_name.value}.parquet",
             boto3_session=boto3_session,
         )
 
@@ -131,11 +131,11 @@ def read_intermediate_file(
     tenant_name: str,
     project_id: int,
     boto3_session,
-    file_name: str,
+    file_name: Enum,
 ):
     try:
         df = wr.s3.read_parquet(
-            f"s3://{tenant_name}/project_{project_id}/intermediate/{file_name}.parquet",
+            f"s3://{tenant_name}/project_{project_id}/intermediate/{file_name.value}.parquet",
             boto3_session=boto3_session,
         )
 
@@ -150,12 +150,12 @@ def read_raw_file(
     tenant_name: str,
     project_id: int,
     boto3_session,
-    file_name: str,
+    file_name: Enum,
     set_index: bool = True,
 ):
     try:
         df = wr.s3.read_parquet(
-            f"s3://{tenant_name}/project_{project_id}/raw/{file_name}.parquet",
+            f"s3://{tenant_name}/project_{project_id}/raw/{file_name.value}.parquet",
             boto3_session=boto3_session,
         )
 
@@ -174,11 +174,11 @@ def read_final_file(
     tenant_name: str,
     project_id: int,
     boto3_session,
-    file_name: str,
+    file_name: Enum,
 ):
     try:
         df = wr.s3.read_parquet(
-            f"s3://{tenant_name}/project_{project_id}/final/{file_name}.parquet",
+            f"s3://{tenant_name}/project_{project_id}/final/{file_name.value}.parquet",
             boto3_session=boto3_session,
         )
 
