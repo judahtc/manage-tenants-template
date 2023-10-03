@@ -1,8 +1,12 @@
 import io
+
+import awswrangler as wr
 import pandas as pd
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
+from application.auth.jwt_bearer import JwtBearer
+from application.aws_helper.helper import S3_CLIENT
 from application.modeling import (
     balance_sheet,
     constants,
@@ -13,6 +17,8 @@ from application.modeling import (
     interest_income,
     statement_of_cashflows,
 )
+from application.utils import models
+from application.utils.database import get_db
 
 router = APIRouter(tags=["Final Calculations"])
 
@@ -1132,6 +1138,8 @@ def download_final_file(
     return response
 
 
+
+
 @router.get("/{tenant_name}/{project_id}/download-intermediate-file")
 def download_intermediate_file(
     tenant_name: str, project_id: str, file_name: constants.IntermediateFiles
@@ -1148,3 +1156,26 @@ def download_intermediate_file(
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; file_name={file_name}.csv"
     return response
+
+
+
+
+
+@router.get("/{tenant_name}/{project_id}/final-filenames")
+def get_final_filenames( tenant_name: str, project_id: str):
+    final_files: list = wr.s3.list_objects(
+        f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.final.value}",
+        boto3_session=constants.MY_SESSION)
+
+    final_files = list(map(lambda x: x.split("/")[-1], final_files))
+    final_files = list(map(lambda x: x.split(".")[0], final_files))
+    return final_files
+
+
+    
+ 
+
+
+
+
+

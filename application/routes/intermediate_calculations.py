@@ -1,3 +1,4 @@
+import awswrangler as wr
 import pandas as pd
 from fastapi import APIRouter
 
@@ -502,4 +503,11 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     return {"message": "done"}
 
 
-
+@router.get("/{tenant_name}/{project_id}/intermediate-filenames")
+def get_intermediate_filenames(tenant_name: str, project_id: str ):
+    intermediate_files: list = wr.s3.list_objects(
+        f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.intermediate.value}",
+        boto3_session=constants.MY_SESSION)
+    intermediate_files = list(map(lambda x: x.split("/")[-1], intermediate_files))
+    intermediate_files = list(map(lambda x: x.split(".")[0], intermediate_files))
+    return intermediate_files
