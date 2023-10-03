@@ -86,7 +86,7 @@ def calculate_new_disbursements(parameters: pd.DataFrame):
         ]
     )
 
-    return pd.DataFrame(
+    new_disbursements_df = pd.DataFrame(
         {
             "b2b_disbursements": b2b_disbursements,
             "sme_disbursements": sme_disbursements,
@@ -95,3 +95,5 @@ def calculate_new_disbursements(parameters: pd.DataFrame):
             "total": total_disbursements,
         }
     )
+
+    return new_disbursements_df

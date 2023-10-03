@@ -1,6 +1,7 @@
+import awswrangler as wr
 import pandas as pd
 from fastapi import APIRouter
-from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
+
 from application.modeling import (
     constants,
     depreciation,
@@ -24,7 +25,7 @@ def calculate_new_disbursements(tenant_name: str, project_id: str):
     parameters = helper.read_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         valuation_date=VALUATION_DATE,
     )
 
@@ -35,7 +36,7 @@ def calculate_new_disbursements(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=new_disbursements_df,
         file_name=constants.IntermediateFiles.new_disbursements_df,
         file_stage=constants.FileStage.intermediate,
@@ -54,14 +55,14 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
     parameters = helper.read_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         valuation_date=VALUATION_DATE,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
@@ -78,7 +79,7 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=monthly_repayment_new_disbursements_df,
         file_name=constants.IntermediateFiles.monthly_repayment_new_disbursements_df,
         file_stage=constants.FileStage.intermediate,
@@ -98,7 +99,7 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=capital_repayment_new_disbursements_df,
         file_name=constants.IntermediateFiles.capital_repayment_new_disbursements_df,
         file_stage=constants.FileStage.intermediate,
@@ -111,7 +112,7 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=interest_income_new_disbursement_df,
         file_name=constants.IntermediateFiles.interest_income_new_disbursement_df,
         file_stage=constants.FileStage.intermediate,
@@ -130,7 +131,7 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
     existing_loans = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.existing_loans,
     )
 
@@ -149,7 +150,7 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=existing_loans_schedules_capital_repayments_df,
         file_name=constants.IntermediateFiles.existing_loans_schedules_capital_repayments_df,
         file_stage=constants.FileStage.intermediate,
@@ -160,7 +161,7 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=existing_loans_schedules_interest_incomes_df,
         file_name=constants.IntermediateFiles.existing_loans_schedules_interest_incomes_df,
         file_stage=constants.FileStage.intermediate,
@@ -179,14 +180,14 @@ def calculate_other_income(tenant_name: str, project_id: str):
     parameters = helper.read_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         valuation_date=VALUATION_DATE,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
@@ -201,7 +202,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=admin_fee_for_all_new_disbursements_df,
         file_name=constants.IntermediateFiles.admin_fee_for_all_new_disbursements_df,
         file_stage=constants.FileStage.intermediate,
@@ -218,7 +219,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=credit_insurance_fee_for_all_new_disbursements_df,
         file_name=constants.IntermediateFiles.credit_insurance_fee_for_all_new_disbursements_df,
         file_stage=constants.FileStage.intermediate,
@@ -227,7 +228,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     existing_loans = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.existing_loans,
     )
 
@@ -240,7 +241,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=other_income_existing_loans_df,
         file_name=constants.IntermediateFiles.other_income_existing_loans_df,
         file_stage=constants.FileStage.intermediate,
@@ -262,7 +263,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=other_income_df,
         file_name=constants.IntermediateFiles.other_income_df,
         file_stage=constants.FileStage.intermediate,
@@ -281,7 +282,7 @@ def calculate_depreciation(tenant_name: str, project_id: str):
     details_of_existing_assets = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.details_of_existing_assets,
         set_index=False,
     )
@@ -289,7 +290,7 @@ def calculate_depreciation(tenant_name: str, project_id: str):
     details_of_new_assets = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.details_of_new_assets,
         set_index=False,
     )
@@ -308,7 +309,7 @@ def calculate_depreciation(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=depreciations_df,
         file_name=constants.IntermediateFiles.depreciations_df,
         file_stage=constants.FileStage.intermediate,
@@ -317,7 +318,7 @@ def calculate_depreciation(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=net_book_values_df,
         file_name=constants.IntermediateFiles.net_book_values_df,
         file_stage=constants.FileStage.intermediate,
@@ -340,14 +341,14 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
     parameters = helper.read_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         valuation_date=VALUATION_DATE,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
@@ -363,7 +364,7 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=salaries_and_pension_and_statutory_contributions_df,
         file_name=constants.IntermediateFiles.salaries_and_pension_and_statutory_contributions_df,
         file_stage=constants.FileStage.intermediate,
@@ -382,14 +383,14 @@ def calculate_provisions(tenant_name: str, project_id: str):
     parameters = helper.read_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         valuation_date=VALUATION_DATE,
     )
 
     opening_balances = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.opening_balances,
         set_index=False,
     )
@@ -397,32 +398,10 @@ def calculate_provisions(tenant_name: str, project_id: str):
     new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
-    trade_receivables_schedule_df = expenses.generate_trade_receivables_schedule(
-        opening_trade_receivables=opening_balances["TRADE_RECEIVABLES"].iat[0],
-        receipts_from_trade_receivables=parameters.loc[
-            "RECEIPTS_FROM_TRADE_RECEIVABLES"
-        ],
-        new_trade_receivables=parameters.loc["NEW_TRADE_RECEIVABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
-        valuation_date=VALUATION_DATE,
-    )
-
-    trade_receivables_schedule_df = helper.convert_columns(
-        trade_receivables_schedule_df
-    )
-
-    helper.upload_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=MY_SESSION,
-        file=trade_receivables_schedule_df,
-        file_name=constants.IntermediateFiles.trade_receivables_schedule_df,
-        file_stage=constants.FileStage.intermediate,
-    )
 
     provision_for_credit_loss_for_all_new_disbursements_df = (
         expenses.calculate_provision_for_credit_loss_for_all_new_disbursements(
@@ -433,28 +412,14 @@ def calculate_provisions(tenant_name: str, project_id: str):
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=provision_for_credit_loss_for_all_new_disbursements_df,
         file_name=constants.IntermediateFiles.provision_for_credit_loss_for_all_new_disbursements_df,
         file_stage=constants.FileStage.intermediate,
     )
 
-    provisions_df = expenses.calculate_provisions(
-        trade_receivables_schedule=trade_receivables_schedule_df,
-        provision_for_credit_loss_for_all_new_disbursements_df=provision_for_credit_loss_for_all_new_disbursements_df,
-        parameters=parameters,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
-    )
 
-    helper.upload_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=MY_SESSION,
-        file=provisions_df,
-        file_name=constants.IntermediateFiles.provisions_df,
-        file_stage=constants.FileStage.intermediate,
-    )
+
 
     return {"message": "done"}
 
@@ -473,28 +438,28 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     details_of_new_short_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.details_of_new_short_term_borrowing,
         set_index=False,
     )
     details_of_existing_short_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.details_of_existing_short_term_borrowing,
         set_index=False,
     )
     details_of_new_long_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.details_of_new_short_term_borrowing,
         set_index=False,
     )
     details_of_existing_long_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.details_of_existing_short_term_borrowing,
         set_index=False,
     )
@@ -511,7 +476,7 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=finance_costs_df,
         file_name=constants.IntermediateFiles.finance_costs_df,
         file_stage=constants.FileStage.intermediate,
@@ -529,10 +494,20 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
-        boto3_session=MY_SESSION,
+        boto3_session=constants.MY_SESSION,
         file=capital_repayment_on_borrowings_df,
         file_name=constants.IntermediateFiles.capital_repayment_on_borrowings_df,
         file_stage=constants.FileStage.intermediate,
     )
 
     return {"message": "done"}
+
+
+@router.get("/{tenant_name}/{project_id}/intermediate-filenames")
+def get_intermediate_filenames(tenant_name: str, project_id: str ):
+    intermediate_files: list = wr.s3.list_objects(
+        f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.intermediate.value}",
+        boto3_session=constants.MY_SESSION)
+    intermediate_files = list(map(lambda x: x.split("/")[-1], intermediate_files))
+    intermediate_files = list(map(lambda x: x.split(".")[0], intermediate_files))
+    return intermediate_files

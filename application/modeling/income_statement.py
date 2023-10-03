@@ -15,11 +15,11 @@ def generate_income_statement_template(
         columns=helper.generate_columns(valuation_date, months_to_forecast),
         index=income_statement_index["INCOME_STATEMENT"],
     )
-    # income_statement_template = remove_na_from_headings(income_statement_template)
+
     return income_statement_template
 
 
-def remove_na_from_headings(income_statement: pd.DataFrame):
+def remove_na_from_income_statement_headings(income_statement: pd.DataFrame):
     non_heading_columns_in_caps = [
         "PROFIT/(LOSS) FOR PERIOD",
         "FINANCE COSTS",
@@ -82,12 +82,8 @@ def insert_depreciation(income_statement: pd.DataFrame, depreciation: pd.Series)
     return income_statement
 
 
-def insert_bad_debts_provision(
-    income_statement, provision_for_bad_debts, change_in_provisin_for_credit_loss
-):
-    income_statement.loc["Bad Debts Provision"] = helper.add_series(
-        [change_in_provisin_for_credit_loss, provision_for_bad_debts]
-    )
+def insert_credit_loss_provision(income_statement, change_in_provisin_for_credit_loss):
+    income_statement.loc["Provisions"] = change_in_provisin_for_credit_loss
     return income_statement
 
 
@@ -205,6 +201,8 @@ def calculate_profit_before_tax(income_statement):
 
 
 def calculate_tax(income_statement, tax_rate):
+    tax_rate = helper.change_period_index_to_strftime(tax_rate)
+
     income_statement.loc["Taxation"] = np.maximum(
         income_statement.loc["PROFIT / (LOSS) BEFORE TAX"] * tax_rate, 0
     )

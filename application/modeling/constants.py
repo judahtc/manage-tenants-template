@@ -3,10 +3,21 @@ from enum import Enum
 import boto3
 from decouple import config
 
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
 
+S3_CLIENT = boto3.client(
+    "s3",
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name="af-south-1",
+)
 
-
-
+MY_SESSION = boto3.Session(
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name="af-south-1",
+)
 
 
 class RawFiles(str, Enum):
@@ -60,19 +71,43 @@ class IntermediateFiles(str, Enum):
     income_statement_df = "income_statement_df"
     direct_cashflow_df = "direct_cashflow_df"
     loan_book_df = "loan_book_df"
+    tax_schedule_df = "tax_schedule_df"
+    long_and_short_term_borrowing_df = "long_and_short_term_borrowing_df"
+    trade_payables_schedule_df = "trade_payables_schedule_df"
+
+    short_term_loans_schedules_df = "short_term_loans_schedules_df"
+    long_term_loans_schedules_df = "long_term_loans_schedules_df"
 
 
 class FinalFiles(str, Enum):
     income_statement_df = "income_statement_df"
     direct_cashflow_df = "direct_cashflow_df"
     loan_book_df = "loan_book_df"
+    balance_sheet_df = "balance_sheet_df"
+    statement_of_cashflow_df = "statement_of_cashflow_df"
 
 
 class FileStage(str, Enum):
     intermediate = "intermediate"
     raw = "raw"
     final = "final"
+
+
 import boto3
 from decouple import config
 
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
 
+S3_CLIENT = boto3.client(
+    "s3",
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name="af-south-1",
+)
+
+MY_SESSION = boto3.Session(
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name="af-south-1",
+)

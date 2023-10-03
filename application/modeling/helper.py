@@ -174,7 +174,7 @@ def read_final_file(
     tenant_name: str,
     project_id: int,
     boto3_session,
-    file_name: Enum, 
+    file_name: Enum,
 ):
     try:
         df = wr.s3.read_parquet(
@@ -211,6 +211,12 @@ def add_series(list_of_series: list):
     return pd.concat(list_of_series, axis=1).sum(axis=1)
 
 
+def change_period_index_to_strftime(input: pd.DataFrame | pd.Series):
+    input.index = pd.PeriodIndex(input.index, freq="M")
+    input.index = input.index.strftime("%b-%Y")
+    return input
+
+
 def convert_to_datetime(date: pd.Series):
     try:
         date = pd.to_datetime(date, format="%d/%m/%Y")
@@ -218,6 +224,12 @@ def convert_to_datetime(date: pd.Series):
         date = pd.to_datetime(date, format="%m/%d/%Y")
 
     return date
+
+
+def remove_na_from_headings(df: pd.DataFrame):
+    headings = df.index[df.index.str.isupper()]
+    df.loc[headings] = ""
+    return df
 
 
 def convert_index(df: pd.DataFrame, to_string: str = False):
@@ -242,12 +254,18 @@ def get_list_from_string_enum(enum: Enum):
     return [item.value for item in enum]
 
 
-from typing import List
+def calculate_opening_and_closing_balances(df: pd.DataFrame):
+    for index, period in enumerate(df.columns):
+        closing_balance_iloc = df.index.get_loc("Closing Balance")
+        opening_balance_iloc = df.index.get_loc("Opening Balance")
+        df.iloc[closing_balance_iloc, index] = df.iloc[
+            opening_balance_iloc:closing_balance_iloc, index
+        ].sum()
 
-import awswrangler as wr
-import pandas as pd
-from botocore.exceptions import ClientError
-from fastapi import File, HTTPException, UploadFile, status
+        if period == df.columns[-1]:
+            break
+        df.iloc[opening_balance_iloc, index + 1] = df.iloc[closing_balance_iloc, index]
+    return df
 
 
 def get_tenant_name(tenant_name: str):

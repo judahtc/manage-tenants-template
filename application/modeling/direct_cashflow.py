@@ -24,6 +24,7 @@ def generate_direct_cashflow_template(valuation_date, months_to_forecast):
             "Dividend Paid",
             "Capital Repayment On Borrowings",
             "Tax Paid",
+            "Payments To Trade Payables",
             "Total Cash Outflows",
             "Net Increase/Decrease In Cash",
             "Opening Balance",
@@ -98,32 +99,15 @@ def insert_issue_of_shares(direct_cashflow: pd.DataFrame, parameters: pd.DataFra
     return direct_cashflow
 
 
-def aggregate_existing_short_and_long_term_borrowing(
-    details_of_existing_long_term_borrowing,
-    details_of_existing_short_term_borrowing,
-    valuation_date,
+def calculate_loan_end_date_on_existing_borrowing(
+    details_of_existing_borrowing: pd.DataFrame, valuation_date: str
 ):
-    details_of_existing_borrowings = pd.concat(
-        [
-            details_of_existing_long_term_borrowing,
-            details_of_existing_short_term_borrowing,
-        ]
-    )
-    details_of_existing_borrowings = details_of_existing_borrowings.assign(
+    details_of_existing_borrowing = details_of_existing_borrowing.assign(
         loan_end_date=pd.Period(valuation_date)
-        + details_of_existing_borrowings["remaining_loan_term"]
+        + details_of_existing_borrowing["remaining_loan_term"]
     )
-    return details_of_existing_borrowings
 
-
-def aggregate_new_short_and_long_term_borrowing(
-    details_of_new_long_term_borrowing,
-    details_of_new_short_term_borrowing,
-):
-    details_of_new_borrowings = pd.concat(
-        [details_of_new_long_term_borrowing, details_of_new_short_term_borrowing]
-    )
-    return details_of_new_borrowings
+    return details_of_existing_borrowing
 
 
 def calculate_loan_end_date_on_new_borrowing(details_of_new_borrowings: pd.DataFrame):
@@ -212,23 +196,6 @@ def insert_loan_book_items(
     return loan_book
 
 
-def calculate_opening_and_closing_balances_for_loan_book(loan_book: pd.DataFrame):
-    loan_book.columns = pd.PeriodIndex(loan_book.columns, freq="M")
-    for period in loan_book.columns:
-        loan_book.loc["Closing Balance", period] = loan_book.loc[
-            "Opening Balance":"Capital Repayments", period
-        ].sum()
-
-        if period == loan_book.columns[-1]:
-            break
-
-        loan_book.loc["Opening Balance", period + 1] = loan_book.loc[
-            "Closing Balance", period
-        ]
-    loan_book.columns = map(str, loan_book.columns.strftime("%b-%Y"))
-    return loan_book
-
-
 def calculate_capital_repayment_on_borrowings(
     details_of_existing_long_term_borrowing: pd.DataFrame,
     details_of_existing_short_term_borrowing: pd.DataFrame,
@@ -237,44 +204,147 @@ def calculate_capital_repayment_on_borrowings(
     valuation_date: str,
     months_to_forecast: int,
 ):
-    details_of_existing_borrowings = aggregate_existing_short_and_long_term_borrowing(
-        details_of_existing_long_term_borrowing=details_of_existing_long_term_borrowing,
-        details_of_existing_short_term_borrowing=details_of_existing_short_term_borrowing,
-        valuation_date=valuation_date,
-    )
-    details_of_new_borrowings = aggregate_new_short_and_long_term_borrowing(
-        details_of_new_long_term_borrowing=details_of_new_long_term_borrowing,
-        details_of_new_short_term_borrowing=details_of_new_short_term_borrowing,
+    details_of_new_short_term_borrowing = calculate_loan_end_date_on_new_borrowing(
+        details_of_new_short_term_borrowing
     )
 
-    details_of_new_borrowings = calculate_loan_end_date_on_new_borrowing(
-        details_of_new_borrowings
+    details_of_new_long_term_borrowing = calculate_loan_end_date_on_new_borrowing(
+        details_of_new_long_term_borrowing
     )
 
-    capital_repayment_on_new_borrowings = (
+    details_of_existing_short_term_borrowing = (
+        calculate_loan_end_date_on_existing_borrowing(
+            details_of_existing_short_term_borrowing, valuation_date
+        )
+    )
+
+    details_of_existing_long_term_borrowing = (
+        calculate_loan_end_date_on_existing_borrowing(
+            details_of_existing_long_term_borrowing, valuation_date
+        )
+    )
+
+    capital_repayment_on_new_short_term_borrowing = (
         calculate_direct_cashflow_capital_repayment_on_borrowings(
-            details_of_borrowing=details_of_new_borrowings,
+            details_of_borrowing=details_of_new_short_term_borrowing,
             valuation_date=valuation_date,
             months_to_forecast=months_to_forecast,
         )
     )
 
-    capital_repayment_on_existing_borrowings = (
+    capital_repayment_on_new_long_term_borrowing = (
         calculate_direct_cashflow_capital_repayment_on_borrowings(
-            details_of_borrowing=details_of_existing_borrowings,
+            details_of_borrowing=details_of_new_long_term_borrowing,
             valuation_date=valuation_date,
             months_to_forecast=months_to_forecast,
         )
     )
 
-    capital_repayment_on_borrowings = helper.add_series(
-        [capital_repayment_on_new_borrowings, capital_repayment_on_existing_borrowings]
+    capital_repayment_on_existing_short_term_borrowing = (
+        calculate_direct_cashflow_capital_repayment_on_borrowings(
+            details_of_borrowing=details_of_existing_short_term_borrowing,
+            valuation_date=valuation_date,
+            months_to_forecast=months_to_forecast,
+        )
+    )
+
+    capital_repayment_on_existing_long_term_borrowing = (
+        calculate_direct_cashflow_capital_repayment_on_borrowings(
+            details_of_borrowing=details_of_existing_long_term_borrowing,
+            valuation_date=valuation_date,
+            months_to_forecast=months_to_forecast,
+        )
+    )
+
+    capital_repayment_on_short_term_borrowing = helper.add_series(
+        [
+            capital_repayment_on_new_short_term_borrowing,
+            capital_repayment_on_existing_short_term_borrowing,
+        ]
+    )
+
+    capital_repayment_on_long_term_borrowing = helper.add_series(
+        [
+            capital_repayment_on_new_long_term_borrowing,
+            capital_repayment_on_existing_long_term_borrowing,
+        ]
     )
 
     return pd.DataFrame(
         {
-            "capital_repayment_on_new_borrowings": capital_repayment_on_new_borrowings,
-            "capital_repayment_on_existing_borrowings": capital_repayment_on_existing_borrowings,
-            "total": capital_repayment_on_borrowings,
+            "short_term_borrowing": capital_repayment_on_short_term_borrowing,
+            "long_term_borrowing": capital_repayment_on_new_long_term_borrowing,
+            "total": helper.add_series(
+                [
+                    capital_repayment_on_long_term_borrowing,
+                    capital_repayment_on_short_term_borrowing,
+                ]
+            ),
+        }
+    )
+
+
+def calculate_tax_paid(tax_schedule: pd.DataFrame):
+    tax_paid = {}
+    tax_payment_dates = tax_schedule.columns[
+        tax_schedule.columns.str.contains("Mar|Jun|Sep|Dec")
+    ]
+    for date in tax_schedule.columns:
+        if date in tax_payment_dates:
+            tax_date_location = tax_schedule.columns.get_loc(date)
+            initial_outstanding_months = tax_date_location - 2
+            tax_paid[date] = (
+                tax_schedule.loc["Tax Charged"]
+                .iloc[initial_outstanding_months : tax_date_location + 1]
+                .sum()
+            )
+        else:
+            tax_paid[date] = 0
+
+    tax_schedule.loc["Tax Paid"] = -pd.Series(tax_paid)
+    return tax_schedule
+
+
+def generate_tax_schedule(
+    taxation: pd.Series,
+    opening_balance: float,
+    valuation_date: str,
+    months_to_forecast: int,
+):
+    tax_schedule = pd.DataFrame(
+        index=["Opening Balance", "Tax Charged", "Tax Paid", "Closing Balance"],
+        columns=helper.generate_columns(valuation_date, months_to_forecast),
+    )
+    tax_schedule.loc["Tax Charged"] = taxation
+    tax_schedule.loc["Opening Balance", tax_schedule.columns[0]] = opening_balance
+    tax_schedule = calculate_tax_paid(tax_schedule=tax_schedule)
+
+    tax_schedule = helper.calculate_opening_and_closing_balances(tax_schedule)
+    return tax_schedule
+
+
+def calculate_long_and_short_term_borrowing_for_direct_cashflow(
+    details_of_new_long_term_borrowing: pd.DataFrame,
+    details_of_new_short_term_borrowing: pd.DataFrame,
+    valuation_date: str,
+    months_to_forecast: int,
+):
+    short_term_borrowing = calculate_direct_cashflow_borrowing(
+        details_of_new_borrowing=details_of_new_short_term_borrowing,
+        valuation_date=valuation_date,
+        months_to_forecast=months_to_forecast,
+    )
+
+    long_term_borrowing = calculate_direct_cashflow_borrowing(
+        details_of_new_borrowing=details_of_new_long_term_borrowing,
+        valuation_date=valuation_date,
+        months_to_forecast=months_to_forecast,
+    )
+
+    return pd.DataFrame(
+        {
+            "long_term_borrowing": long_term_borrowing,
+            "short_term_borrowing": short_term_borrowing,
+            "total": short_term_borrowing + long_term_borrowing,
         }
     )
