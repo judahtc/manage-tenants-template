@@ -59,10 +59,12 @@ def get_db():
 
 
 @router.post("/users/")
-async def create_user(user: object, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())):
+async def create_user(user: schemas.UsersBaseCreate, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())):
     # try:
+    print(current_user)
+    email = current_user["email"]
     body = user.email
-    url = user.url
+    # url = "user.url"
     print(body)
     characters = string.ascii_letters + string.digits + string.punctuation
 
@@ -73,11 +75,11 @@ async def create_user(user: object, db: Session = Depends(get_db), current_user:
     # Generate the random google auth string
     secret_key = google_auth.generate_random_key()
     uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
-        name="Claxon", issuer_name='CBS IFRS17')
+        name="Claxon", issuer_name='CBS Budgetting')
 
     qrcode_image = crud.create_base64_qrcode_image(uri)
     response = crud.create_user(
-        db=db, user=user, password=encryption_key, secret_key=secret_key)
+        db=db, user=user, password=encryption_key, secret_key=secret_key, email=email)
     # if response["response"] == "user successfully added":
     #     return await crud.user_reg_email_sendgrid(body, password=encryption_key, url=url, qrcode_image=qrcode_image)
     # else:
