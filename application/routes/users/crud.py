@@ -50,7 +50,7 @@ def delete_by_email(db: Session, email: str):
         db.delete(user)
         db.commit()
         context = {"response": "user successfully deleted ",
-                   "statusCode": status.HTTP_200_OK}, status.HTTP_200_OK
+                   "statusCode": status.HTTP_200_OK}
         return context
     except:
         context = {"response": "user does not exist ",

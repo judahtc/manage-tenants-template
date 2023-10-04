@@ -79,7 +79,8 @@ async def create_tenant(
     body = tenant.admin_email
     characters = string.ascii_letters + string.digits + string.punctuation
     random_string = "".join(random.choice(characters) for i in range(8))
-    encryption_key = random_string
+    # encryption_key = random_string
+    encryption_key = "password123"
 
     # generate random google auth key
     secret_key = google_auth.generate_random_key()

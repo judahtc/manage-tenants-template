@@ -70,7 +70,8 @@ async def create_user(user: schemas.UsersBaseCreate, db: Session = Depends(get_d
 
     # Generate the random string
     random_string = "".join(random.choice(characters) for i in range(8))
-    encryption_key = random_string
+    # encryption_key = random_string
+    encryption_key = "password123"
 
     # Generate the random google auth string
     secret_key = google_auth.generate_random_key()
