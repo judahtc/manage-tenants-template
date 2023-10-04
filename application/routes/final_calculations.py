@@ -3,7 +3,7 @@ import io
 import awswrangler as wr
 import pandas as pd
 from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 
 from application.auth.jwt_bearer import JwtBearer
 from application.aws_helper.helper import S3_CLIENT
@@ -1131,10 +1131,22 @@ def download_final_file(
         file_name=file_name,
     )
 
+ 
+    
     stream = io.StringIO()
+    # buffer = io.BytesIO()
     df.to_csv(stream, index=True)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers["Content-Disposition"] = f"attachment; file_name={file_name}.csv"
+    
+
+    response = Response(
+        content=stream.getvalue(),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f'attachment; filename={file_name.value}', 
+            'Content-Type': 'application/octet-stream'
+       
+        }, 
+    )
     return response
 
 
@@ -1154,7 +1166,7 @@ def download_intermediate_file(
     stream = io.StringIO()
     df.to_csv(stream, index=True)
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers["Content-Disposition"] = f"attachment; file_name={file_name}.csv"
+    response.headers["Content-Disposition"] = f"attachment; file_name={file_name.value}.csv"
     return response
 
 

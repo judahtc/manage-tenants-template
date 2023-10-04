@@ -168,34 +168,6 @@ def calculate_opening_and_closing_balances_for_direct_cashflows(
     return direct_cashflow
 
 
-def generate_loan_book_template(valuation_date: str, months_to_forecast: int):
-    loan_book = pd.DataFrame(
-        index=[
-            "Opening Balance",
-            "New Disbursements",
-            "Capital Repayments",
-            "Closing Balance",
-        ],
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
-    )
-    return loan_book
-
-
-def insert_loan_book_items(
-    loan_book: pd.DataFrame,
-    opening_balance_on_loan_book: float,
-    capital_repayment: pd.Series,
-    disbursements: pd.Series,
-):
-    loan_book.loc[
-        "Opening Balance", loan_book.columns[0]
-    ] = opening_balance_on_loan_book
-    loan_book.loc["Capital Repayments"] = capital_repayment
-    loan_book.loc["New Disbursements"] = disbursements
-
-    return loan_book
-
-
 def calculate_capital_repayment_on_borrowings(
     details_of_existing_long_term_borrowing: pd.DataFrame,
     details_of_existing_short_term_borrowing: pd.DataFrame,

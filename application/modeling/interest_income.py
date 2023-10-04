@@ -93,6 +93,8 @@ def calculate_monthly_repayments_new_disbursements(
             "b2b_monthly_repayment": b2b_monthly_repayment,
             "consumer_ssb_monthly_repayment": consumer_ssb_monthly_repayment,
             "consumer_pvt_monthly_repayment": consumer_pvt_monthly_repayment,
+            "total": helper.add_series([b2b_monthly_repayment, consumer_pvt_monthly_repayment
+                                        ,consumer_ssb_monthly_repayment,sme_monthly_repayment])
         }
     )
 
@@ -143,7 +145,7 @@ def aggregate_new_and_existing_loans_interest_income(
     months_to_forecast: int,
 ):
     return (
-        interest_income_new_disbursements_df.sum(axis=1)
+        interest_income_new_disbursements_df['total']
         .add(interest_income_existing_loans, fill_value=0)
         .reindex(helper.generate_columns(valuation_date, months_to_forecast))
     )
