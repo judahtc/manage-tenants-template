@@ -15,6 +15,7 @@ from application.modeling import (
     helper,
     income_statement,
     interest_income,
+    loan_book,
     statement_of_cashflows,
 )
 from application.utils import models
@@ -670,23 +671,49 @@ def generate_loan_book(tenant_name: str, project_id: str):
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
-    capital_repayment = helper.add_series(
-        [
-            existing_loans_schedules_capital_repayments_df.sum(),
-            capital_repayment_new_disbursements_df["total"],
-        ]
+    interest_income_new_disbursement_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.interest_income_new_disbursement_df,
     )
 
-    loan_book_df = direct_cashflow.generate_loan_book_template(
+    existing_loans_schedules_interest_incomes_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.existing_loans_schedules_interest_incomes_df,
+    )
+
+    capital_repayment_existing_loans = (
+        existing_loans_schedules_capital_repayments_df.sum()
+    )
+
+    loan_book_df = loan_book.generate_loan_book_template(
         valuation_date=VALUATION_DATE, months_to_forecast=MONTHS_TO_FORECAST
     )
 
-    loan_book_df = direct_cashflow.insert_loan_book_items(
+    total_capital_repayments = loan_book.aggregate_new_and_existing_loans_capital_repayments(
+        capital_repayments_new_disbursements_df=capital_repayment_new_disbursements_df,
+        capital_repayments_existing_loans=capital_repayment_existing_loans,
+        valuation_date=VALUATION_DATE,
+        months_to_forecast=MONTHS_TO_FORECAST,
+    )
+
+    total_interest_income = interest_income.aggregate_new_and_existing_loans_interest_income(
+        interest_income_new_disbursements_df=interest_income_new_disbursement_df,
+        interest_income_existing_loans=existing_loans_schedules_interest_incomes_df.sum(),
+        valuation_date=VALUATION_DATE,
+        months_to_forecast=MONTHS_TO_FORECAST,
+    )
+
+    loan_book_df = loan_book.insert_loan_book_items(
         loan_book=loan_book_df,
         opening_balance_on_loan_book=float(opening_balances["LOAN_BOOK"].iat[0]),
-        capital_repayment=capital_repayment,
-        disbursements=get_total_disbursements(
-            new_disbursements_df=new_disbursements_df
+        total_interest_income=total_interest_income,
+        total_capital_repayments=total_capital_repayments,
+        disbursements=helper.change_period_index_to_strftime(
+            new_disbursements_df["total"]
         ),
     )
 
@@ -1131,25 +1158,17 @@ def download_final_file(
         file_name=file_name,
     )
 
- 
-    
     stream = io.StringIO()
-    # buffer = io.BytesIO()
     df.to_csv(stream, index=True)
-    
 
     response = Response(
         content=stream.getvalue(),
         media_type="text/csv",
         headers={
-            "Content-Disposition": f'attachment; filename={file_name.value}', 
-            'Content-Type': 'application/octet-stream'
-       
-        }, 
+            "Content-Disposition": f"attachment; filename={file_name.value}",
+        },
     )
     return response
-
-
 
 
 @router.get("/{tenant_name}/{project_id}/download-intermediate-file")
@@ -1166,28 +1185,19 @@ def download_intermediate_file(
     stream = io.StringIO()
     df.to_csv(stream, index=True)
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers["Content-Disposition"] = f"attachment; file_name={file_name.value}.csv"
+    response.headers[
+        "Content-Disposition"
+    ] = f"attachment; file_name={file_name.value}.csv"
     return response
 
 
-
-
-
 @router.get("/{tenant_name}/{project_id}/final-filenames")
-def get_final_filenames( tenant_name: str, project_id: str):
+def get_final_filenames(tenant_name: str, project_id: str):
     final_files: list = wr.s3.list_objects(
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.final.value}",
-        boto3_session=constants.MY_SESSION)
+        boto3_session=constants.MY_SESSION,
+    )
 
     final_files = list(map(lambda x: x.split("/")[-1], final_files))
     final_files = list(map(lambda x: x.split(".")[0], final_files))
     return final_files
-
-
-    
- 
-
-
-
-
-
