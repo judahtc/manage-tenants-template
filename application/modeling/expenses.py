@@ -44,39 +44,6 @@ def calculate_credit_officer_commission(
 #     return total_salaries
 
 
-def generate_trade_receivables_schedule(
-    opening_trade_receivables: int,
-    receipts_from_trade_receivables: pd.Series,
-    new_trade_receivables: pd.Series,
-    valuation_date: str,
-    months_to_forecast: int,
-):
-    receipts_from_trade_receivables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
-    new_trade_receivables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
-
-    trade_receivables = pd.DataFrame(
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
-        index=[
-            "Opening Balance",
-            "New Trade Receivables",
-            "Receipts From Trade Receivables",
-            "Closing Balance",
-        ],
-        data=0,
-    )
-
-    trade_receivables.loc["New Trade Receivables"] = new_trade_receivables
-    trade_receivables.loc[
-        "Receipts From Trade Receivables"
-    ] = -receipts_from_trade_receivables
-    trade_receivables.iloc[0, 0] = opening_trade_receivables
-    trade_receivables = helper.calculate_opening_and_closing_balances(trade_receivables)
-    return trade_receivables
-
 
 def calculate_provision_for_bad_debts(
     trade_receivables: pd.Series,

@@ -4,37 +4,95 @@ import pandas as pd
 from application.modeling import helper
 
 
-def generate_trade_payables_schedule(
-    opening_trade_payables: int,
-    payments_to_trade_payables: pd.Series,
-    new_trade_payables: pd.Series,
+def generate_inventories_schedule(
+    opening_inventories: int,
+    inventories_used: pd.Series,
+    new_inventories: pd.Series,
     valuation_date: str,
     months_to_forecast: int,
 ):
-    payments_to_trade_payables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
-    new_trade_payables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
+    inventories_used.index = helper.generate_columns(valuation_date, months_to_forecast)
 
-    trade_payables = pd.DataFrame(
+    new_inventories.index = helper.generate_columns(valuation_date, months_to_forecast)
+
+    inventories = pd.DataFrame(
         columns=helper.generate_columns(valuation_date, months_to_forecast),
         index=[
             "Opening Balance",
-            "New Trade Payables",
-            "Payments To Trade Payables",
+            "New Inventories",
+            "Inventories Used",
             "Closing Balance",
         ],
         data=0,
     )
 
-    trade_payables.loc["New Trade Payables"] = new_trade_payables
-    trade_payables.loc["Payments To Trade Payables"] = -payments_to_trade_payables
-    trade_payables.iloc[0, 0] = opening_trade_payables
+    inventories.loc["New Inventories"] = new_inventories
+    inventories.loc["Inventories Used"] = -inventories_used
+    inventories.iloc[0, 0] = opening_inventories
+    inventories = helper.calculate_opening_and_closing_balances(inventories)
+    return inventories
 
-    trade_payables = helper.calculate_opening_and_closing_balances(trade_payables)
-    return trade_payables
+
+def generate_payables_schedule(
+    opening_payables: int,
+    payments_to_payables: pd.Series,
+    new_payables: pd.Series,
+    valuation_date: str,
+    months_to_forecast: int,
+):
+    payments_to_payables.index = helper.generate_columns(
+        valuation_date, months_to_forecast
+    )
+    new_payables.index = helper.generate_columns(valuation_date, months_to_forecast)
+
+    payables = pd.DataFrame(
+        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        index=[
+            "Opening Balance",
+            "New Payables",
+            "Payments To Payables",
+            "Closing Balance",
+        ],
+        data=0,
+    )
+
+    payables.loc["New Payables"] = new_payables
+    payables.loc["Payments To Payables"] = -payments_to_payables
+    payables.iloc[0, 0] = opening_payables
+
+    payables = helper.calculate_opening_and_closing_balances(payables)
+    return payables
+
+
+def generate_receivables_schedule(
+    opening_receivables: int,
+    receipts_from_receivables: pd.Series,
+    new_receivables: pd.Series,
+    valuation_date: str,
+    months_to_forecast: int,
+):
+    receipts_from_receivables.index = helper.generate_columns(
+        valuation_date, months_to_forecast
+    )
+
+    new_receivables.index = helper.generate_columns(valuation_date, months_to_forecast)
+
+    receivables = pd.DataFrame(
+        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        index=[
+            "Opening Balance",
+            "New Receivables",
+            "Receipts From Receivables",
+            "Closing Balance",
+        ],
+        data=0,
+    )
+
+    receivables.loc["New Receivables"] = new_receivables
+    receivables.loc["Receipts From Receivables"] = -receipts_from_receivables
+    receivables.iloc[0, 0] = opening_receivables
+    receivables = helper.calculate_opening_and_closing_balances(receivables)
+    return receivables
 
 
 def generate_balance_sheet_template(valuation_date: str, months_to_forecast: int):
