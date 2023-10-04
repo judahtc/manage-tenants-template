@@ -110,6 +110,18 @@ def update_project(project_id: str, edit_project: schemas.ProjectUpdate, db: Ses
         return {"response": "project does not exist ", "statusCode": status.HTTP_404_NOT_FOUND}
 
 
+def update_project_status(project_id: str, status: str, db: Session):
+    # try:
+
+    project = get_project(db=db, project_id=project_id)
+    if project is not None:
+        project.project_statyus = status
+        print(datetime.now)
+        db.commit()
+    else:
+        return {"response": "project does not exist ", "statusCode": status.HTTP_404_NOT_FOUND}
+
+
 def delete_project(db: Session, project_id: str):
     try:
         project = get_project(db=db, project_id=project_id)

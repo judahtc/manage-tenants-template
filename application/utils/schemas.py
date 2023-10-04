@@ -205,8 +205,11 @@ class UserLoginSchema(BaseModel):
 
 class ProjectUpdate(BaseModel):
     project_name: str
-
     description: str
+
+
+class ProjectStatusUpdate(BaseModel):
+    project_status: object
 
 
 class AuditTrailAL(BaseModel):

@@ -43,7 +43,7 @@ from fastapi.responses import FileResponse
 import os
 import io
 from application.utils.database import SessionLocal, engine
-from application.routes.users import crud
+from application.routes.users import crud, emails
 from application.utils import google_auth
 import pyotp
 import qrcode
@@ -80,10 +80,10 @@ async def create_user(user: schemas.UsersBaseCreate, db: Session = Depends(get_d
     qrcode_image = crud.create_base64_qrcode_image(uri)
     response = crud.create_user(
         db=db, user=user, password=encryption_key, secret_key=secret_key, email=email)
-    # if response["response"] == "user successfully added":
-    #     return await crud.user_reg_email_sendgrid(body, password=encryption_key, url=url, qrcode_image=qrcode_image)
-    # else:
-    #     return response
+    if response["response"] == "user successfully added":
+        return emails.send_email(recipient=body, qrcode_image=qrcode_image, password=encryption_key,)
+    else:
+        return response
 
     # comment the next statement when you activate emails by uncommenting the above commented code
     return response
