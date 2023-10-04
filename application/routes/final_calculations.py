@@ -2,9 +2,11 @@ import io
 
 import awswrangler as wr
 import pandas as pd
+from sqlalchemy.orm import Session
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-
+from application.routes.projects import crud as project_crud
 from application.auth.jwt_bearer import JwtBearer
 from application.aws_helper.helper import S3_CLIENT
 from application.modeling import (
@@ -19,6 +21,7 @@ from application.modeling import (
 )
 from application.utils import models
 from application.utils.database import get_db
+
 
 router = APIRouter(tags=["Final Calculations"])
 
@@ -138,14 +141,16 @@ def read_files_for_generating_income(
 
 
 def aggregate_expenses_in_income_statement(income_statement_df):
-    income_statement_df = income_statement.aggregate_staff_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_staff_costs(
+        income_statement_df)
     income_statement_df = income_statement.aggregate_travel_and_entertainment(
         income_statement_df
     )
     income_statement_df = income_statement.aggregate_marketing_and_public_relations(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_office_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_office_costs(
+        income_statement_df)
     income_statement_df = income_statement.aggregate_professional_fees(
         income_statement_df
     )
@@ -155,11 +160,13 @@ def aggregate_expenses_in_income_statement(income_statement_df):
     income_statement_df = income_statement.aggregate_motor_vehicle_costs(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_other_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_other_costs(
+        income_statement_df)
     income_statement_df = income_statement.aggregate_investment_income(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_finance_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_finance_costs(
+        income_statement_df)
 
     return income_statement_df
 
@@ -301,12 +308,15 @@ def generate_income_statement(tenant_name: str, project_id: str):
         income_statement_df=income_statement_df
     )
 
-    income_statement_df = income_statement.calculate_total_expenses(income_statement_df)
-    income_statement_df = income_statement.calculate_ebidta(income_statement_df)
+    income_statement_df = income_statement.calculate_total_expenses(
+        income_statement_df)
+    income_statement_df = income_statement.calculate_ebidta(
+        income_statement_df)
 
     income_statement_df.loc["Finance Costs"] = finance_costs_df.loc["total"]
 
-    income_statement_df = income_statement.aggregate_finance_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_finance_costs(
+        income_statement_df)
 
     income_statement_df = income_statement.calculate_profit_before_tax(
         income_statement_df
@@ -492,7 +502,8 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         valuation_date=VALUATION_DATE,
     )
 
-    parameters.columns = pd.PeriodIndex(parameters.columns, freq="M").strftime("%b-%Y")
+    parameters.columns = pd.PeriodIndex(
+        parameters.columns, freq="M").strftime("%b-%Y")
 
     direct_cashflow_df.loc["Receipts From Trade Receivables"] = parameters.loc[
         "RECEIPTS_FROM_TRADE_RECEIVABLES"
@@ -511,7 +522,8 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         "Finance Costs"
     ]
     direct_cashflow_df.loc["Disbursements"] = -new_disbursements_df["total"].reindex(
-        pd.PeriodIndex(new_disbursements_df["total"].index, freq="M").strftime("%b-%Y")
+        pd.PeriodIndex(
+            new_disbursements_df["total"].index, freq="M").strftime("%b-%Y")
     )
 
     tax_schedule_df = direct_cashflow.generate_tax_schedule(
@@ -568,12 +580,12 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
 
     direct_cashflow_df.loc["Total Cash Inflows"] = direct_cashflow_df.iloc[
         direct_cashflow_df.index.get_loc("CASH INFLOWS")
-        + 1 : direct_cashflow_df.index.get_loc("Total Cash Inflows")
+        + 1: direct_cashflow_df.index.get_loc("Total Cash Inflows")
     ].sum()
 
     direct_cashflow_df.loc["Total Cash Outflows"] = direct_cashflow_df.iloc[
         direct_cashflow_df.index.get_loc("CASH OUTFLOWS")
-        + 1 : direct_cashflow_df.index.get_loc("Total Cash Outflows")
+        + 1: direct_cashflow_df.index.get_loc("Total Cash Outflows")
     ].sum()
 
     direct_cashflow_df.loc["Net Increase/Decrease In Cash"] = (
@@ -683,7 +695,8 @@ def generate_loan_book(tenant_name: str, project_id: str):
 
     loan_book_df = direct_cashflow.insert_loan_book_items(
         loan_book=loan_book_df,
-        opening_balance_on_loan_book=float(opening_balances["LOAN_BOOK"].iat[0]),
+        opening_balance_on_loan_book=float(
+            opening_balances["LOAN_BOOK"].iat[0]),
         capital_repayment=capital_repayment,
         disbursements=get_total_disbursements(
             new_disbursements_df=new_disbursements_df
@@ -884,7 +897,8 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         opening_balances=opening_balances,
     )
 
-    balance_sheet_df = balance_sheet.sum_financial_statements_totals(balance_sheet_df)
+    balance_sheet_df = balance_sheet.sum_financial_statements_totals(
+        balance_sheet_df)
     balance_sheet_df = balance_sheet.calculate_final_balances(
         balance_sheet_df=balance_sheet_df
     )
@@ -938,7 +952,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
 
 
 @router.get("/{tenant_name}/{project_id}/generate-statement-of-cashflows")
-def generate_statement_of_cashflows(tenant_name: str, project_id: str):
+def generate_statement_of_cashflows(tenant_name: str, project_id: str, db: Session = Depends(get_db)):
     # Todo : Get valuation_date and months_to_forecast from the database using project_id
 
     VALUATION_DATE = "2023-01"
@@ -1042,7 +1056,8 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
         - trade_receivables_schedule_df.loc["Closing Balance"]
     )
     change_in_loan_book_principle = (
-        loan_book_df.loc["Opening Balance"] - loan_book_df.loc["Closing Balance"]
+        loan_book_df.loc["Opening Balance"] -
+        loan_book_df.loc["Closing Balance"]
     )
 
     statement_of_cashflow_df.loc["Profit/(loss) per I/S"] = income_statement_df.loc[
@@ -1111,7 +1126,8 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
         file_name=constants.FinalFiles.statement_of_cashflow_df,
         file_stage=constants.FileStage.final,
     )
-
+    project_crud.update_project_status(
+        project_id=project_id, status="COMPLETED", db=db)
     return {"message": "done"}
 
 
@@ -1133,11 +1149,10 @@ def download_final_file(
 
     stream = io.StringIO()
     df.to_csv(stream, index=True)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    response = StreamingResponse(
+        iter([stream.getvalue()]), media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; file_name={file_name}.csv"
     return response
-
-
 
 
 @router.get("/{tenant_name}/{project_id}/download-intermediate-file")
@@ -1153,16 +1168,14 @@ def download_intermediate_file(
 
     stream = io.StringIO()
     df.to_csv(stream, index=True)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    response = StreamingResponse(
+        iter([stream.getvalue()]), media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; file_name={file_name}.csv"
     return response
 
 
-
-
-
 @router.get("/{tenant_name}/{project_id}/final-filenames")
-def get_final_filenames( tenant_name: str, project_id: str):
+def get_final_filenames(tenant_name: str, project_id: str):
     final_files: list = wr.s3.list_objects(
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.final.value}",
         boto3_session=constants.MY_SESSION)
@@ -1170,12 +1183,3 @@ def get_final_filenames( tenant_name: str, project_id: str):
     final_files = list(map(lambda x: x.split("/")[-1], final_files))
     final_files = list(map(lambda x: x.split(".")[0], final_files))
     return final_files
-
-
-    
- 
-
-
-
-
-

@@ -1,7 +1,3 @@
-import awswrangler as wr
-import pandas as pd
-from fastapi import APIRouter
-
 from application.modeling import (
     constants,
     depreciation,
@@ -12,14 +8,23 @@ from application.modeling import (
     interest_income,
     other_income,
 )
+from fastapi import FastAPI, HTTPException, status, File, UploadFile, Depends, Form, Header, Request
+from sqlalchemy.orm import Session
+import awswrangler as wr
+import pandas as pd
+from fastapi import APIRouter
+from application.routes.projects import crud as project_crud
+from application.utils.database import get_db, SessionLocal
+
 
 router = APIRouter(tags=["Intermediate Calculations"])
 
 
 @router.get("/{tenant_name}/{project_id}/calculate-new-disbursements")
-def calculate_new_disbursements(tenant_name: str, project_id: str):
+def calculate_new_disbursements(tenant_name: str, project_id: str, db: Session = Depends(get_db)):
     # Todo : Get valuation_date and months_to_forecast from the database using project_id
-
+    project_crud.update_project_status(
+        project_id=project_id, status="IN_PROGRESS", db=db)
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
     parameters = helper.read_parameters_file(
@@ -402,7 +407,6 @@ def calculate_provisions(tenant_name: str, project_id: str):
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
-
     provision_for_credit_loss_for_all_new_disbursements_df = (
         expenses.calculate_provision_for_credit_loss_for_all_new_disbursements(
             new_disbursements_df=new_disbursements_df, parameters=parameters
@@ -417,9 +421,6 @@ def calculate_provisions(tenant_name: str, project_id: str):
         file_name=constants.IntermediateFiles.provision_for_credit_loss_for_all_new_disbursements_df,
         file_stage=constants.FileStage.intermediate,
     )
-
-
-
 
     return {"message": "done"}
 
@@ -504,10 +505,12 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
 
 
 @router.get("/{tenant_name}/{project_id}/intermediate-filenames")
-def get_intermediate_filenames(tenant_name: str, project_id: str ):
+def get_intermediate_filenames(tenant_name: str, project_id: str):
     intermediate_files: list = wr.s3.list_objects(
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.intermediate.value}",
         boto3_session=constants.MY_SESSION)
-    intermediate_files = list(map(lambda x: x.split("/")[-1], intermediate_files))
-    intermediate_files = list(map(lambda x: x.split(".")[0], intermediate_files))
+    intermediate_files = list(
+        map(lambda x: x.split("/")[-1], intermediate_files))
+    intermediate_files = list(
+        map(lambda x: x.split(".")[0], intermediate_files))
     return intermediate_files

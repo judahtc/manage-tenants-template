@@ -115,8 +115,7 @@ def update_project_status(project_id: str, status: str, db: Session):
 
     project = get_project(db=db, project_id=project_id)
     if project is not None:
-        project.project_statyus = status
-        print(datetime.now)
+        project.project_status = status
         db.commit()
     else:
         return {"response": "project does not exist ", "statusCode": status.HTTP_404_NOT_FOUND}
