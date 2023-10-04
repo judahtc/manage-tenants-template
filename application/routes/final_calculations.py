@@ -1,6 +1,7 @@
 import io
 
 import awswrangler as wr
+import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response, StreamingResponse
@@ -493,16 +494,39 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         valuation_date=VALUATION_DATE,
     )
 
-    parameters.columns = pd.PeriodIndex(parameters.columns, freq="M").strftime("%b-%Y")
+    ## From Parameeters
 
-    direct_cashflow_df.loc["Receipts From Trade Receivables"] = parameters.loc[
-        "RECEIPTS_FROM_TRADE_RECEIVABLES"
-    ]
-    direct_cashflow_df.loc["Issue Of Shares"] = parameters.loc["ISSUE_OF_SHARES"]
-    direct_cashflow_df.loc["Payments To Trade Payables"] = -parameters.loc[
-        "PAYMENTS_TO_TRADE_PAYABLES"
-    ]
-    direct_cashflow_df.loc["Dividend Paid"] = -parameters.loc["DIVIDEND_PAID"]
+    direct_cashflow_df.loc[
+        "Receipts From Receivables"
+    ] = helper.change_period_index_to_strftime(
+        helper.add_series(
+            [
+                parameters.loc["RECEIPTS_FROM_OTHER_RECEIVABLES"],
+                parameters.loc["RECEIPTS_FROM_TRADE_RECEIVABLES"],
+                parameters.loc["RECEIPTS_FROM_INTERGROUP_RECEIVABLES"],
+            ]
+        )
+    )
+
+    direct_cashflow_df.loc[
+        "Purchase Of Inventory"
+    ] = helper.change_period_index_to_strftime(parameters.loc["NEW_INVENTORY"])
+    direct_cashflow_df.loc[
+        "Payments To Payables"
+    ] = -helper.change_period_index_to_strftime(
+        helper.add_series(
+            [
+                parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
+                parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
+            ]
+        )
+    )
+
+    direct_cashflow_df.loc["Dividend Paid"] = -helper.change_period_index_to_strftime(
+        parameters.loc["DIVIDEND_PAID"]
+    )
+
+    ## From Calculations/Income Statement
 
     direct_cashflow_df.loc["Interest Income"] = income_statement_df.loc[
         "Interest Income"
@@ -511,9 +535,23 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     direct_cashflow_df.loc["Interest Expense"] = -income_statement_df.loc[
         "Finance Costs"
     ]
-    direct_cashflow_df.loc["Disbursements"] = -new_disbursements_df["total"].reindex(
-        pd.PeriodIndex(new_disbursements_df["total"].index, freq="M").strftime("%b-%Y")
+    direct_cashflow_df.loc["Disbursements"] = -helper.change_period_index_to_strftime(
+        new_disbursements_df["total"]
     )
+
+    ## Equity and Intercompany Loans
+
+    direct_cashflow_df = direct_cashflow.add_equity_and_intercompany_loans(
+        parameters=parameters, direct_cashflow_df=direct_cashflow_df
+    )
+
+    ## Other Assets
+
+    direct_cashflow_df = direct_cashflow.add_other_assets(
+        parameters=parameters, direct_cashflow_df=direct_cashflow_df
+    )
+
+    # Tax Paid
 
     tax_schedule_df = direct_cashflow.generate_tax_schedule(
         taxation=income_statement_df.loc["Taxation"],
@@ -824,6 +862,10 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         "Provisions"
     ] = provision_for_credit_loss_for_all_new_disbursements_df["total"]
 
+    balance_sheet_df.loc[
+        "Provision For Taxation"
+    ] = helper.change_period_index_to_strftime(parameters.loc["PROVISION_FOR_TAX"])
+
     short_term_loans_schedules_df = balance_sheet.calculate_short_term_loans_schedules(
         long_and_short_term_borrowing_df=long_and_short_term_borrowing_df,
         capital_repayment_on_borrowings_df=capital_repayment_on_borrowings_df,
@@ -845,75 +887,204 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         "Closing Balance"
     ]
 
-    balance_sheet_df.loc["Issued Share Capital"] = (
-        parameters.loc["ISSUE_OF_SHARES"].cumsum()
-        + opening_balances["ISSUED_SHARE_CAPITAL"].iat[0]
+    trade_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
+        opening_receivables=opening_balances["TRADE_RECEIVABLES"].iat[0],
+        receipts_from_receivables=parameters.loc["RECEIPTS_FROM_TRADE_RECEIVABLES"],
+        new_receivables=parameters.loc["NEW_TRADE_RECEIVABLES"],
+        months_to_forecast=MONTHS_TO_FORECAST,
+        valuation_date=VALUATION_DATE,
     )
 
-    balance_sheet_df.loc[
-        "Provision For Taxation"
-    ] = helper.change_period_index_to_strftime(parameters.loc["PROVISION_FOR_TAX"])
-
-    balance_sheet_df.loc["Other Payables"] = helper.change_period_index_to_strftime(
-        parameters.loc["OTHER_PAYABLES"]
-    )
-    balance_sheet_df.loc["Intercompany Loans"] = helper.change_period_index_to_strftime(
-        parameters.loc["INTERCOMPANY_LOANS"]
+    other_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
+        opening_receivables=opening_balances["OTHER_RECEIVABLES"].iat[0],
+        receipts_from_receivables=parameters.loc["RECEIPTS_FROM_OTHER_RECEIVABLES"],
+        new_receivables=parameters.loc["NEW_OTHER_RECEIVABLES"],
+        months_to_forecast=MONTHS_TO_FORECAST,
+        valuation_date=VALUATION_DATE,
     )
 
-    trade_receivables_schedule_df = expenses.generate_trade_receivables_schedule(
-        opening_trade_receivables=opening_balances["TRADE_RECEIVABLES"].iat[0],
-        receipts_from_trade_receivables=parameters.loc[
-            "RECEIPTS_FROM_TRADE_RECEIVABLES"
+
+    intergroup_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
+        opening_receivables=opening_balances["INTERGROUP_RECEIVABLES"].iat[0],
+        receipts_from_receivables=parameters.loc[
+            "RECEIPTS_FROM_INTERGROUP_RECEIVABLES"
         ],
-        new_trade_receivables=parameters.loc["NEW_TRADE_RECEIVABLES"],
+        new_receivables=parameters.loc["NEW_INTERGROUP_RECEIVABLES"],
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
 
-    balance_sheet_df.loc["Deferred Taxation"] = tax_schedule_df.loc["Closing Balance"]
-    trade_payables_schedule_df = balance_sheet.generate_trade_payables_schedule(
-        opening_trade_payables=opening_balances["TRADE_PAYABLES"].iat[0],
-        payments_to_trade_payables=parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
-        new_trade_payables=parameters.loc["NEW_TRADE_PAYABLES"],
+
+    trade_payables_schedule_df = balance_sheet.generate_payables_schedule(
+        opening_payables=opening_balances["TRADE_PAYABLES"].iat[0],
+        payments_to_payables=parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
+        new_payables=parameters.loc["NEW_TRADE_PAYABLES"],
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
+
+    other_payables_schedule_df = balance_sheet.generate_payables_schedule(
+        opening_payables=opening_balances["OTHER_PAYABLES"].iat[0],
+        payments_to_payables=parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
+        new_payables=parameters.loc["NEW_OTHER_PAYABLES"],
+        months_to_forecast=MONTHS_TO_FORECAST,
+        valuation_date=VALUATION_DATE,
+    )
+
 
     balance_sheet_df.loc["Trade Payables"] = trade_payables_schedule_df.loc[
         "Closing Balance"
     ]
+    balance_sheet_df.loc["Other Payables"] = other_payables_schedule_df.loc[
+        "Closing Balance"
+    ]
+
     balance_sheet_df.loc["Trade Receivables"] = trade_receivables_schedule_df.loc[
         "Closing Balance"
     ]
-    balance_sheet_df
 
-    balance_sheet_df.loc["Issued Share Capital"] = (
-        parameters.loc["ISSUE_OF_SHARES"].cumsum()
+    balance_sheet_df.loc["Other Receivables"] = other_receivables_schedule_df.loc[
+        "Closing Balance"
+    ]
+
+    balance_sheet_df.loc[
+        "Intergroup Receivables"
+    ] = intergroup_receivables_schedule_df.loc["Closing Balance"]
+
+    balance_sheet_df.loc["Deferred Taxation"] = tax_schedule_df.loc["Closing Balance"]
+
+    inventories_schedule = balance_sheet.generate_inventories_schedule(
+        opening_inventories=opening_balances["INVENTORIES"].iat[0],
+        new_inventories=parameters.loc["NEW_INVENTORY"],
+        inventories_used=parameters.loc["INVENTORY_USED"],
+        valuation_date=VALUATION_DATE,
+        months_to_forecast=MONTHS_TO_FORECAST,
+    )
+
+    balance_sheet_df.loc["Inventories"] = inventories_schedule.loc["Closing Balance"]
+
+    balance_sheet_df.loc[
+        "Issued Share Capital"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["SHARE_CAPITAL"].cumsum()
         + opening_balances["ISSUED_SHARE_CAPITAL"].iat[0]
     )
-    balance_sheet_df.loc["Share Premium"] = opening_balances["SHARE_PREMIUM"].iat[0]
-    balance_sheet_df.loc["Other Components Of Equity"] = opening_balances[
-        "OTHER_COMPONENTS_OF_EQUITY"
-    ].iat[0]
-    balance_sheet_df.loc["Treasury Shares"] = opening_balances["TREASURY_SHARES"].iat[0]
+
+    balance_sheet_df.loc["Intercompany Loans"] = helper.change_period_index_to_strftime(
+        parameters.loc["INTERCOMPANY_LOANS"].cumsum()
+        + opening_balances["INTERCOMPANY_LOANS"].iat[0]
+    )
+
+    balance_sheet_df.loc["Share Premium"] = helper.change_period_index_to_strftime(
+        parameters.loc["SHARE_PREMIUM"].cumsum()
+        + opening_balances["SHARE_PREMIUM"].iat[0]
+    )
+
+    balance_sheet_df.loc[
+        "Other Components Of Equity"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["OTHER_COMPONENTS_OF_EQUITY"].cumsum()
+        + opening_balances["OTHER_COMPONENTS_OF_EQUITY"].iat[0]
+    )
+
+    balance_sheet_df.loc["Treasury Shares"] = helper.change_period_index_to_strftime(
+        parameters.loc["TREASURY_SHARES"].cumsum()
+        + opening_balances["TREASURY_SHARES"].iat[0]
+    )
+
     balance_sheet_df.loc["Retained Earnings"] = (
         income_statement_df.loc["PROFIT/(LOSS) FOR PERIOD"]
         - helper.change_period_index_to_strftime(parameters.loc["DIVIDEND_PAID"])
     ).cumsum()
+
     balance_sheet_df.loc["Capital And Reserves"] = balance_sheet_df.loc[
         "Issued Share Capital":"Retained Earnings"
     ].sum()
 
-    balance_sheet_df = balance_sheet.calculate_other_assets(
-        balance_sheet_df=balance_sheet_df,
-        parameters=parameters,
-        opening_balances=opening_balances,
+    balance_sheet_df.loc["Intangible Assets"] = helper.change_period_index_to_strftime(
+        parameters.loc["INTANGIBLE_ASSETS"].cumsum()
+        + opening_balances["INTANGIBLE_ASSETS"].iat[0]
+    )
+
+    balance_sheet_df.loc[
+        "Investment In Subsidiaries"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["INVESTMENT_IN_SUBSIDIARIES"].cumsum()
+        + opening_balances["INVESTMENT_IN_SUBSIDIARIES"].iat[0]
+    )
+
+    balance_sheet_df.loc[
+        "Investment In Associates"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["INVESTMENT_IN_ASSOCIATES"].cumsum()
+        + opening_balances["INVESTMENT_IN_ASSOCIATES"].iat[0]
+    )
+
+    balance_sheet_df.loc[
+        "Investment Properties"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["INVESTMENT_PROPERTIES"].cumsum()
+        + opening_balances["INVESTMENT_PROPERTIES"].iat[0]
+    )
+
+    balance_sheet_df.loc["Equity Investments"] = helper.change_period_index_to_strftime(
+        parameters.loc["EQUITY_INVESTMENTS"].cumsum()
+        + opening_balances["EQUITY_INVESTMENTS"].iat[0]
+    )
+
+    balance_sheet_df.loc[
+        "Long Term Money Market Investments"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["LONG_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
+        + opening_balances["LONG_TERM_MONEY_MARKET_INVESTMENTS"].iat[0]
+    )
+
+    balance_sheet_df.loc[
+        "Short Term Money Market Investments"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["SHORT_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
+        + opening_balances["SHORT_TERM_MONEY_MARKET_INVESTMENTS"].iat[0]
+    )
+
+    balance_sheet_df.loc[
+        "Loans To Related Entities"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["LOANS_TO_RELATED_ENTITIES"].cumsum()
+        + opening_balances["LOANS_TO_RELATED_ENTITIES"].iat[0]
     )
 
     balance_sheet_df = balance_sheet.sum_financial_statements_totals(balance_sheet_df)
     balance_sheet_df = balance_sheet.calculate_final_balances(
         balance_sheet_df=balance_sheet_df
+    )
+
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=other_payables_schedule_df,
+        file_name=constants.IntermediateFiles.other_payables_schedule_df,
+        file_stage=constants.FileStage.intermediate,
+    )
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=intergroup_receivables_schedule_df,
+        file_name=constants.IntermediateFiles.intergroup_receivables_schedule_df,
+        file_stage=constants.FileStage.intermediate,
+    )
+
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=other_receivables_schedule_df,
+        file_name=constants.IntermediateFiles.other_receivables_schedule_df,
+        file_stage=constants.FileStage.intermediate,
     )
 
     helper.upload_file(

@@ -47,6 +47,7 @@ class IntermediateFiles(str, Enum):
     credit_insurance_fee_for_all_new_disbursements_df = (
         "credit_insurance_fee_for_all_new_disbursements_df"
     )
+    other_payables_schedule_df = "other_payables_schedule_df"
 
     existing_loans_schedules_capital_repayments_df = (
         "existing_loans_schedules_capital_repayments_df"
@@ -77,6 +78,8 @@ class IntermediateFiles(str, Enum):
 
     short_term_loans_schedules_df = "short_term_loans_schedules_df"
     long_term_loans_schedules_df = "long_term_loans_schedules_df"
+    other_receivables_schedule_df = "other_receivables_schedule_df"
+    intergroup_receivables_schedule_df = "intergroup_receivables_schedule_df"
 
 
 class FinalFiles(str, Enum):

@@ -4,6 +4,70 @@ import pandas as pd
 from application.modeling import helper
 
 
+def add_other_assets(parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame):
+    other_assets = parameters.loc[
+        [
+            "INTANGIBLE_ASSETS",
+            "INVESTMENT_IN_SUBSIDIARIES",
+            "INVESTMENT_IN_ASSOCIATES",
+            "INVESTMENT_PROPERTIES",
+            "EQUITY_INVESTMENTS",
+            "LONG_TERM_MONEY_MARKET_INVESTMENTS",
+            "SHORT_TERM_MONEY_MARKET_INVESTMENTS",
+            "LOANS_TO_RELATED_ENTITIES",
+        ]
+    ]
+
+    purchase_of_other_assets = (np.where(other_assets > 0, 1, 0) * other_assets).sum()
+
+    sale_of_other_assets = (np.where(other_assets < 0, 1, 0) * other_assets).sum()
+
+    direct_cashflow_df.loc[
+        "Purchase Of Other Assets"
+    ] = helper.change_period_index_to_strftime(purchase_of_other_assets)
+
+    direct_cashflow_df.loc[
+        "Sale Of Other Assets"
+    ] = helper.change_period_index_to_strftime(sale_of_other_assets)
+
+    return direct_cashflow_df
+
+
+def add_equity_and_intercompany_loans(
+    parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame
+):
+    equity_and_intercompany_loans = parameters.loc[
+        [
+            "TREASURY_SHARES",
+            "INTERCOMPANY_LOANS",
+            "SHARE_CAPITAL",
+            "SHARE_PREMIUM",
+            "OTHER_COMPONENTS_OF_EQUITY",
+        ]
+    ]
+
+    issue_of_equity_and_intercompany_loans = (
+        np.where(equity_and_intercompany_loans > 0, 1, 0)
+        * equity_and_intercompany_loans
+    ).sum()
+    sale_of_equity_and_repayments_on_intercompany_loans = (
+        np.where(equity_and_intercompany_loans < 0, 1, 0)
+        * equity_and_intercompany_loans
+    ).sum()
+
+    direct_cashflow_df.loc[
+        "Issue Of Equity And Intercompany Loans"
+    ] = helper.change_period_index_to_strftime(issue_of_equity_and_intercompany_loans)
+
+    direct_cashflow_df.loc[
+        "Sale Of Equity And Repayments On Intercompany Loans"
+    ] = helper.change_period_index_to_strftime(
+        sale_of_equity_and_repayments_on_intercompany_loans
+    )
+
+    return direct_cashflow_df
+
+
 def generate_direct_cashflow_template(valuation_date, months_to_forecast):
     direct_cashflow = pd.DataFrame(
         index=[

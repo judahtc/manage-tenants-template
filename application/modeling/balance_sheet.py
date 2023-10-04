@@ -158,42 +158,42 @@ def generate_balance_sheet_template(valuation_date: str, months_to_forecast: int
     return balance_sheet_template
 
 
-def calculate_other_assets(
-    balance_sheet_df: pd.DataFrame,
-    parameters: pd.DataFrame,
-    opening_balances: pd.DataFrame,
-):
-    other_assets_index = pd.Index(
-        [
-            "INTANGIBLE_ASSETS",
-            "INVESTMENT_IN_SUBSIDIARIES",
-            "INVESTMENT_IN_ASSOCIATES",
-            "INVESTMENT_PROPERTIES",
-            "EQUITY_INVESTMENTS",
-            "LONG_TERM_MONEY_MARKET_INVESTMENTS",
-            "SHORT_TERM_MONEY_MARKET_INVESTMENTS",
-            "LOANS_TO_RELATED_ENTITIES",
-            "INVENTORIES",
-            "OTHER_RECEIVABLES",
-            "INTERGROUP_RECEIVABLES",
-            "OTHER_RECEIVABLES",
-        ]
-    )
+# def calculate_other_assets(
+#     balance_sheet_df: pd.DataFrame,
+#     parameters: pd.DataFrame,
+#     opening_balances: pd.DataFrame,
+# ):
+#     other_assets_index = pd.Index(
+#         [
+#             "INTANGIBLE_ASSETS",
+#             "INVESTMENT_IN_SUBSIDIARIES",
+#             "INVESTMENT_IN_ASSOCIATES",
+#             "INVESTMENT_PROPERTIES",
+#             "EQUITY_INVESTMENTS",
+#             "LONG_TERM_MONEY_MARKET_INVESTMENTS",
+#             "SHORT_TERM_MONEY_MARKET_INVESTMENTS",
+#             "LOANS_TO_RELATED_ENTITIES",
+#             "INVENTORIES",
+#             "OTHER_RECEIVABLES",
+#             "INTERGROUP_RECEIVABLES",
+#             "OTHER_RECEIVABLES",
+#         ]
+#     )
 
-    other_assets = (
-        parameters.loc[other_assets_index].cumsum(axis=1)
-        + opening_balances[other_assets_index].T.values
-    )
+#     other_assets = (
+#         parameters.loc[other_assets_index].cumsum(axis=1)
+#         + opening_balances[other_assets_index].T.values
+#     )
 
-    other_assets.columns = pd.PeriodIndex(other_assets.columns, freq="M").strftime(
-        "%b-%Y"
-    )
+#     other_assets.columns = pd.PeriodIndex(other_assets.columns, freq="M").strftime(
+#         "%b-%Y"
+#     )
 
-    other_assets.index = other_assets_index.str.title().str.replace("_", " ")
+#     other_assets.index = other_assets_index.str.title().str.replace("_", " ")
 
-    balance_sheet_df.loc[other_assets.index] = other_assets
+#     balance_sheet_df.loc[other_assets.index] = other_assets
 
-    return balance_sheet_df
+#     return balance_sheet_df
 
 
 def sum_financial_statements_totals(financial_statement: pd.DataFrame):
