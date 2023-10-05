@@ -1,5 +1,5 @@
 asset,depreciation,net_book_value,remaining_useful_life,cost,useful_life_when_purchased,method
-Vehicles,0.2,10000,5,20000,10,straight_line
-Buildings,0.1,50000,20,80000,25,straight_line
-Computers,0.2,10000,5,20000,10,straight_line
-Furniture,0.1,50000,20,80000,25,straight_line
+Vehicles,0.1,10000,5,20000,10,straight_line
+Buildings,0.03125,50000,20,80000,25,straight_line
+Computers,0.1,10000,5,20000,10,straight_line
+Furniture,0.03125,50000,20,80000,25,straight_line
