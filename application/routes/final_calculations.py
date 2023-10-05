@@ -903,7 +903,6 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         valuation_date=VALUATION_DATE,
     )
 
-
     intergroup_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
         opening_receivables=opening_balances["INTERGROUP_RECEIVABLES"].iat[0],
         receipts_from_receivables=parameters.loc[
@@ -913,7 +912,6 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
-
 
     trade_payables_schedule_df = balance_sheet.generate_payables_schedule(
         opening_payables=opening_balances["TRADE_PAYABLES"].iat[0],
@@ -930,7 +928,6 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
-
 
     balance_sheet_df.loc["Trade Payables"] = trade_payables_schedule_df.loc[
         "Closing Balance"
@@ -1058,7 +1055,6 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         balance_sheet_df=balance_sheet_df
     )
 
-
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -1076,7 +1072,6 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         file_name=constants.IntermediateFiles.intergroup_receivables_schedule_df,
         file_stage=constants.FileStage.intermediate,
     )
-
 
     helper.upload_file(
         tenant_name=tenant_name,
@@ -1169,6 +1164,12 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
         boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.tax_schedule_df,
     )
+    other_receivables_schedule_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.other_receivables_schedule_df,
+    )
 
     trade_payables_schedule_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
@@ -1182,6 +1183,20 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.trade_receivables_schedule_df,
+    )
+
+    intergroup_receivables_schedule_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.intergroup_receivables_schedule_df,
+    )
+
+    other_payables_schedule_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.other_payables_schedule_df,
     )
 
     finance_costs_df = helper.read_intermediate_file(
@@ -1231,41 +1246,31 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
             VALUATION_DATE, MONTHS_TO_FORECAST
         )
     )
-    change_in_trade_payables = (
-        trade_payables_schedule_df.loc["Closing Balance"]
-        - trade_payables_schedule_df.loc["Opening Balance"]
-    )
-    change_in_trade_receivables = (
-        trade_receivables_schedule_df.loc["Opening Balance"]
-        - trade_receivables_schedule_df.loc["Closing Balance"]
-    )
-    change_in_loan_book_principle = (
-        loan_book_df.loc["Opening Balance"] - loan_book_df.loc["Closing Balance"]
-    )
 
-    statement_of_cashflow_df.loc["Profit/(loss) per I/S"] = income_statement_df.loc[
+    statement_of_cashflow_df.loc["Profit/(loss) Per I/S"] = income_statement_df.loc[
         "PROFIT/(LOSS) FOR PERIOD"
     ]
     statement_of_cashflow_df.loc["Depreciation"] = income_statement_df.loc[
         "Depreciation"
     ]
     statement_of_cashflow_df.loc[
-        "(Increase)/Decrease in Receivables"
-    ] = change_in_trade_receivables
-    statement_of_cashflow_df.loc[
-        "Increase/(Decrease) in Payables"
-    ] = change_in_trade_payables
-    statement_of_cashflow_df.loc[
-        "(Increase)/Decrease in Loan Book (Principle)"
-    ] = change_in_loan_book_principle
-    statement_of_cashflow_df.loc[
         "Dividend Paid"
     ] = helper.change_period_index_to_strftime(parameters.loc["DIVIDEND_PAID"])
-
-    statement_of_cashflow_df.loc["Interest Paid"] = finance_costs_df.loc["total"]
+    statement_of_cashflow_df.loc[
+        "Treasury Movements"
+    ] = helper.change_period_index_to_strftime(parameters.loc["TREASURY_MOVEMENTS"])
+    statement_of_cashflow_df.loc[
+        "Interest Expense Accrued"
+    ] = helper.change_period_index_to_strftime(
+        parameters.loc["INTEREST_EXPENSE_ACCRUED"]
+    )
+    statement_of_cashflow_df.loc[
+        "Other Non-Cash Items"
+    ] = helper.change_period_index_to_strftime(parameters.loc["OTHER_NON_CASH_ITEMS"])
+    statement_of_cashflow_df.loc["Interest Paid"] = -finance_costs_df.loc["total"]
     statement_of_cashflow_df.loc["Tax Paid"] = tax_schedule_df.loc["Tax Paid"]
     statement_of_cashflow_df.loc[
-        "Repayment of Borrowings"
+        "Repayment Of Borrowings"
     ] = capital_repayment_on_borrowings_df["total"]
 
     capital_expenses = direct_cashflow.calculate_capital_expenses(
@@ -1273,22 +1278,84 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
         valuation_date=VALUATION_DATE,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
-    statement_of_cashflow_df.loc["Purchase of Fixed Assets"] = capital_expenses
-    statement_of_cashflow_df.loc["Increase/(Decrease) in Short Term Borrowings"] = (
+    statement_of_cashflow_df.loc["Purchase Of Fixed Assets"] = capital_expenses
+    statement_of_cashflow_df.loc["Increase/(Decrease) In Short Term Borrowings"] = (
         short_term_loans_schedules_df.loc["Closing Balance"]
         - short_term_loans_schedules_df.loc["Opening Balance"]
     )
-
-    statement_of_cashflow_df.loc["Increase/(Decrease) in Long Term Borrowings"] = (
+    statement_of_cashflow_df.loc["Increase/(Decrease) In Long Term Borrowings"] = (
         long_term_loans_schedules_df.loc["Closing Balance"]
         - long_term_loans_schedules_df.loc["Opening Balance"]
     )
+
+    statement_of_cashflow_df.loc[
+        "Cash From Operations Before WC"
+    ] = statement_of_cashflow_df.iloc[
+        statement_of_cashflow_df.index.get_loc("STATEMENT_OF_CASHFLOWS")
+        + 1 : statement_of_cashflow_df.index.get_loc("Cash From Operations Before WC")
+    ].sum()
+
+    change_in_receivables = (
+        other_receivables_schedule_df.loc["Closing Balance"]
+        - other_receivables_schedule_df.loc["Opening Balance"]
+        + trade_receivables_schedule_df.loc["Closing Balance"]
+        - trade_receivables_schedule_df.loc["Opening Balance"]
+        + intergroup_receivables_schedule_df.loc["Closing Balance"]
+        - intergroup_receivables_schedule_df.loc["Opening Balance"]
+    )
+
+    change_in_payables = (
+        trade_payables_schedule_df.loc["Closing Balance"]
+        - trade_payables_schedule_df.loc["Opening Balance"]
+        + other_payables_schedule_df.loc["Closing Balance"]
+        - other_payables_schedule_df.loc["Opening Balance"]
+    )
+
+    change_in_loan_book_principle = loan_book_df.loc[
+        "New Disbursements":"Repayments"
+    ].sum()
+
+    change_in_loan_book_interest = loan_book_df.loc["Interest Income"]
+
+    borrowings_schedule = long_term_loans_schedules_df + short_term_loans_schedules_df
+    change_in_borrowings = (
+        borrowings_schedule.loc["Closing Balance"]
+        - borrowings_schedule.loc["Opening Balance"]
+    )
+
+    statement_of_cashflow_df.loc[
+        "(Increase)/Decrease In Receivables"
+    ] = change_in_receivables
+    statement_of_cashflow_df.loc["Increase/(Decrease) In Payables"] = change_in_payables
+    statement_of_cashflow_df.loc[
+        "(Increase)/Decrease In Loan Book (Principle)"
+    ] = change_in_loan_book_principle
+    statement_of_cashflow_df.loc[
+        "(Increase)/Decrease In Loan Book (Interest)"
+    ] = change_in_loan_book_interest
+    statement_of_cashflow_df.loc[
+        "Increase/(Decrease) In Borrowings"
+    ] = change_in_borrowings
+
+    statement_of_cashflow_df.loc["Cash From Operations After WC"] = (
+        statement_of_cashflow_df.loc["Cash From Operations Before WC"]
+        + statement_of_cashflow_df.iloc[
+            statement_of_cashflow_df.index.get_loc("Working Capital Movements")
+            + 1 : statement_of_cashflow_df.index.get_loc(
+                "Cash From Operations After WC"
+            )
+        ].sum()
+    )
+
+    statement_of_cashflow_df.loc[
+        "Net Cash Flow From Operations"
+    ] = statement_of_cashflow_df.loc["Cash From Operations After WC":"Tax Paid"].sum()
 
     statement_of_cashflow_df = balance_sheet.sum_financial_statements_totals(
         statement_of_cashflow_df
     )
 
-    statement_of_cashflow_df.loc["Net Increase/(Decrease) in Cash"] = (
+    statement_of_cashflow_df.loc["Net Increase/(Decrease) In Cash"] = (
         statement_of_cashflow_df.loc["Net Cash Flow From Operations"]
         + statement_of_cashflow_df.loc["Cash Flow From Investing Activities"]
         + statement_of_cashflow_df.loc["Cash Flow From Financing Activities"]
