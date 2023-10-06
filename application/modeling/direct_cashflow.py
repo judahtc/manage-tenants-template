@@ -72,6 +72,7 @@ def generate_direct_cashflow_template(valuation_date, months_to_forecast):
     direct_cashflow = pd.DataFrame(
         index=pd.Index(
             [
+                "CASH INFLOWS",
                 "Short Term Borrowing",
                 "Long Term Borrowing",
                 "Capital Repayment",
@@ -98,7 +99,7 @@ def generate_direct_cashflow_template(valuation_date, months_to_forecast):
                 "Opening Balance",
                 "Closing Balance",
             ],
-            name="CASH INFLOWS",
+            name="CASHFLOW_STATEMENT",
         ),
         columns=helper.generate_columns(valuation_date, months_to_forecast),
         data=np.nan,

@@ -50,7 +50,7 @@ def upload_multiple_files(
             if i.filename.startswith(j):
                 print(i.filename)
                 temp = pd.read_csv(i.file)
-                temp = columns_to_snake_case(temp)
+                temp.columns = temp.columns.str.strip()
                 wr.s3.to_parquet(
                     df=temp,
                     path=f"s3://{tenant_name}/project_{project_id}/raw/{j}.parquet",

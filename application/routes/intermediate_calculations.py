@@ -318,7 +318,7 @@ def calculate_depreciation(tenant_name: str, project_id: str):
 
     depreciations_df = depreciations_and_nbvs["dpns"]
 
-    net_book_values_df = depreciations_and_nbvs["dpns"]
+    net_book_values_df = depreciations_and_nbvs["nbvs"]
 
     helper.upload_file(
         tenant_name=tenant_name,
@@ -511,6 +511,20 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
 
     capital_repayment_borrowings_df.loc["total"] = capital_repayment_borrowings_df.sum()
 
+    long_term_borrowings_capital_repayments_df = long_term_borrowings_schedules[
+        "capital_repayments"
+    ]
+    short_term_borrowings_capital_repayments_df = short_term_borrowings_schedules[
+        "capital_repayments"
+    ]
+    short_term_borrowings_capital_repayments_df.loc[
+        "total"
+    ] = short_term_borrowings_capital_repayments_df.sum()
+
+    long_term_borrowings_capital_repayments_df.loc[
+        "total"
+    ] = long_term_borrowings_capital_repayments_df.sum()
+
     finance_costs_df = pd.concat(
         [
             long_term_borrowings_schedules["interest_payments"],
@@ -526,6 +540,23 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
         boto3_session=constants.MY_SESSION,
         file=finance_costs_df,
         file_name=constants.IntermediateFiles.finance_costs_df,
+        file_stage=constants.FileStage.intermediate,
+    )
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=short_term_borrowings_capital_repayments_df,
+        file_name=constants.IntermediateFiles.short_term_borrowings_capital_repayments_df,
+        file_stage=constants.FileStage.intermediate,
+    )
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=long_term_borrowings_capital_repayments_df,
+        file_name=constants.IntermediateFiles.long_term_borrowings_capital_repayments_df,
         file_stage=constants.FileStage.intermediate,
     )
 

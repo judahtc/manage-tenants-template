@@ -574,8 +574,6 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
 
     details_of_new_assets = helper.columns_to_snake_case(details_of_new_assets)
 
-    print(details_of_new_assets.columns)
-
     capital_expenses = direct_cashflow.calculate_capital_expenses(
         details_of_new_assets=details_of_new_assets,
         valuation_date=VALUATION_DATE,
@@ -623,11 +621,13 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     ] = -capital_repayment_borrowings_df.loc["total"]
 
     direct_cashflow_df.loc["Total Cash Inflows"] = direct_cashflow_df.iloc[
-        1 : direct_cashflow_df.index.get_loc("Total Cash Inflows")
+        direct_cashflow_df.index.get_loc("CASH INFLOWS")
+        + 1 : direct_cashflow_df.index.get_loc("Total Cash Inflows")
     ].sum()
 
     direct_cashflow_df.loc["Total Cash Outflows"] = direct_cashflow_df.iloc[
-        1 : direct_cashflow_df.index.get_loc("Total Cash Outflows")
+        direct_cashflow_df.index.get_loc("CASH OUTFLOWS")
+        + 1 : direct_cashflow_df.index.get_loc("Total Cash Outflows")
     ].sum()
 
     direct_cashflow_df.loc["Net Increase/Decrease In Cash"] = (
@@ -643,7 +643,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     )
 
     income_statement_df.loc["2% Taxation"] = (
-        -direct_cashflow_df.loc["Total Cash Outflows"] * IMTT
+        direct_cashflow_df.loc["Total Cash Outflows"] * IMTT
     )
 
     income_statement_df = income_statement.calculate_profit_or_loss_for_period(
@@ -760,6 +760,8 @@ def generate_loan_book(tenant_name: str, project_id: str):
         months_to_forecast=MONTHS_TO_FORECAST,
     )
 
+    opening_balances = helper.columns_to_screaming_snake_case(opening_balances)
+
     loan_book_df = loan_book.insert_loan_book_items(
         loan_book=loan_book_df,
         opening_balance_on_loan_book=float(opening_balances["LOAN_BOOK"].iat[0]),
@@ -825,6 +827,19 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.tax_schedule_df,
     )
+    long_term_borrowings_capital_repayments_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.long_term_borrowings_capital_repayments_df,
+    )
+
+    short_term_borrowings_capital_repayments_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.short_term_borrowings_capital_repayments_df,
+    )
 
     loan_book_df = helper.read_final_file(
         tenant_name=tenant_name,
@@ -881,9 +896,13 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         "Provision For Taxation"
     ] = helper.change_period_index_to_strftime(parameters.loc["PROVISION_FOR_TAX"])
 
+    opening_balances = helper.columns_to_screaming_snake_case(opening_balances)
+
     short_term_loans_schedules_df = balance_sheet.calculate_short_term_loans_schedules(
         long_and_short_term_borrowing_df=long_and_short_term_borrowing_df,
-        capital_repayment_on_borrowings_df=capital_repayment_borrowings_df,
+        capital_repayment_on_borrowings_df=short_term_borrowings_capital_repayments_df.loc[
+            "total"
+        ],
         opening_balances=opening_balances,
         valuation_date=VALUATION_DATE,
         months_to_forecast=MONTHS_TO_FORECAST,
@@ -891,7 +910,9 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
 
     long_term_loans_schedules_df = balance_sheet.calculate_long_term_loans_schedules(
         long_and_short_term_borrowing_df=long_and_short_term_borrowing_df,
-        capital_repayment_on_borrowings_df=capital_repayment_borrowings_df,
+        capital_repayment_on_borrowings_df=long_term_borrowings_capital_repayments_df.loc[
+            "total"
+        ],
         opening_balances=opening_balances,
         valuation_date=VALUATION_DATE,
         months_to_forecast=MONTHS_TO_FORECAST,
@@ -1286,7 +1307,7 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
     statement_of_cashflow_df.loc["Tax Paid"] = tax_schedule_df.loc["Tax Paid"]
     statement_of_cashflow_df.loc[
         "Repayment Of Borrowings"
-    ] = capital_repayment_borrowings_df["total"]
+    ] = capital_repayment_borrowings_df.loc["total"]
 
     capital_expenses = direct_cashflow.calculate_capital_expenses(
         details_of_new_assets=details_of_new_assets,
@@ -1306,8 +1327,7 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
     statement_of_cashflow_df.loc[
         "Cash From Operations Before WC"
     ] = statement_of_cashflow_df.iloc[
-        statement_of_cashflow_df.index.get_loc("STATEMENT_OF_CASHFLOWS")
-        + 1 : statement_of_cashflow_df.index.get_loc("Cash From Operations Before WC")
+        1 : statement_of_cashflow_df.index.get_loc("Cash From Operations Before WC")
     ].sum()
 
     change_in_receivables = (
@@ -1375,6 +1395,8 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
         + statement_of_cashflow_df.loc["Cash Flow From Investing Activities"]
         + statement_of_cashflow_df.loc["Cash Flow From Financing Activities"]
     )
+
+    opening_balances = helper.columns_to_screaming_snake_case(opening_balances)
 
     statement_of_cashflow_df = (
         statement_of_cashflows.calculate_cash_at_end_and_beginning_of_period(
