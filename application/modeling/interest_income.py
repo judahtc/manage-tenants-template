@@ -93,49 +93,16 @@ def calculate_monthly_repayments_new_disbursements(
             "b2b_monthly_repayment": b2b_monthly_repayment,
             "consumer_ssb_monthly_repayment": consumer_ssb_monthly_repayment,
             "consumer_pvt_monthly_repayment": consumer_pvt_monthly_repayment,
-            "total": helper.add_series([b2b_monthly_repayment, consumer_pvt_monthly_repayment
-                                        ,consumer_ssb_monthly_repayment,sme_monthly_repayment])
+            "total": helper.add_series(
+                [
+                    b2b_monthly_repayment,
+                    consumer_pvt_monthly_repayment,
+                    consumer_ssb_monthly_repayment,
+                    sme_monthly_repayment,
+                ]
+            ),
         }
     )
-
-
-def generate_loan_schedules_existing_loans(
-    outstanding_balance: pd.Series,
-    interest_rate_monthly: pd.Series,
-    repayment_amount_monthly: pd.Series,
-    valuation_date: str,
-    months_to_project: int = 12 * 10,
-):
-    number_of_loans = outstanding_balance.shape[0]
-
-    outstanding_at_start = np.zeros((number_of_loans, months_to_project))
-    interest = np.zeros((number_of_loans, months_to_project))
-    capital_repayment = np.zeros((number_of_loans, months_to_project))
-
-    outstanding_at_start[:, 0] = outstanding_balance.values
-    for i in range(months_to_project - 1):
-        interest[:, i] = outstanding_at_start[:, i] * interest_rate_monthly
-        capital_repayment[:, i] = np.where(
-            outstanding_at_start[:, i] == 0,
-            0,
-            repayment_amount_monthly - interest[:, i],
-        )
-        outstanding_at_start[:, i + 1] = np.maximum(
-            0, outstanding_at_start[:, i] - capital_repayment[:, i]
-        )
-
-    index = outstanding_balance.index
-    columns = helper.generate_columns(valuation_date, months_to_project)
-
-    return {
-        "interest": pd.DataFrame(interest, index=index, columns=columns),
-        "capital_repayment": pd.DataFrame(
-            capital_repayment, index=index, columns=columns
-        ),
-        "outstanding_at_start": pd.DataFrame(
-            outstanding_at_start, index=index, columns=columns
-        ),
-    }
 
 
 def aggregate_new_and_existing_loans_interest_income(
@@ -145,7 +112,7 @@ def aggregate_new_and_existing_loans_interest_income(
     months_to_forecast: int,
 ):
     return (
-        interest_income_new_disbursements_df['total']
+        interest_income_new_disbursements_df["total"]
         .add(interest_income_existing_loans, fill_value=0)
         .reindex(helper.generate_columns(valuation_date, months_to_forecast))
     )
@@ -280,3 +247,42 @@ def generate_interest_income_new_disbursements_df(
         }
     )
     return interest_income_new_disbursements_df
+
+
+def generate_loan_schedules_existing_loans(
+    outstanding_balance: pd.Series,
+    interest_rate_monthly: pd.Series,
+    repayment_amount_monthly: pd.Series,
+    valuation_date: str,
+    months_to_project: int = 12 * 10,
+):
+    number_of_loans = outstanding_balance.shape[0]
+
+    outstanding_at_start = np.zeros((number_of_loans, months_to_project))
+    interest = np.zeros((number_of_loans, months_to_project))
+    capital_repayment = np.zeros((number_of_loans, months_to_project))
+
+    outstanding_at_start[:, 0] = outstanding_balance.values
+    for i in range(months_to_project - 1):
+        interest[:, i] = outstanding_at_start[:, i] * interest_rate_monthly
+        capital_repayment[:, i] = np.where(
+            outstanding_at_start[:, i] == 0,
+            0,
+            repayment_amount_monthly - interest[:, i],
+        )
+        outstanding_at_start[:, i + 1] = np.maximum(
+            0, outstanding_at_start[:, i] - capital_repayment[:, i]
+        )
+
+    index = outstanding_balance.index
+    columns = helper.generate_columns(valuation_date, months_to_project)
+
+    return {
+        "interest": pd.DataFrame(interest, index=index, columns=columns),
+        "capital_repayment": pd.DataFrame(
+            capital_repayment, index=index, columns=columns
+        ),
+        "outstanding_at_start": pd.DataFrame(
+            outstanding_at_start, index=index, columns=columns
+        ),
+    }

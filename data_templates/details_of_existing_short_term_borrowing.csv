@@ -1,9 +1,13 @@
-company,principal,interest_rate,remaining_loan_term,loan_term,method
-Zimnat Life,50000,0.14,10,12,straight_line
-Zimnat Life,30000,0.13,12,12,straight_line
-Grandre,100000,0.12,7,12,straight_line
-FCB,120383,0.18,5,12,straight_line
-Nurture,500000,0.25,8,12,straight_line
-NMB,450000,0.22,11,12,straight_line
-Beramasamba,30000,0.13,3,12,straight_line
-Dandemutande,25000,0.12,7,12,reducing_balance
+Effective Date,Institution ,Nominal Amount ,Interest Rate,Tenure ,Repayment Frequency ,Frequency,Method
+24/04/2023,FCB,120383.84,0.18,3, Bullet (P+I) ,0,straight_line
+02/03/2023,ZIMNAT LIFE ASSURANCE ,50000,0.14,6, Monthly (P+I) ,12,reducing_balance
+31/12/2022,Zimnat Life Assurance,20000,0.08,12, Annually(I) Principal rollover ,1,straight_line
+31/12/2022,ZLA-Cargo,124575,0.1,12, Annually(I) Principal rollover ,1,straight_line
+31/12/2022,ZIMNAT LION INSURANCE,50000,0.08,12, Bi-annual(I)Principal at maturity ,2,straight_line
+31/12/2022,ZIMNAT LION INSURANCE,92800,0.06,12, Bi-annual(I)Principal at maturity ,2,straight_line
+31/12/2022,Grandre,100000,0.12,12, Quaterly (I+Bullet P) ,4,straight_line
+23/04/2023,FCB,18429.93,1.5,12, Bullet (P+I) ,0,straight_line
+17/12/2022,NURTURE,500000,0.2,12, Quaterly (I+Bullet P) ,4,straight_line
+26/01/2023,NMB ,450000,0.18,12, Quaterly (I+Bullet P) ,4,straight_line
+29/03/2023,BERAMASAMBA,30000,0.06,12, Bi-annual(I)Principal at maturity ,2,straight_line
+24/03/2023,DANDEMUTANDE,25000,0.06,12, Bullet (P+I) ,0,straight_line

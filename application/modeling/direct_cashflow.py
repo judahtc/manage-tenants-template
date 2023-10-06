@@ -139,21 +139,24 @@ def calculate_capital_expenses(
 def calculate_direct_cashflow_borrowing(
     details_of_new_borrowing: pd.DataFrame, valuation_date: str, months_to_forecast: int
 ):
+    details_of_new_borrowing["effective_date"] = helper.convert_to_datetime(
+        details_of_new_borrowing["effective_date"]
+    )
     direct_cashflow_borrowing = details_of_new_borrowing[
-        ["principal", "loan_start_date"]
+        ["nominal_amount", "effective_date"]
     ]
     direct_cashflow_borrowing = direct_cashflow_borrowing.assign(
         loan_start_date=helper.convert_to_datetime(
-            direct_cashflow_borrowing["loan_start_date"]
+            direct_cashflow_borrowing["effective_date"]
         )
     )
-    direct_cashflow_borrowing["loan_start_date"] = (
-        direct_cashflow_borrowing["loan_start_date"]
+    direct_cashflow_borrowing["effective_date"] = (
+        direct_cashflow_borrowing["effective_date"]
         .dt.to_period("M")
         .dt.strftime("%b-%Y")
     )
     direct_cashflow_borrowing = (
-        direct_cashflow_borrowing.groupby("loan_start_date")["principal"]
+        direct_cashflow_borrowing.groupby("effective_date")["nominal_amount"]
         .sum()
         .reindex(
             helper.generate_columns(valuation_date, months_to_forecast), fill_value=0

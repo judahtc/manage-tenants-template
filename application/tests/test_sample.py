@@ -1,4 +1,6 @@
-from routes.intermediate_calculations import router as intermediate_calculations_router
+# from application.routes.intermediate_calculations import (
+#     router as intermediate_calculations_router,
+# )
 
 
 class TestAdd:

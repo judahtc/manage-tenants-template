@@ -1,7 +1,7 @@
-company,principal,interest_rate,remaining_loan_term,loan_term,method
-Zimnat Lion Insurance,92800,0.06,60,60,straight_line
-Zimnat Lion Insurance,50000,0.06,12,12,straight_line
-Grandre,160000,0.06,36,36,straight_line
-Minerva,15000,0.08,36,36,straight_line
-Masawara,5613,0.06,60,60,straight_line
-Zam-Cargo,364000,0.05,36,36,straight_line
+Effective Date,Institution ,Nominal Amount ,Interest Rate,Tenure ,Repayment Frequency ,Frequency,Method
+31/12/2022,ZIMNAT LIFE ASSURANCE,376455,0.06,60, Monthly (P+I) ,12,reducing_balance
+06/05/2022,MASAWARA ,5613,0.06,60, Monthly (P+I) ,12,reducing_balance
+31/12/2022,Grandre,160000,0.06,36, Quaterly (I+Bullet P) ,4,straight_line
+31/12/2022,MINERVA,15000,0.08,36, Bullet (P+I) ,0,straight_line
+10/09/2022,ZAM-CARGO,364000,0.05,36, Annually(I) Principal rollover ,12,straight_line
+05/04/2023,ZIMNAT LIFE ASSURANCE ,30000,0.14,24, Monthly (P+I) ,4,reducing_balance

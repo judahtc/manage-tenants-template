@@ -44,7 +44,6 @@ def calculate_credit_officer_commission(
 #     return total_salaries
 
 
-
 def calculate_provision_for_bad_debts(
     trade_receivables: pd.Series,
     trade_receivables_provision_for_bad_debts_percentage: float,
@@ -329,41 +328,6 @@ def calculate_salaries_and_pension_and_statutory_contributions(
         },
         index=total_salaries.index,
     )
-
-
-# def calculate_provisions(
-#     trade_receivables_schedule: pd.DataFrame,
-#     provision_for_credit_loss_for_all_new_disbursements_df: pd.DataFrame,
-#     parameters: pd.DataFrame,
-#     valuation_date: str,
-#     months_to_forecast: int,
-# ):
-#     provision_for_bad_debts = calculate_provision_for_bad_debts(
-#         trade_receivables=trade_receivables_schedule.loc["Closing Balance"],
-#         trade_receivables_provision_for_bad_debts_percentage=parameters.loc[
-#             "TRADE_RECEIVABLES_PROVISION_FOR_BAD_DEBTS"
-#         ],
-#         valuation_date=valuation_date,
-#         months_to_forecast=months_to_forecast,
-#     )
-
-#     provision_for_credit_loss = (
-#         provision_for_credit_loss_for_all_new_disbursements_df.sum(axis=1).reindex_like(
-#             provision_for_bad_debts
-#         )
-#     )
-
-#     total_provisions = helper.add_series(
-#         [provision_for_bad_debts, provision_for_credit_loss]
-#     )
-
-#     return pd.DataFrame(
-#         {
-#             "provision_for_bad_debts": provision_for_bad_debts,
-#             "provision_for_credit_loss": provision_for_credit_loss,
-#             "total": total_provisions,
-#         }
-#     )
 
 
 def calculate_finance_costs(
