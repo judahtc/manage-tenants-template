@@ -119,15 +119,17 @@ def calculate_operating_expenses(income_statement: pd.DataFrame):
 def calculate_capital_expenses(
     details_of_new_assets: pd.DataFrame, valuation_date: str, months_to_forecast: int
 ):
-    capital_expenses = details_of_new_assets[["cost", "purchase_date"]]
+    capital_expenses = details_of_new_assets[["book_value", "acquisition_date"]]
     capital_expenses = capital_expenses.assign(
-        purchase_date=helper.convert_to_datetime(capital_expenses["purchase_date"])
+        acquisition_date=helper.convert_to_datetime(
+            capital_expenses["acquisition_date"]
+        )
     )
-    capital_expenses["purchase_date"] = (
-        capital_expenses["purchase_date"].dt.to_period("M").dt.strftime("%b-%Y")
+    capital_expenses["acquisition_date"] = (
+        capital_expenses["acquisition_date"].dt.to_period("M").dt.strftime("%b-%Y")
     )
     capital_expenses = (
-        capital_expenses.groupby("purchase_date")["cost"]
+        capital_expenses.groupby("acquisition_date")["book_value"]
         .sum()
         .reindex(
             helper.generate_columns(valuation_date, months_to_forecast), fill_value=0

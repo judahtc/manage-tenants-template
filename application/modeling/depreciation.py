@@ -17,11 +17,11 @@ def cal_depreciation_and_nbv(
 
 
 def create_depreciation_and_nbv_series_index(
-    details_of_assets, remaining_useful_life, asset, new_assets: bool, valuation_date
+    details_of_assets, remaining_useful_life, asset_id, new_assets: bool, valuation_date
 ):
     if new_assets:
         purchase_date = details_of_assets.loc[
-            details_of_assets.asset == asset, "purchase_date"
+            details_of_assets.asset_id == asset_id, "acquisition_date"
         ].values[0]
 
         purchase_date = helper.convert_to_datetime(purchase_date)
@@ -41,28 +41,43 @@ def calculate_reducing_balance_depreciation(
     months_to_forecast: int,
     new_assets: bool = False,
 ):
+    if details_of_assets.empty:
+        return {"nbvs": pd.DataFrame(), "depreciations": pd.DataFrame()}
+
     depreciations = []
     nbvs = []
     df_index = helper.generate_columns(valuation_date, months_to_forecast)
 
-    if details_of_assets.empty:
-        return {"nbvs": pd.DataFrame(), "depreciations": pd.DataFrame()}
+    details_of_assets = details_of_assets.assign(
+        remaining_useful_life=details_of_assets.apply(
+            lambda row: np.maximum(
+                0,
+                (
+                    helper.convert_to_datetime(row["acquisition_date"])
+                    + np.timedelta64(row["life"], "Y")
+                    - np.datetime64(valuation_date)
+                )
+                // np.timedelta64(1, "M"),
+            ),
+            axis=1,
+        )
+    )
 
-    for asset in details_of_assets.asset:
+    for asset_id in details_of_assets.asset_id:
         nbv = details_of_assets.loc[
-            details_of_assets.asset == asset, "net_book_value"
+            details_of_assets.asset_id == asset_id, "net_value"
         ].values[0]
         remaining_useful_life = details_of_assets.loc[
-            details_of_assets.asset == asset, "remaining_useful_life"
+            details_of_assets.asset_id == asset_id, "remaining_useful_life"
         ].values[0]
         depreciation_rate = details_of_assets.loc[
-            details_of_assets.asset == asset, "depreciation"
+            details_of_assets.asset_id == asset_id, "depreciation"
         ].values[0]
 
         index = create_depreciation_and_nbv_series_index(
             details_of_assets=details_of_assets,
             remaining_useful_life=remaining_useful_life,
-            asset=asset,
+            asset_id=asset_id,
             new_assets=new_assets,
             valuation_date=valuation_date,
         )
@@ -73,8 +88,8 @@ def calculate_reducing_balance_depreciation(
             nbv=nbv,
         )
 
-        net_book_value = pd.Series(net_book_value, index=index, name=asset)
-        depreciation = pd.Series(depreciation, index=index, name=asset)
+        net_book_value = pd.Series(net_book_value, index=index, name=asset_id)
+        depreciation = pd.Series(depreciation, index=index, name=asset_id)
         depreciations.append(depreciation)
         nbvs.append(net_book_value)
 
@@ -90,24 +105,51 @@ def calculate_straight_line_depreciation(
     months_to_forecast: int,
     new_assets: bool = False,
 ):
+    if details_of_assets.empty:
+        return {"nbvs": pd.DataFrame(), "depreciations": pd.DataFrame()}
+
     depreciations = []
     nbvs = []
     df_index = helper.generate_columns(valuation_date, months_to_forecast)
 
-    if details_of_assets.empty:
-        return {"nbvs": pd.DataFrame(), "depreciations": pd.DataFrame()}
+    details_of_assets = details_of_assets.assign(
+        remaining_useful_life=details_of_assets.apply(
+            lambda row: np.maximum(
+                0,
+                (
+                    helper.convert_to_datetime(row["acquisition_date"])
+                    + np.timedelta64(row["life"], "Y")
+                    - np.datetime64(valuation_date)
+                )
+                // np.timedelta64(1, "M"),
+            ),
+            axis=1,
+        )
+    )
 
-    for asset in details_of_assets.asset:
-        cost = details_of_assets.loc[details_of_assets.asset == asset, "cost"].iat[0]
+    details_of_assets = details_of_assets.assign(
+        depreciation=(
+            details_of_assets["book_value"] - details_of_assets["salvage_value"]
+        )
+        / details_of_assets["life"]
+        / details_of_assets["book_value"]
+        / 12
+    )
+
+    for asset_id in details_of_assets.asset_id:
+        cost = details_of_assets.loc[
+            details_of_assets.asset_id == asset_id, "book_value"
+        ].iat[0]
+
         depreciation_rate = details_of_assets.loc[
-            details_of_assets.asset == asset, "depreciation"
+            details_of_assets.asset_id == asset_id, "depreciation"
         ].iat[0]
         remaining_useful_life = details_of_assets.loc[
-            details_of_assets.asset == asset, "remaining_useful_life"
+            details_of_assets.asset_id == asset_id, "remaining_useful_life"
         ].iat[0]
 
         net_book_value = details_of_assets.loc[
-            details_of_assets.asset == asset, "net_book_value"
+            details_of_assets.asset_id == asset_id, "net_value"
         ].iat[0]
 
         monthly_depreciation = cost * depreciation_rate
@@ -115,7 +157,7 @@ def calculate_straight_line_depreciation(
         index = create_depreciation_and_nbv_series_index(
             details_of_assets=details_of_assets,
             remaining_useful_life=remaining_useful_life,
-            asset=asset,
+            asset_id=asset_id,
             new_assets=new_assets,
             valuation_date=valuation_date,
         )
@@ -123,7 +165,7 @@ def calculate_straight_line_depreciation(
         depreciation = pd.Series(
             np.repeat(monthly_depreciation, remaining_useful_life),
             index=index,
-            name=asset,
+            name=asset_id,
         )
 
         net_book_value = -depreciation.cumsum() + net_book_value
