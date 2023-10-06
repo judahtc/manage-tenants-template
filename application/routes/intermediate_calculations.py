@@ -3,6 +3,7 @@ import pandas as pd
 from fastapi import APIRouter
 
 from application.modeling import (
+    borrowings,
     constants,
     depreciation,
     direct_cashflow,
@@ -133,18 +134,22 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.existing_loans,
+        set_index=False,
     )
 
-    existing_loans_schedules = interest_income.generate_loan_schedules_existing_loans(
-        outstanding_balance=existing_loans["outstanding_balance"],
-        interest_rate_monthly=existing_loans["interest_rate"],
-        repayment_amount_monthly=existing_loans["repayment_amount"],
-        valuation_date=VALUATION_DATE,
-        months_to_project=MONTHS_TO_FORECAST,
+    existing_loans = helper.columns_to_snake_case(existing_loans)
+
+    existing_loans_schedules = borrowings.calculate_reducing_balance_loans_schedules(
+        interest_rates=existing_loans["interest_rate"],
+        effective_dates=existing_loans["disbursement_date"],
+        frequencies=existing_loans["frequency"],
+        loan_identifiers=existing_loans["loan_number"],
+        tenures=existing_loans["loan_term"],
+        amounts=existing_loans["loan_amount"],
     )
 
     existing_loans_schedules_capital_repayments_df = existing_loans_schedules[
-        "capital_repayment"
+        "capital_repayments"
     ]
 
     helper.upload_file(
@@ -156,7 +161,9 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
         file_stage=constants.FileStage.intermediate,
     )
 
-    existing_loans_schedules_interest_incomes_df = existing_loans_schedules["interest"]
+    existing_loans_schedules_interest_incomes_df = existing_loans_schedules[
+        "interest_payments"
+    ]
 
     helper.upload_file(
         tenant_name=tenant_name,
@@ -232,6 +239,8 @@ def calculate_other_income(tenant_name: str, project_id: str):
         file_name=constants.RawFiles.existing_loans,
     )
 
+    existing_loans = helper.columns_to_snake_case(existing_loans)
+
     other_income_existing_loans_df = other_income.calculate_other_income_existing_loans(
         existing_loans=existing_loans,
         valuation_date=VALUATION_DATE,
@@ -294,6 +303,11 @@ def calculate_depreciation(tenant_name: str, project_id: str):
         file_name=constants.RawFiles.details_of_new_assets,
         set_index=False,
     )
+
+    details_of_existing_assets = helper.columns_to_snake_case(
+        details_of_existing_assets
+    )
+    details_of_new_assets = helper.columns_to_snake_case(details_of_new_assets)
 
     depreciations_and_nbvs = depreciation.calculate_depreciations_and_nbvs(
         details_of_existing_assets=details_of_existing_assets,
@@ -402,7 +416,6 @@ def calculate_provisions(tenant_name: str, project_id: str):
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
-
     provision_for_credit_loss_for_all_new_disbursements_df = (
         expenses.calculate_provision_for_credit_loss_for_all_new_disbursements(
             new_disbursements_df=new_disbursements_df, parameters=parameters
@@ -417,9 +430,6 @@ def calculate_provisions(tenant_name: str, project_id: str):
         file_name=constants.IntermediateFiles.provision_for_credit_loss_for_all_new_disbursements_df,
         file_stage=constants.FileStage.intermediate,
     )
-
-
-
 
     return {"message": "done"}
 
@@ -464,14 +474,51 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
         set_index=False,
     )
 
-    finance_costs_df = expenses.calculate_finance_costs(
-        details_of_existing_long_term_borrowing=details_of_existing_long_term_borrowing,
-        details_of_existing_short_term_borrowing=details_of_existing_short_term_borrowing,
-        details_of_new_short_term_borrowing=details_of_new_short_term_borrowing,
-        details_of_new_long_term_borrowing=details_of_new_long_term_borrowing,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+    details_of_existing_long_term_borrowing = helper.columns_to_snake_case(
+        details_of_existing_long_term_borrowing
     )
+    details_of_existing_short_term_borrowing = helper.columns_to_snake_case(
+        details_of_existing_short_term_borrowing
+    )
+    details_of_new_short_term_borrowing = helper.columns_to_snake_case(
+        details_of_new_short_term_borrowing
+    )
+    details_of_new_long_term_borrowing = helper.columns_to_snake_case(
+        details_of_new_long_term_borrowing
+    )
+
+    details_of_long_term_borrowings = pd.concat(
+        [details_of_existing_long_term_borrowing, details_of_new_long_term_borrowing]
+    ).reset_index(drop=True)
+
+    details_of_short_term_borrowings = pd.concat(
+        [details_of_existing_short_term_borrowing, details_of_new_short_term_borrowing]
+    ).reset_index(drop=True)
+
+    long_term_borrowings_schedules = borrowings.calculate_borrowings_schedules(
+        borrowings=details_of_long_term_borrowings
+    )
+    short_term_borrowings_schedules = borrowings.calculate_borrowings_schedules(
+        borrowings=details_of_short_term_borrowings
+    )
+
+    capital_repayment_borrowings_df = pd.concat(
+        [
+            long_term_borrowings_schedules["capital_repayments"],
+            short_term_borrowings_schedules["capital_repayments"],
+        ],
+    ).fillna(0)
+
+    capital_repayment_borrowings_df.loc["total"] = capital_repayment_borrowings_df.sum()
+
+    finance_costs_df = pd.concat(
+        [
+            long_term_borrowings_schedules["interest_payments"],
+            short_term_borrowings_schedules["interest_payments"],
+        ],
+    ).fillna(0)
+
+    finance_costs_df.loc["total"] = finance_costs_df.sum()
 
     helper.upload_file(
         tenant_name=tenant_name,
@@ -482,21 +529,12 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
         file_stage=constants.FileStage.intermediate,
     )
 
-    capital_repayment_on_borrowings_df = direct_cashflow.calculate_capital_repayment_on_borrowings(
-        details_of_existing_long_term_borrowing=details_of_existing_long_term_borrowing,
-        details_of_existing_short_term_borrowing=details_of_existing_short_term_borrowing,
-        details_of_new_short_term_borrowing=details_of_new_short_term_borrowing,
-        details_of_new_long_term_borrowing=details_of_new_long_term_borrowing,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
-    )
-
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        file=capital_repayment_on_borrowings_df,
-        file_name=constants.IntermediateFiles.capital_repayment_on_borrowings_df,
+        file=capital_repayment_borrowings_df,
+        file_name=constants.IntermediateFiles.capital_repayment_borrowings_df,
         file_stage=constants.FileStage.intermediate,
     )
 
@@ -504,10 +542,11 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
 
 
 @router.get("/{tenant_name}/{project_id}/intermediate-filenames")
-def get_intermediate_filenames(tenant_name: str, project_id: str ):
+def get_intermediate_filenames(tenant_name: str, project_id: str):
     intermediate_files: list = wr.s3.list_objects(
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.intermediate.value}",
-        boto3_session=constants.MY_SESSION)
+        boto3_session=constants.MY_SESSION,
+    )
     intermediate_files = list(map(lambda x: x.split("/")[-1], intermediate_files))
     intermediate_files = list(map(lambda x: x.split(".")[0], intermediate_files))
     return intermediate_files

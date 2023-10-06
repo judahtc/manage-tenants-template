@@ -68,7 +68,7 @@ class IntermediateFiles(str, Enum):
         "provision_for_credit_loss_for_all_new_disbursements_df"
     )
     finance_costs_df = "finance_costs_df"
-    capital_repayment_on_borrowings_df = "capital_repayment_on_borrowings_df"
+    capital_repayment_borrowings_df = "capital_repayment_borrowings_df"
     income_statement_df = "income_statement_df"
     direct_cashflow_df = "direct_cashflow_df"
     loan_book_df = "loan_book_df"

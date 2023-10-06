@@ -50,6 +50,7 @@ def upload_multiple_files(
             if i.filename.startswith(j):
                 print(i.filename)
                 temp = pd.read_csv(i.file)
+                temp = columns_to_snake_case(temp)
                 wr.s3.to_parquet(
                     df=temp,
                     path=f"s3://{tenant_name}/project_{project_id}/raw/{j}.parquet",
@@ -224,6 +225,16 @@ def convert_to_datetime(date: pd.Series):
         date = pd.to_datetime(date, format="%m/%d/%Y")
 
     return date
+
+
+def columns_to_snake_case(df: pd.DataFrame):
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+    return df
+
+
+def columns_to_screaming_snake_case(df: pd.DataFrame):
+    df.columns = df.columns.str.strip().str.upper().str.replace(" ", "_")
+    return df
 
 
 def remove_na_from_headings(df: pd.DataFrame):

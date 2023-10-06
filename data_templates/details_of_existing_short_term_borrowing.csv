@@ -1,4 +1,4 @@
-Effective Date,Institution ,Nominal Amount ,Interest Rate,Tenure ,Repayment Frequency ,Frequency,Method
+Effective Date,Institution ,Nominal Amount,Interest Rate,Tenure,Repayment Frequency,Frequency,Method
 24/04/2023,FCB,120383.84,0.18,3, Bullet (P+I) ,0,straight_line
 02/03/2023,ZIMNAT LIFE ASSURANCE ,50000,0.14,6, Monthly (P+I) ,12,reducing_balance
 31/12/2022,Zimnat Life Assurance,20000,0.08,12, Annually(I) Principal rollover ,1,straight_line
