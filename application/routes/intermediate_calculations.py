@@ -28,7 +28,7 @@ from application.modeling import (
 from application.routes.projects import crud as project_crud
 from application.utils.database import SessionLocal, get_db
 
-router = APIRouter(tags=["Intermediate Calculations"])
+router = APIRouter(tags=["INTERMEDIATE CALCULATIONS"])
 
 
 @router.get("/{tenant_name}/{project_id}/calculate-new-disbursements")
@@ -552,6 +552,9 @@ def get_intermediate_filenames(tenant_name: str, project_id: str):
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.intermediate.value}",
         boto3_session=constants.MY_SESSION,
     )
-    intermediate_files = list(map(lambda x: x.split("/")[-1], intermediate_files))
-    intermediate_files = list(map(lambda x: x.split(".")[0], intermediate_files))
+
+    intermediate_files = list(
+        map(lambda x: x.split("/")[-1].split(".")[0], intermediate_files)
+    )
+
     return intermediate_files

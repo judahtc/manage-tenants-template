@@ -24,7 +24,7 @@ from application.routes.projects import crud as project_crud
 from application.utils import models
 from application.utils.database import get_db
 
-router = APIRouter(tags=["Final Calculations"])
+router = APIRouter(tags=["FINAL CALCULATIONS"])
 
 
 def read_files_for_generating_income(
@@ -1462,6 +1462,6 @@ def get_final_filenames(tenant_name: str, project_id: str):
         boto3_session=constants.MY_SESSION,
     )
 
-    final_files = list(map(lambda x: x.split("/")[-1], final_files))
-    final_files = list(map(lambda x: x.split(".")[0], final_files))
+    final_files = list(map(lambda x: x.split("/")[-1].split(".")[0], final_files))
+
     return final_files
