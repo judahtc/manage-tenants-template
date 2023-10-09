@@ -125,9 +125,11 @@ def calculate_reducing_balance_loans_schedules(
     number_of_payments = years * frequencies
 
     effective_interest_rate = np.power(1 + interest_rates, 1 / frequencies) - 1
+
     annuity_factor = (
         1 - (1 + effective_interest_rate) ** (-number_of_payments)
     ) / effective_interest_rate
+
     repayment = amounts / annuity_factor
 
     for index, _ in interest_rates.items():

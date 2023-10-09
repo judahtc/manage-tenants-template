@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 import main
 from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
-from application.utils import google_auth, models, schemas
+from application.utils import models, schemas, utils
 
 
 def get_projects(db: Session, tenant_id: str):

@@ -44,7 +44,7 @@ import os
 import io
 from application.utils.database import SessionLocal, engine
 from application.routes.users import crud, emails
-from application.utils import google_auth
+from application.utils import utils
 import pyotp
 import qrcode
 router = APIRouter(tags=["USER MANAGEMENT"])
@@ -74,7 +74,7 @@ async def create_user(user: schemas.UsersBaseCreate, db: Session = Depends(get_d
     encryption_key = "password123"
 
     # Generate the random google auth string
-    secret_key = google_auth.generate_random_key()
+    secret_key = utils.generate_random_key()
     uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
         name="Claxon", issuer_name='CBS Budgetting')
 

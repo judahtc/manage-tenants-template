@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 import main
 from application.utils import models
 from application.utils import schemas
-from application.utils import google_auth
+from application.utils import utils
 from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
 # from modeling import helper
 from io import BytesIO

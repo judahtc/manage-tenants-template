@@ -1,23 +1,22 @@
+import base64
 from datetime import datetime
 
+# from modeling import helper
+from io import BytesIO
+
 import boto3
+import qrcode
 from decouple import config
 from fastapi import HTTPException, status
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+
 # import emails_helper
 import main
-from application.utils import models
-from application.utils  import schemas
-from application.utils  import google_auth
 from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
-# from modeling import helper
-from io import BytesIO
-import base64
-import qrcode
-
 from application.aws_helper import helper
+from application.utils import models, schemas, utils
 
 s3_client = boto3.client(
     "s3",
@@ -33,10 +32,11 @@ ses_client = boto3.client(
 )
 
 
-def create_tenant(db: Session, tenant: schemas.TenantBaseResponse, password: str, secret_key: str):
+def create_tenant(
+    db: Session, tenant: schemas.TenantBaseResponse, password: str, secret_key: str
+):
     user = (
-        db.query(models.Users).filter(
-            models.Users.email == tenant.admin_email).first()
+        db.query(models.Users).filter(models.Users.email == tenant.admin_email).first()
     )
 
     if user is not None:
@@ -45,28 +45,27 @@ def create_tenant(db: Session, tenant: schemas.TenantBaseResponse, password: str
             status_code=status.HTTP_403_FORBIDDEN, detail=f"User already exist"
         )
 
-    response = helper.make_bucket(
-        tenant_name=tenant.company_name, s3_client=s3_client)
+    # response = helper.make_bucket(
+    #     tenant_name=tenant.company_name, s3_client=s3_client)
+
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     my_hashed_password = pwd_context.hash(password)
     fake_hashed_password = my_hashed_password
+
     db_tenant = models.Tenant(
         admin_email=tenant.admin_email,
-        password=fake_hashed_password,
         first_name=tenant.first_name,
         last_name=tenant.last_name,
         company_name=tenant.company_name,
         physical_address=tenant.physical_address,
         phone_number=tenant.phone_number,
-
     )
     db.add(db_tenant)
     db.commit()
 
     db.refresh(db_tenant)
     try:
-        result = main.engine.execute(
-            "SELECT MAX(tenant_id) FROM tenants").fetchall()
+        result = main.engine.execute("SELECT MAX(tenant_id) FROM tenants").fetchall()
         tenants_count = result[0].max
         # tenants_count=db.query(models.Tenant).count()
         db_user = models.Users(
@@ -79,7 +78,7 @@ def create_tenant(db: Session, tenant: schemas.TenantBaseResponse, password: str
             is_active=False,
             phone_number=tenant.phone_number,
             work_address=tenant.physical_address,
-            secret_key=secret_key
+            secret_key=secret_key,
         )
         db.add(db_user)
         db.commit()
@@ -98,7 +97,7 @@ def create_tenant(db: Session, tenant: schemas.TenantBaseResponse, password: str
             is_active=False,
             phone_number=tenant.phone_number,
             work_address=tenant.physical_address,
-            secret_key=secret_key
+            secret_key=secret_key,
         )
         db.add(db_user)
         db.commit()
@@ -108,7 +107,6 @@ def create_tenant(db: Session, tenant: schemas.TenantBaseResponse, password: str
 
 
 def create_base64_qrcode_image(uri: str):
-
     qrcode_image = qrcode.make(uri)
 
     buffer = BytesIO()
@@ -117,7 +115,7 @@ def create_base64_qrcode_image(uri: str):
 
     image_bytes = buffer.getvalue()
 
-    qrcode_image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+    qrcode_image_base64 = base64.b64encode(image_bytes).decode("utf-8")
 
     return qrcode_image_base64
 
@@ -130,8 +128,9 @@ def get_tenants(db: Session):
 def get_tenant_by_tenant_name(tenant_name: str, db: Session):
     try:
         tenant = (
-            db.query(models.Tenant).filter(
-                models.Tenant.company_name == tenant_name).first()
+            db.query(models.Tenant)
+            .filter(models.Tenant.company_name == tenant_name)
+            .first()
         )
 
         if tenant is not None:
