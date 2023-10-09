@@ -40,6 +40,7 @@ class UserBase(BaseModel):
     email: str
     id: int
     is_active: bool
+    url: str
 
 
 class UserCreate(UserBase):
@@ -171,9 +172,7 @@ class UsersBaseCreate(BaseModel):
     last_name: str
     phone_number: str
     work_address: str
-    token: str
     password: str
-    url: str
 
     class Config:
         orm_mode = True
@@ -206,8 +205,11 @@ class UserLoginSchema(BaseModel):
 
 class ProjectUpdate(BaseModel):
     project_name: str
-
     description: str
+
+
+class ProjectStatusUpdate(BaseModel):
+    project_status: object
 
 
 class AuditTrailAL(BaseModel):

@@ -50,7 +50,7 @@ def delete_by_email(db: Session, email: str):
         db.delete(user)
         db.commit()
         context = {"response": "user successfully deleted ",
-                   "statusCode": status.HTTP_200_OK}, status.HTTP_200_OK
+                   "statusCode": status.HTTP_200_OK}
         return context
     except:
         context = {"response": "user does not exist ",
@@ -105,10 +105,13 @@ def decrypt(db: Session, token: str):
         return {"response": "token expired"}
 
 
-def create_user(db: Session, user: schemas.UsersBaseCreate, password: str, secret_key: str):
-    admin = decrypt(db=db, token=user.token)
-    registrar_domain = get_email_domain(admin.email)
-    new_user_domain = get_email_domain(user.email)
+def create_user(db: Session, user: schemas.UsersBaseCreate, password: str, secret_key: str, email: str):
+    # admin = decrypt(db=db, token=user.token)
+
+    admin = db.query(models.Users).filter(
+        (models.Users.email == email)).first()
+    # registrar_domain = get_email_domain(admin.email)
+    # new_user_domain = get_email_domain(user.email)
 
     # if registrar_domain == new_user_domain:
     try:

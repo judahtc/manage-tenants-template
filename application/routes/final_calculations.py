@@ -3,6 +3,8 @@ import io
 import awswrangler as wr
 import numpy as np
 import pandas as pd
+from sqlalchemy.orm import Session
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response, StreamingResponse
 
@@ -21,6 +23,7 @@ from application.modeling import (
 )
 from application.utils import models
 from application.utils.database import get_db
+
 
 router = APIRouter(tags=["Final Calculations"])
 
@@ -147,7 +150,8 @@ def aggregate_expenses_in_income_statement(income_statement_df: pd.DataFrame):
     income_statement_df = income_statement.aggregate_marketing_and_public_relations(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_office_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_office_costs(
+        income_statement_df)
     income_statement_df = income_statement.aggregate_professional_fees(
         income_statement_df
     )
@@ -157,11 +161,13 @@ def aggregate_expenses_in_income_statement(income_statement_df: pd.DataFrame):
     income_statement_df = income_statement.aggregate_motor_vehicle_costs(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_other_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_other_costs(
+        income_statement_df)
     income_statement_df = income_statement.aggregate_investment_income(
         income_statement_df
     )
-    income_statement_df = income_statement.aggregate_finance_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_finance_costs(
+        income_statement_df)
 
     return income_statement_df
 
@@ -303,12 +309,15 @@ def generate_income_statement(tenant_name: str, project_id: str):
         income_statement_df=income_statement_df
     )
 
-    income_statement_df = income_statement.calculate_total_expenses(income_statement_df)
-    income_statement_df = income_statement.calculate_ebidta(income_statement_df)
+    income_statement_df = income_statement.calculate_total_expenses(
+        income_statement_df)
+    income_statement_df = income_statement.calculate_ebidta(
+        income_statement_df)
 
     income_statement_df.loc["Finance Costs"] = finance_costs_df.loc["total"]
 
-    income_statement_df = income_statement.aggregate_finance_costs(income_statement_df)
+    income_statement_df = income_statement.aggregate_finance_costs(
+        income_statement_df)
 
     income_statement_df = income_statement.calculate_profit_before_tax(
         income_statement_df
@@ -622,12 +631,12 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
 
     direct_cashflow_df.loc["Total Cash Inflows"] = direct_cashflow_df.iloc[
         direct_cashflow_df.index.get_loc("CASH INFLOWS")
-        + 1 : direct_cashflow_df.index.get_loc("Total Cash Inflows")
+        + 1: direct_cashflow_df.index.get_loc("Total Cash Inflows")
     ].sum()
 
     direct_cashflow_df.loc["Total Cash Outflows"] = direct_cashflow_df.iloc[
         direct_cashflow_df.index.get_loc("CASH OUTFLOWS")
-        + 1 : direct_cashflow_df.index.get_loc("Total Cash Outflows")
+        + 1: direct_cashflow_df.index.get_loc("Total Cash Outflows")
     ].sum()
 
     direct_cashflow_df.loc["Net Increase/Decrease In Cash"] = (
@@ -1086,7 +1095,8 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         + opening_balances["LOANS_TO_RELATED_ENTITIES"].iat[0]
     )
 
-    balance_sheet_df = balance_sheet.sum_financial_statements_totals(balance_sheet_df)
+    balance_sheet_df = balance_sheet.sum_financial_statements_totals(
+        balance_sheet_df)
     balance_sheet_df = balance_sheet.calculate_final_balances(
         balance_sheet_df=balance_sheet_df
     )
@@ -1167,7 +1177,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
 
 
 @router.get("/{tenant_name}/{project_id}/generate-statement-of-cashflows")
-def generate_statement_of_cashflows(tenant_name: str, project_id: str):
+def generate_statement_of_cashflows(tenant_name: str, project_id: str, db: Session = Depends(get_db)):
     # Todo : Get valuation_date and months_to_forecast from the database using project_id
 
     VALUATION_DATE = "2023-01"
@@ -1415,7 +1425,8 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
         file_name=constants.FinalFiles.statement_of_cashflow_df,
         file_stage=constants.FileStage.final,
     )
-
+    # project_crud.update_project_status(
+    #     project_id=project_id, status="COMPLETED", db=db)
     return {"message": "done"}
 
 

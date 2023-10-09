@@ -43,7 +43,7 @@ from fastapi.responses import FileResponse
 import os
 import io
 from application.utils.database import SessionLocal, engine
-from application.routes.users import crud
+from application.routes.users import crud, emails
 from application.utils import google_auth
 import pyotp
 import qrcode
@@ -59,29 +59,32 @@ def get_db():
 
 
 @router.post("/users/")
-async def create_user(user: object, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())):
+async def create_user(user: schemas.UsersBaseCreate, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())):
     # try:
+    print(current_user)
+    email = current_user["email"]
     body = user.email
-    url = user.url
+    # url = "user.url"
     print(body)
     characters = string.ascii_letters + string.digits + string.punctuation
 
     # Generate the random string
     random_string = "".join(random.choice(characters) for i in range(8))
-    encryption_key = random_string
+    # encryption_key = random_string
+    encryption_key = "password123"
 
     # Generate the random google auth string
     secret_key = google_auth.generate_random_key()
     uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
-        name="Claxon", issuer_name='CBS IFRS17')
+        name="Claxon", issuer_name='CBS Budgetting')
 
     qrcode_image = crud.create_base64_qrcode_image(uri)
     response = crud.create_user(
-        db=db, user=user, password=encryption_key, secret_key=secret_key)
-    # if response["response"] == "user successfully added":
-    #     return await crud.user_reg_email_sendgrid(body, password=encryption_key, url=url, qrcode_image=qrcode_image)
-    # else:
-    #     return response
+        db=db, user=user, password=encryption_key, secret_key=secret_key, email=email)
+    if response["response"] == "user successfully added":
+        return emails.send_email(recipient=body, qrcode_image=qrcode_image, password=encryption_key,)
+    else:
+        return response
 
     # comment the next statement when you activate emails by uncommenting the above commented code
     return response

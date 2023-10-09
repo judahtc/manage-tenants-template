@@ -1,7 +1,7 @@
 
 import json
 from typing import List, Union
-from application.utils  import schemas
+from application.utils import schemas
 from fastapi import APIRouter, HTTPException, status, Response
 import pandas as pd
 import boto3
@@ -74,17 +74,18 @@ def generate_login_creds():
 
 @router.post("/tenants/")
 async def create_tenant(
-     tenant: schemas.TenantBaseCreate, db: Session = Depends(get_db)
+    tenant: schemas.TenantBaseCreate, db: Session = Depends(get_db)
 ):
     body = tenant.admin_email
     characters = string.ascii_letters + string.digits + string.punctuation
     random_string = "".join(random.choice(characters) for i in range(8))
-    encryption_key = random_string
+    # encryption_key = random_string
+    encryption_key = "password123"
 
     # generate random google auth key
     secret_key = google_auth.generate_random_key()
     uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
-        name="Claxon", issuer_name='CBS IFRS17')
+        name="Claxon", issuer_name='CBS Budgetting')
     qrcode_image = crud.create_base64_qrcode_image(uri)
     # try:
     crud.create_tenant(db=db, tenant=tenant,

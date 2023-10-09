@@ -8,8 +8,8 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 # import emails_helper
 import main
-from application.utils import  models
-from application.utils import  schemas
+from application.utils import models
+from application.utils import schemas
 from application.utils import google_auth
 from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
 # from modeling import helper
@@ -39,7 +39,9 @@ def check_user(db: Session, user: schemas.UserLoginSchema):
         return False
 
     response = signJWT0(fbc_user.user_id, user.email)
-    response['phone'] = fbc_user.phone_number
+    response['email'] = fbc_user.email
+    response['first_name'] = fbc_user.first_name
+    response['lastlast_name'] = fbc_user.last_name
     response['is_active'] = fbc_user.is_active
 
     return response
