@@ -38,8 +38,9 @@ class Users(Base):
     first_name = Column(String)  # requires input
     last_name = Column(String)  # requires input
     hashed_password = Column(String)  # requires input
-    phone_number = Column(String) # required input
+    phone_number = Column(String)  # required input
     role = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=True)
     secret_key = Column(String)
     created_at = Column(DateTime, default=func.now())  # auto captured
     updated_at = Column(
