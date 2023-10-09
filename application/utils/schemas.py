@@ -1,9 +1,11 @@
+import enum
 from datetime import datetime
 from typing import List, Optional, Set, Union
-import enum
+
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import Column, Integer
 from sqlalchemy.types import Enum as SQLAlchemyEnum
-from pydantic import BaseModel, EmailStr, Field
+
 # from enum import Enum
 
 
@@ -89,15 +91,12 @@ class TenantBaseResponse(BaseModel):
 
 
 class TenantBaseCreate(BaseModel):
-    tenant_id: int
     admin_email: str
     first_name: str
     last_name: str
     company_name: str
     physical_address: str
     phone_number: str
-    created_at: str
-    password: str
 
     class Config:
         orm_mode = True
@@ -199,8 +198,7 @@ class UserLoginSchema(BaseModel):
     password: str
 
     class Config:
-        the_schema = {"user_signUp": {
-            "email": "juloh@gmail.com", "password": "juloh"}}
+        the_schema = {"user_signUp": {"email": "juloh@gmail.com", "password": "juloh"}}
 
 
 class ProjectUpdate(BaseModel):
