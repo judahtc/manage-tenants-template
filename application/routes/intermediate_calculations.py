@@ -1,3 +1,19 @@
+import awswrangler as wr
+import pandas as pd
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
+from sqlalchemy.orm import Session
+
 from application.modeling import (
     borrowings,
     constants,
@@ -9,20 +25,16 @@ from application.modeling import (
     interest_income,
     other_income,
 )
-from fastapi import FastAPI, HTTPException, status, File, UploadFile, Depends, Form, Header, Request
-from sqlalchemy.orm import Session
-import awswrangler as wr
-import pandas as pd
-from fastapi import APIRouter
 from application.routes.projects import crud as project_crud
-from application.utils.database import get_db, SessionLocal
-
+from application.utils.database import SessionLocal, get_db
 
 router = APIRouter(tags=["Intermediate Calculations"])
 
 
 @router.get("/{tenant_name}/{project_id}/calculate-new-disbursements")
-def calculate_new_disbursements(tenant_name: str, project_id: str, db: Session = Depends(get_db)):
+def calculate_new_disbursements(
+    tenant_name: str, project_id: str, db: Session = Depends(get_db)
+):
     # Todo : Get valuation_date and months_to_forecast from the database using project_id
     project_crud.update_project_status(
         project_id=project_id, status="IN_PROGRESS", db=db)
