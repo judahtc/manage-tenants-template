@@ -21,18 +21,11 @@ MY_SESSION = boto3.Session(
 
 
 class RawFiles(str, Enum):
-    details_of_existing_assets = "details_of_existing_assets"
-    details_of_new_assets = "details_of_new_assets"
-    details_of_existing_long_term_borrowing = "details_of_existing_long_term_borrowing"
-    details_of_existing_short_term_borrowing = (
-        "details_of_existing_short_term_borrowing"
-    )
-    details_of_new_short_term_borrowing = "details_of_new_short_term_borrowing"
-    details_of_new_long_term_borrowing = "details_of_new_long_term_borrowing"
+    details_of_assets = "details_of_assets"
+    details_of_borrowing = "details_of_borrowing"
     income_statement_index = "income_statement_index"
     static_inputs_income_statement = "static_inputs_income_statement"
     variable_inputs_income_statement = "variable_inputs_income_statement"
-    disbursements = "disbursements"
     parameters = "parameters"
     existing_loans = "existing_loans"
     opening_balances = "opening_balances"

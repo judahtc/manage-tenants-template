@@ -120,17 +120,28 @@ def calculate_operating_expenses(income_statement: pd.DataFrame):
 
 
 def calculate_capital_expenses(
-    details_of_new_assets: pd.DataFrame, valuation_date: str, months_to_forecast: int
+    details_of_assets: pd.DataFrame, valuation_date: str, months_to_forecast: int
 ):
+    details_of_assets["acquisition_date"] = helper.convert_to_datetime(
+        details_of_assets["acquisition_date"]
+    )
+
+    details_of_new_assets = details_of_assets.loc[
+        details_of_assets["acquisition_date"] > valuation_date
+    ]
+
     capital_expenses = details_of_new_assets[["book_value", "acquisition_date"]]
+
     capital_expenses = capital_expenses.assign(
         acquisition_date=helper.convert_to_datetime(
             capital_expenses["acquisition_date"]
         )
     )
+
     capital_expenses["acquisition_date"] = (
         capital_expenses["acquisition_date"].dt.to_period("M").dt.strftime("%b-%Y")
     )
+
     capital_expenses = (
         capital_expenses.groupby("acquisition_date")["book_value"]
         .sum()
@@ -144,9 +155,13 @@ def calculate_capital_expenses(
 def calculate_direct_cashflow_borrowing(
     details_of_new_borrowing: pd.DataFrame, valuation_date: str, months_to_forecast: int
 ):
-    details_of_new_borrowing["effective_date"] = helper.convert_to_datetime(
-        details_of_new_borrowing["effective_date"]
+    details_of_new_borrowing.assign(
+        effective_date=helper.convert_to_datetime(
+            details_of_new_borrowing["effective_date"]
+        ),
+        inplace=True,
     )
+    
     direct_cashflow_borrowing = details_of_new_borrowing[
         ["nominal_amount", "effective_date"]
     ]
@@ -372,11 +387,22 @@ def generate_tax_schedule(
 
 
 def calculate_long_and_short_term_borrowing_for_direct_cashflow(
-    details_of_new_long_term_borrowing: pd.DataFrame,
-    details_of_new_short_term_borrowing: pd.DataFrame,
+    details_of_borrowing: pd.DataFrame,
     valuation_date: str,
     months_to_forecast: int,
 ):
+    details_of_borrowing["effective_date"] = helper.convert_to_datetime(
+        details_of_borrowing["effective_date"]
+    )
+    details_of_new_long_term_borrowing = details_of_borrowing.loc[
+        (details_of_borrowing["tenure"] > 12)
+        & (details_of_borrowing["effective_date"] > pd.Timestamp(valuation_date))
+    ]
+    details_of_new_short_term_borrowing = details_of_borrowing.loc[
+        (details_of_borrowing["tenure"] <= 12)
+        & (details_of_borrowing["effective_date"] > pd.Timestamp(valuation_date))
+    ]
+
     short_term_borrowing = calculate_direct_cashflow_borrowing(
         details_of_new_borrowing=details_of_new_short_term_borrowing,
         valuation_date=valuation_date,

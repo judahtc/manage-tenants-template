@@ -36,8 +36,9 @@ def calculate_new_disbursements(
     tenant_name: str, project_id: str, db: Session = Depends(get_db)
 ):
     # Todo : Get valuation_date and months_to_forecast from the database using project_id
-    project_crud.update_project_status(
-        project_id=project_id, status="IN_PROGRESS", db=db)
+    # project_crud.update_project_status(
+    #     project_id=project_id, status="IN_PROGRESS", db=db
+    # )
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
     parameters = helper.read_parameters_file(
@@ -305,36 +306,23 @@ def calculate_depreciation(tenant_name: str, project_id: str):
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    details_of_existing_assets = helper.read_raw_file(
+    details_of_assets = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.details_of_existing_assets,
+        file_name=constants.RawFiles.details_of_assets,
         set_index=False,
     )
 
-    details_of_new_assets = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.details_of_new_assets,
-        set_index=False,
-    )
-
-    details_of_existing_assets = helper.columns_to_snake_case(
-        details_of_existing_assets
-    )
-    details_of_new_assets = helper.columns_to_snake_case(details_of_new_assets)
+    details_of_assets = helper.columns_to_snake_case(details_of_assets)
 
     depreciations_and_nbvs = depreciation.calculate_depreciations_and_nbvs(
-        details_of_existing_assets=details_of_existing_assets,
-        details_of_new_assets=details_of_new_assets,
+        details_of_assets=details_of_assets,
         valuation_date=VALUATION_DATE,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
 
     depreciations_df = depreciations_and_nbvs["dpns"]
-
     net_book_values_df = depreciations_and_nbvs["nbvs"]
 
     helper.upload_file(
@@ -462,55 +450,22 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    details_of_new_short_term_borrowing = helper.read_raw_file(
+    details_of_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.details_of_new_short_term_borrowing,
-        set_index=False,
-    )
-    details_of_existing_short_term_borrowing = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.details_of_existing_short_term_borrowing,
-        set_index=False,
-    )
-    details_of_new_long_term_borrowing = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.details_of_new_short_term_borrowing,
-        set_index=False,
-    )
-    details_of_existing_long_term_borrowing = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.details_of_existing_short_term_borrowing,
+        file_name=constants.RawFiles.details_of_borrowing,
         set_index=False,
     )
 
-    details_of_existing_long_term_borrowing = helper.columns_to_snake_case(
-        details_of_existing_long_term_borrowing
-    )
-    details_of_existing_short_term_borrowing = helper.columns_to_snake_case(
-        details_of_existing_short_term_borrowing
-    )
-    details_of_new_short_term_borrowing = helper.columns_to_snake_case(
-        details_of_new_short_term_borrowing
-    )
-    details_of_new_long_term_borrowing = helper.columns_to_snake_case(
-        details_of_new_long_term_borrowing
-    )
+    details_of_borrowing = helper.columns_to_snake_case(details_of_borrowing)
 
-    details_of_long_term_borrowings = pd.concat(
-        [details_of_existing_long_term_borrowing, details_of_new_long_term_borrowing]
-    ).reset_index(drop=True)
-
-    details_of_short_term_borrowings = pd.concat(
-        [details_of_existing_short_term_borrowing, details_of_new_short_term_borrowing]
-    ).reset_index(drop=True)
+    details_of_long_term_borrowings = details_of_borrowing.loc[
+        details_of_borrowing["tenure"] > 12
+    ]
+    details_of_short_term_borrowings = details_of_borrowing.loc[
+        details_of_borrowing["tenure"] <= 12
+    ]
 
     long_term_borrowings_schedules = borrowings.calculate_borrowings_schedules(
         borrowings=details_of_long_term_borrowings
@@ -531,9 +486,11 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     long_term_borrowings_capital_repayments_df = long_term_borrowings_schedules[
         "capital_repayments"
     ]
+
     short_term_borrowings_capital_repayments_df = short_term_borrowings_schedules[
         "capital_repayments"
     ]
+
     short_term_borrowings_capital_repayments_df.loc[
         "total"
     ] = short_term_borrowings_capital_repayments_df.sum()

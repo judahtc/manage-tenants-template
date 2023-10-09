@@ -17,21 +17,20 @@ def cal_depreciation_and_nbv(
 
 
 def create_depreciation_and_nbv_series_index(
-    details_of_assets, remaining_useful_life, asset_id, new_assets: bool, valuation_date
+    details_of_assets,
+    remaining_useful_life,
+    asset_id,
+    valuation_date,
 ):
-    if new_assets:
-        purchase_date = details_of_assets.loc[
-            details_of_assets.asset_id == asset_id, "acquisition_date"
-        ].values[0]
+    acquistion_date = details_of_assets.loc[
+        details_of_assets.asset_id == asset_id, "acquisition_date"
+    ].values[0]
 
-        purchase_date = helper.convert_to_datetime(purchase_date)
-        index = pd.period_range(
-            purchase_date, periods=remaining_useful_life, freq="M"
-        ).strftime("%b-%Y")
-    else:
-        index = pd.period_range(
-            valuation_date, periods=remaining_useful_life, freq="M"
-        ).strftime("%b-%Y")
+    acquistion_date = helper.convert_to_datetime(acquistion_date)
+    index = pd.period_range(
+        valuation_date, periods=remaining_useful_life, freq="M"
+    ).strftime("%b-%Y")
+
     return index
 
 
@@ -78,7 +77,7 @@ def calculate_reducing_balance_depreciation(
             details_of_assets=details_of_assets,
             remaining_useful_life=remaining_useful_life,
             asset_id=asset_id,
-            new_assets=new_assets,
+            # new_assets=new_assets,
             valuation_date=valuation_date,
         )
 
@@ -103,7 +102,6 @@ def calculate_straight_line_depreciation(
     details_of_assets: pd.DataFrame,
     valuation_date: str,
     months_to_forecast: int,
-    new_assets: bool = False,
 ):
     if details_of_assets.empty:
         return {"nbvs": pd.DataFrame(), "depreciations": pd.DataFrame()}
@@ -119,7 +117,7 @@ def calculate_straight_line_depreciation(
                 (
                     helper.convert_to_datetime(row["acquisition_date"])
                     + np.timedelta64(row["life"], "Y")
-                    - np.datetime64(valuation_date)
+                    - pd.Timestamp(valuation_date)
                 )
                 // np.timedelta64(1, "M"),
             ),
@@ -157,9 +155,8 @@ def calculate_straight_line_depreciation(
         index = create_depreciation_and_nbv_series_index(
             details_of_assets=details_of_assets,
             remaining_useful_life=remaining_useful_life,
-            asset_id=asset_id,
-            new_assets=new_assets,
             valuation_date=valuation_date,
+            asset_id=asset_id,
         )
 
         depreciation = pd.Series(
@@ -180,67 +177,36 @@ def calculate_straight_line_depreciation(
 
 
 def calculate_depreciations_and_nbvs(
-    details_of_new_assets: pd.DataFrame,
-    details_of_existing_assets: pd.DataFrame,
+    details_of_assets: pd.DataFrame,
     valuation_date: str,
     months_to_forecast: int,
 ):
-    details_of_existing_assets_reducing_balance = details_of_existing_assets.loc[
-        details_of_existing_assets.method == "reducing_balance"
+    details_of_assets_reducing_balance = details_of_assets.loc[
+        details_of_assets.method == "reducing_balance"
     ]
 
-    details_of_existing_assets_straight_line = details_of_existing_assets.loc[
-        details_of_existing_assets.method == "straight_line"
+    details_of_assets_straight_line = details_of_assets.loc[
+        details_of_assets.method == "straight_line"
     ]
 
-    details_of_new_assets_reducing_balance = details_of_new_assets.loc[
-        details_of_new_assets.method == "reducing_balance"
-    ]
-
-    details_of_new_assets_straight_line = details_of_new_assets.loc[
-        details_of_new_assets.method == "straight_line"
-    ]
-
-    depreciation_and_nbv_of_existing_assets_reducing_balance = (
+    depreciation_and_nbv_of_assets_reducing_balance = (
         calculate_reducing_balance_depreciation(
-            details_of_assets=details_of_existing_assets_reducing_balance,
+            details_of_assets=details_of_assets_reducing_balance,
             months_to_forecast=months_to_forecast,
             valuation_date=valuation_date,
         )
     )
 
-    depreciation_and_nbv_of_existing_assets_straight_line = (
-        calculate_straight_line_depreciation(
-            details_of_assets=details_of_existing_assets_straight_line,
-            months_to_forecast=months_to_forecast,
-            valuation_date=valuation_date,
-        )
-    )
-
-    depreciation_and_nbv_of_new_assets_reducing_balance = (
-        calculate_reducing_balance_depreciation(
-            details_of_assets=details_of_new_assets_reducing_balance,
-            months_to_forecast=months_to_forecast,
-            valuation_date=valuation_date,
-            new_assets=True,
-        )
-    )
-
-    depreciation_and_nbv_of_new_assets_straight_line = (
-        calculate_straight_line_depreciation(
-            details_of_assets=details_of_new_assets_straight_line,
-            months_to_forecast=months_to_forecast,
-            valuation_date=valuation_date,
-            new_assets=True,
-        )
+    depreciation_and_nbv_of_assets_straight_line = calculate_straight_line_depreciation(
+        details_of_assets=details_of_assets_straight_line,
+        months_to_forecast=months_to_forecast,
+        valuation_date=valuation_date,
     )
 
     nbvs_for_assets = pd.concat(
         [
-            depreciation_and_nbv_of_new_assets_reducing_balance["nbvs"],
-            depreciation_and_nbv_of_new_assets_straight_line["nbvs"],
-            depreciation_and_nbv_of_existing_assets_reducing_balance["nbvs"],
-            depreciation_and_nbv_of_existing_assets_straight_line["nbvs"],
+            depreciation_and_nbv_of_assets_reducing_balance["nbvs"],
+            depreciation_and_nbv_of_assets_straight_line["nbvs"],
         ],
         axis=1,
     )
@@ -249,10 +215,8 @@ def calculate_depreciations_and_nbvs(
 
     depreciation_of_assets = pd.concat(
         [
-            depreciation_and_nbv_of_new_assets_reducing_balance["depreciations"],
-            depreciation_and_nbv_of_new_assets_straight_line["depreciations"],
-            depreciation_and_nbv_of_existing_assets_reducing_balance["depreciations"],
-            depreciation_and_nbv_of_existing_assets_straight_line["depreciations"],
+            depreciation_and_nbv_of_assets_reducing_balance["depreciations"],
+            depreciation_and_nbv_of_assets_straight_line["depreciations"],
         ],
         axis=1,
     )

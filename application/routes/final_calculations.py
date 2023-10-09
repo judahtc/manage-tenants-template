@@ -352,26 +352,18 @@ def read_files_for_generating_direct_cashflow(
         file_name=constants.IntermediateFiles.interest_income_new_disbursement_df,
     )
 
-    details_of_new_assets = helper.read_raw_file(
+    details_of_assets = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
-        file_name=constants.RawFiles.details_of_new_assets,
+        file_name=constants.RawFiles.details_of_assets,
     )
 
-    details_of_new_long_term_borrowing = helper.read_raw_file(
+    details_of_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
-        file_name=constants.RawFiles.details_of_new_long_term_borrowing,
-        set_index=False,
-    )
-
-    details_of_new_short_term_borrowing = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=boto3_session,
-        file_name=constants.RawFiles.details_of_new_short_term_borrowing,
+        file_name=constants.RawFiles.details_of_borrowing,
         set_index=False,
     )
 
@@ -450,9 +442,8 @@ def read_files_for_generating_direct_cashflow(
         existing_loans_schedules_interest_incomes_df,
         opening_balances,
         interest_income_new_disbursement_df,
-        details_of_new_assets,
-        details_of_new_long_term_borrowing,
-        details_of_new_short_term_borrowing,
+        details_of_assets,
+        details_of_borrowing,
     )
 
 
@@ -488,9 +479,8 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         existing_loans_schedules_interest_incomes_df,
         opening_balances,
         interest_income_new_disbursement_df,
-        details_of_new_assets,
-        details_of_new_long_term_borrowing,
-        details_of_new_short_term_borrowing,
+        details_of_assets,
+        details_of_borrowing,
     ) = read_files_for_generating_direct_cashflow(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -574,27 +564,21 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
 
     direct_cashflow_df.loc["Operating Expenses"] = -operating_expenses
 
-    details_of_new_assets = helper.columns_to_snake_case(details_of_new_assets)
+    details_of_assets = helper.columns_to_snake_case(details_of_assets)
 
     capital_expenses = direct_cashflow.calculate_capital_expenses(
-        details_of_new_assets=details_of_new_assets,
+        details_of_assets=details_of_assets,
         valuation_date=VALUATION_DATE,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
 
     direct_cashflow_df.loc["Capital Expenses"] = -capital_expenses
 
-    details_of_new_long_term_borrowing = helper.columns_to_snake_case(
-        details_of_new_long_term_borrowing
-    )
-    details_of_new_short_term_borrowing = helper.columns_to_snake_case(
-        details_of_new_short_term_borrowing
-    )
+    details_of_borrowing = helper.columns_to_snake_case(details_of_borrowing)
 
     long_and_short_term_borrowing_df = (
         direct_cashflow.calculate_long_and_short_term_borrowing_for_direct_cashflow(
-            details_of_new_long_term_borrowing=details_of_new_long_term_borrowing,
-            details_of_new_short_term_borrowing=details_of_new_short_term_borrowing,
+            details_of_borrowing=details_of_borrowing,
             valuation_date=VALUATION_DATE,
             months_to_forecast=MONTHS_TO_FORECAST,
         )
@@ -1189,11 +1173,11 @@ def generate_statement_of_cashflows(
         file_name=constants.RawFiles.opening_balances,
     )
 
-    details_of_new_assets = helper.read_raw_file(
+    details_of_assets = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.details_of_new_assets,
+        file_name=constants.RawFiles.details_of_assets,
     )
 
     tax_schedule_df = helper.read_intermediate_file(
@@ -1311,13 +1295,14 @@ def generate_statement_of_cashflows(
         "Repayment Of Borrowings"
     ] = capital_repayment_borrowings_df.loc["total"]
 
-    details_of_new_assets = helper.columns_to_snake_case(details_of_new_assets)
+    details_of_assets = helper.columns_to_snake_case(details_of_assets)
 
     capital_expenses = direct_cashflow.calculate_capital_expenses(
-        details_of_new_assets=details_of_new_assets,
+        details_of_assets=details_of_assets,
         valuation_date=VALUATION_DATE,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
+
     statement_of_cashflow_df.loc["Purchase Of Fixed Assets"] = capital_expenses
     statement_of_cashflow_df.loc["Increase/(Decrease) In Short Term Borrowings"] = (
         short_term_loans_schedules_df.loc["Closing Balance"]
@@ -1417,7 +1402,7 @@ def generate_statement_of_cashflows(
         file_name=constants.FinalFiles.statement_of_cashflow_df,
         file_stage=constants.FileStage.final,
     )
-    project_crud.update_project_status(project_id=project_id, status="COMPLETED", db=db)
+    # project_crud.update_project_status(project_id=project_id, status="COMPLETED", db=db)
     return {"message": "done"}
 
 

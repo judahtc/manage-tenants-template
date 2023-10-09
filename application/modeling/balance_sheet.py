@@ -257,6 +257,8 @@ def calculate_short_term_loans_schedules(
 
     short_term_loans_schedule.loc["Repayments"] = -capital_repayment_on_borrowings_df
 
+    short_term_loans_schedule.loc["Repayments"].fillna(0, inplace=True)
+
     short_term_loans_schedule = helper.calculate_opening_and_closing_balances(
         short_term_loans_schedule
     )
