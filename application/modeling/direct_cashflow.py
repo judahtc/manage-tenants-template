@@ -60,8 +60,8 @@ def add_equity_and_intercompany_loans(
     ] = helper.change_period_index_to_strftime(issue_of_equity_and_intercompany_loans)
 
     direct_cashflow_df.loc[
-        "Sale Of Equity And Repayments On Intercompany Loans"
-    ] = helper.change_period_index_to_strftime(
+        "Repayments On Intercompany Loans and Equity Buyback",
+    ] = -helper.change_period_index_to_strftime(
         sale_of_equity_and_repayments_on_intercompany_loans
     )
 
@@ -79,9 +79,8 @@ def generate_direct_cashflow_template(valuation_date, months_to_forecast):
                 "Interest Income",
                 "Other Income",
                 "Receipts From Receivables",
-                "Purchase Of Inventory",
+                "Sale Of Other Assets",
                 "Issue Of Equity And Intercompany Loans",
-                "Purchase Of Other Assets",
                 "Total Cash Inflows",
                 "CASH OUTFLOWS",
                 "Disbursements",
@@ -90,8 +89,9 @@ def generate_direct_cashflow_template(valuation_date, months_to_forecast):
                 "Operating Expenses",
                 "Capital Expenses",
                 "Payments To Payables",
-                "Sale Of Equity And Repayments On Intercompany Loans",
-                "Sale Of Other Assets",
+                "Repayments On Intercompany Loans and Equity Buyback",
+                "Purchase Of Inventory",
+                "Purchase Of Other Assets",
                 "Dividend Paid",
                 "Tax Paid",
                 "Total Cash Outflows",

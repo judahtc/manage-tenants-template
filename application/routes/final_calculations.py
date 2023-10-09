@@ -1309,6 +1309,8 @@ def generate_statement_of_cashflows(tenant_name: str, project_id: str):
         "Repayment Of Borrowings"
     ] = capital_repayment_borrowings_df.loc["total"]
 
+    details_of_new_assets = helper.columns_to_snake_case(details_of_new_assets)
+
     capital_expenses = direct_cashflow.calculate_capital_expenses(
         details_of_new_assets=details_of_new_assets,
         valuation_date=VALUATION_DATE,
