@@ -72,7 +72,9 @@ class ProjectsBase(BaseModel):
 class ProjectsCreate(BaseModel):
     project_name: str
     description: str
-    start_date: str
+    valuation_date: str
+    months_to_forecast: str 
+    
 
 
 class Projects(ProjectsBase):

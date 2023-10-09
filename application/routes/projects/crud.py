@@ -60,14 +60,13 @@ def get_projects_with_cb(db: Session, tenant_id: str):
 def create_projects(
     user_id: int, tenant_id: str, db: Session, project: schemas.ProjectsCreate
 ):
-    date_now = datetime.now()
     db_project = models.Projects(
         project_name=project.project_name,
         description=project.description,
         user_id=user_id,
         tenant_id=tenant_id,
         project_status="PENDING",
-        start_date=project.start_date,
+        valuation_date=project.valuation_date,
     )
     db.add(db_project)
     db.commit()

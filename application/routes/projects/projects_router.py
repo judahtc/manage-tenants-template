@@ -55,7 +55,7 @@ def get_db():
 
 
 @router.post("/projects/")
-def createProject(
+def create_project(
     project: schemas.ProjectsCreate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(JwtBearer()),

@@ -78,13 +78,15 @@ class Projects(Base):
     __tablename__ = "projects"
     project_id = Column(Integer, primary_key=True, index=True)
     project_name = Column(String)
-    created_at = Column(String, default=datetime.now)
     description = Column(String)
-    updated_at = Column(String, default=datetime.now)
     valuation_date = Column(DateTime)
     months_to_forecast = Column(Integer)
     tenant_id = Column(String)
     project_status = Column(String, nullable=False)
+
+    created_at = Column(DateTime, default=func.now())  # auto captured
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
     user_id = Column(Integer, ForeignKey("users.user_id"))
     users = relationship("Users", back_populates="projects")
 
