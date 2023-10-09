@@ -45,12 +45,11 @@ def create_tenant(
             status_code=status.HTTP_403_FORBIDDEN, detail=f"User already exist"
         )
 
-    # response = helper.make_bucket(
-    #     tenant_name=tenant.company_name, s3_client=s3_client)
+    response = helper.make_bucket(tenant_name=tenant.company_name, s3_client=s3_client)
 
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    my_hashed_password = pwd_context.hash(password)
-    fake_hashed_password = my_hashed_password
+
+    hashed_password = pwd_context.hash(password)
 
     db_tenant = models.Tenant(
         admin_email=tenant.admin_email,
@@ -62,48 +61,23 @@ def create_tenant(
     )
     db.add(db_tenant)
     db.commit()
-
     db.refresh(db_tenant)
-    try:
-        result = main.engine.execute("SELECT MAX(tenant_id) FROM tenants").fetchall()
-        tenants_count = result[0].max
-        # tenants_count=db.query(models.Tenant).count()
-        db_user = models.Users(
-            email=tenant.admin_email,
-            hashed_password=my_hashed_password,
-            first_name=tenant.first_name,
-            last_name=tenant.last_name,
-            tenant_id=tenants_count,
-            is_admin=True,
-            is_active=False,
-            phone_number=tenant.phone_number,
-            work_address=tenant.physical_address,
-            secret_key=secret_key,
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        return {"s3": response}
 
-    except:
-        tenants_count = 1
-        db_user = models.Users(
-            email=tenant.admin_email,
-            hashed_password=my_hashed_password,
-            first_name=tenant.first_name,
-            last_name=tenant.last_name,
-            tenant_id=tenants_count,
-            is_admin=True,
-            is_active=False,
-            phone_number=tenant.phone_number,
-            work_address=tenant.physical_address,
-            secret_key=secret_key,
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        status_code = 200
-        return status_code
+    db_user = models.Users(
+        tenant_id=db_tenant.tenant_id,
+        email=tenant.admin_email,
+        hashed_password=hashed_password,
+        first_name=tenant.first_name,
+        last_name=tenant.last_name,
+        phone_number=tenant.phone_number,
+        secret_key=secret_key,
+        role=schemas.UserRole.ADMIN,
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    return response
 
 
 def create_base64_qrcode_image(uri: str):

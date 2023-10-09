@@ -9,17 +9,6 @@ from sqlalchemy.types import Enum as SQLAlchemyEnum
 
 from .database import Base
 
-class ProjectStatus(Enum):
-    PENDING = "PENDING"
-    IN_PROGRESS = "IN_PROGRESS"
-    COMPLETED = "COMPLETED"
-
-
-class UserRole(Enum):
-    ADMIN = "ADMIN"
-    SUPERADMIN = "SUPERADMIN"
-    USER = "USER"
-
 
 class Tenant(Base):
     __tablename__ = "tenants"
@@ -49,7 +38,7 @@ class Users(Base):
     first_name = Column(String)  # requires input
     last_name = Column(String)  # requires input
     hashed_password = Column(String)  # requires input
-    phone_number = Column(String)
+    phone_number = Column(String) # required input
     role = Column(String, nullable=False)
     secret_key = Column(String)
     created_at = Column(DateTime, default=func.now())  # auto captured

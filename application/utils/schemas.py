@@ -1,5 +1,5 @@
-import enum
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional, Set, Union
 
 from pydantic import BaseModel, EmailStr, Field
@@ -9,10 +9,16 @@ from sqlalchemy.types import Enum as SQLAlchemyEnum
 # from enum import Enum
 
 
-class ProjectStatusEnum(str, enum.Enum):
+class ProjectStatusEnum(str, Enum):
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
+
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    SUPERADMIN = "SUPERADMIN"
+    USER = "USER"
 
 
 class otp(BaseModel):
