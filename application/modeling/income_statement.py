@@ -4,16 +4,92 @@ import pandas as pd
 from application.modeling import helper
 
 
-def generate_income_statement_template(
-    income_statement_index: pd.DataFrame, valuation_date: str, months_to_forecast: int
-):
-    income_statement_index["INCOME_STATEMENT"] = income_statement_index[
-        "INCOME_STATEMENT"
-    ].str.strip()
-
+def generate_income_statement_template(valuation_date: str, months_to_forecast: int):
     income_statement_template = pd.DataFrame(
         columns=helper.generate_columns(valuation_date, months_to_forecast),
-        index=income_statement_index["INCOME_STATEMENT"],
+        index=pd.Index(
+            [
+                "Interest Income",
+                "Other Income",
+                "Total Revenue",
+                "MANAGEMENT EXPENSES",
+                "STAFF COSTS",
+                "Salaries",
+                "Pensions & Statutory Contributions",
+                "Training",
+                "Bonus Provision",
+                "Retrenchments",
+                "Staff Welfare",
+                "CILL",
+                "Total Staff Costs",
+                "TRAVEL & ENTERTAINMENT",
+                "Travel Costs",
+                "Entertainment",
+                "Total Travel & Entertainment",
+                "MARKETING AND PUBLIC RELATIONS",
+                "Marketing Costs",
+                "Group Marketing Costs",
+                "Donations",
+                "Total Marketing And Public Relations",
+                "OFFICE COSTS",
+                "Rental Costs",
+                "Subscriptions",
+                "Insurance",
+                "Repairs And Maintenance",
+                "Utilities",
+                "Stationery",
+                "Admin Costs",
+                "IT Costs",
+                "Masawara Mgt Fee",
+                "Fines And Penalties",
+                "Total Office Costs",
+                "PROFESSIONAL FEES",
+                "Auditors Remuneration",
+                "Legal Fees",
+                "Strategic Expenses",
+                "Directors Fees",
+                "Consultancy Fees",
+                "Total Professional Fees",
+                "COMMUNICATION COSTS",
+                "Telephones",
+                "Cellphones",
+                "Internet",
+                "Courier",
+                "Total Communication Costs",
+                "MOTOR VEHICLE COSTS",
+                "Fuel",
+                "Motor Vehicle Maintenance Costs",
+                "Total Motor Vehicle Costs",
+                "OTHER COSTS",
+                "Depreciation",
+                "Bank Charges",
+                "Zimnat Grp Shared Costs Recovery Exp",
+                "Provisions",
+                "Business Acquisition",
+                "Total Other Costs",
+                "TOTAL EXPENSES",
+                "EBIDTA",
+                "INVESTMENT INCOME",
+                "Rental Income",
+                "Interest Received",
+                "Dividends Received",
+                "Fair Value Adjustments",
+                "Realised Gains On Disposal Of Inv Properties",
+                "Realised Gains On Disposal Of Equities",
+                "Exchange Gains/(Losses)",
+                "Admin Fees",
+                "Total Investment Income",
+                "FINANCE COSTS",
+                "Finance Costs",
+                "Third Party",
+                "Total Finance Costs",
+                "PROFIT / (LOSS) BEFORE TAX",
+                "Taxation",
+                "2% Taxation",
+                "PROFIT/(LOSS) FOR PERIOD",
+            ],
+            name="INCOME_STATEMENT",
+        ),
     )
 
     return income_statement_template
@@ -49,15 +125,13 @@ def insert_revenue(
     return income_statement
 
 
-def insert_static_and_variable_inputs(
+def insert_expenses(
     income_statement: pd.DataFrame,
-    static_inputs_income_statement: pd.DataFrame,
-    variable_expenses: pd.DataFrame,
+    expenses_certain: pd.DataFrame,
+    uncertain_expenses: pd.DataFrame,
 ):
-    income_statement.loc[
-        static_inputs_income_statement.index
-    ] = static_inputs_income_statement
-    income_statement.loc[variable_expenses.index] = variable_expenses
+    income_statement.loc[expenses_certain.index] = expenses_certain
+    income_statement.loc[uncertain_expenses.index] = uncertain_expenses
     return income_statement
 
 
@@ -82,8 +156,8 @@ def insert_depreciation(income_statement: pd.DataFrame, depreciation: pd.Series)
     return income_statement
 
 
-def insert_credit_loss_provision(income_statement, change_in_provisin_for_credit_loss):
-    income_statement.loc["Provisions"] = change_in_provisin_for_credit_loss
+def insert_credit_loss_provision(income_statement, change_in_provision_for_credit_loss):
+    income_statement.loc["Provisions"] = change_in_provision_for_credit_loss
     return income_statement
 
 

@@ -136,31 +136,35 @@ def aggregate_other_income(
 
 def calculate_admin_fee_for_all_new_disbursements(
     new_disbursements_df: pd.DataFrame,
-    parameters: pd.DataFrame,
+    disbursement_parameters: pd.DataFrame,
     months_to_forecast: int,
 ):
     sme_admin_fee = calculate_admin_fee_new_disbursements(
         disbursements=new_disbursements_df["sme_disbursements"],
-        admin_fee_percentage=parameters.loc["SME_ADMINISTRATION_FEE"],
-        average_loan_term=parameters.loc["SME_AVERAGE_LOAN_TERM"],
+        admin_fee_percentage=disbursement_parameters.loc["SME_ADMINISTRATION_FEE"],
+        average_loan_term=disbursement_parameters.loc["SME_AVERAGE_LOAN_TERM"],
         months_to_forecast=months_to_forecast,
     )
     b2b_admin_fee = calculate_admin_fee_new_disbursements(
         disbursements=new_disbursements_df["b2b_disbursements"],
-        admin_fee_percentage=parameters.loc["B2B_ADMINISTRATION_FEE"],
-        average_loan_term=parameters.loc["B2B_AVERAGE_LOAN_TERM"],
+        admin_fee_percentage=disbursement_parameters.loc["B2B_ADMINISTRATION_FEE"],
+        average_loan_term=disbursement_parameters.loc["B2B_AVERAGE_LOAN_TERM"],
         months_to_forecast=months_to_forecast,
     )
     consumer_ssb_admin_fee = calculate_admin_fee_new_disbursements(
         disbursements=new_disbursements_df["consumer_ssb_disbursements"],
-        admin_fee_percentage=parameters.loc["CONSUMER_SSB_ADMINISTRATION_FEE"],
-        average_loan_term=parameters.loc["CONSUMER_SSB_AVERAGE_LOAN_TERM"],
+        admin_fee_percentage=disbursement_parameters.loc[
+            "CONSUMER_SSB_ADMINISTRATION_FEE"
+        ],
+        average_loan_term=disbursement_parameters.loc["CONSUMER_SSB_AVERAGE_LOAN_TERM"],
         months_to_forecast=months_to_forecast,
     )
     consumer_pvt_admin_fee = calculate_admin_fee_new_disbursements(
         disbursements=new_disbursements_df["consumer_pvt_disbursements"],
-        admin_fee_percentage=parameters.loc["CONSUMER_PVT_ADMINISTRATION_FEE"],
-        average_loan_term=parameters.loc["CONSUMER_PVT_AVERAGE_LOAN_TERM"],
+        admin_fee_percentage=disbursement_parameters.loc[
+            "CONSUMER_PVT_ADMINISTRATION_FEE"
+        ],
+        average_loan_term=disbursement_parameters.loc["CONSUMER_PVT_AVERAGE_LOAN_TERM"],
         months_to_forecast=months_to_forecast,
     )
     admin_fee_new_disbursements = helper.add_series(
@@ -179,38 +183,46 @@ def calculate_admin_fee_for_all_new_disbursements(
 
 def calculate_credit_insurance_fee_for_all_new_disbursements(
     new_disbursements_df: pd.DataFrame,
-    parameters: pd.DataFrame,
+    disbursement_parameters: pd.DataFrame,
     months_to_forecast: int,
 ):
     sme_credit_insurance_fee = calculate_credit_insurance_fee_new_disbursements(
         new_disbursements_df["sme_disbursements"],
-        credit_insurance_fee_percentage=parameters.loc["SME_CREDIT_INSURANCE_FEE"],
-        average_loan_term=parameters.loc["SME_AVERAGE_LOAN_TERM"],
+        credit_insurance_fee_percentage=disbursement_parameters.loc[
+            "SME_CREDIT_INSURANCE_FEE"
+        ],
+        average_loan_term=disbursement_parameters.loc["SME_AVERAGE_LOAN_TERM"],
         months_to_forecast=months_to_forecast,
     )
     b2b_credit_insurance_fee = calculate_credit_insurance_fee_new_disbursements(
         new_disbursements_df["b2b_disbursements"],
-        credit_insurance_fee_percentage=parameters.loc["B2B_CREDIT_INSURANCE_FEE"],
-        average_loan_term=parameters.loc["B2B_AVERAGE_LOAN_TERM"],
+        credit_insurance_fee_percentage=disbursement_parameters.loc[
+            "B2B_CREDIT_INSURANCE_FEE"
+        ],
+        average_loan_term=disbursement_parameters.loc["B2B_AVERAGE_LOAN_TERM"],
         months_to_forecast=months_to_forecast,
     )
     consumer_ssb_credit_insurance_fee = (
         calculate_credit_insurance_fee_new_disbursements(
             new_disbursements_df["consumer_ssb_disbursements"],
-            credit_insurance_fee_percentage=parameters.loc[
+            credit_insurance_fee_percentage=disbursement_parameters.loc[
                 "CONSUMER_SSB_CREDIT_INSURANCE_FEE"
             ],
-            average_loan_term=parameters.loc["CONSUMER_SSB_AVERAGE_LOAN_TERM"],
+            average_loan_term=disbursement_parameters.loc[
+                "CONSUMER_SSB_AVERAGE_LOAN_TERM"
+            ],
             months_to_forecast=months_to_forecast,
         )
     )
     consumer_pvt_credit_insurance_fee = (
         calculate_credit_insurance_fee_new_disbursements(
             new_disbursements_df["consumer_pvt_disbursements"],
-            credit_insurance_fee_percentage=parameters.loc[
+            credit_insurance_fee_percentage=disbursement_parameters.loc[
                 "CONSUMER_PVT_CREDIT_INSURANCE_FEE"
             ],
-            average_loan_term=parameters.loc["CONSUMER_PVT_AVERAGE_LOAN_TERM"],
+            average_loan_term=disbursement_parameters.loc[
+                "CONSUMER_PVT_AVERAGE_LOAN_TERM"
+            ],
             months_to_forecast=months_to_forecast,
         )
     )

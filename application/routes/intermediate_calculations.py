@@ -30,6 +30,7 @@ from application.utils.database import SessionLocal, get_db
 
 router = APIRouter(tags=["INTERMEDIATE CALCULATIONS"])
 
+
 @router.get("/{tenant_name}/{project_id}/calculate-new-disbursements")
 def calculate_new_disbursements(
     tenant_name: str, project_id: str, db: Session = Depends(get_db)
@@ -40,7 +41,8 @@ def calculate_new_disbursements(
     # )
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
-    parameters = helper.read_parameters_file(
+
+    disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
@@ -48,7 +50,7 @@ def calculate_new_disbursements(
     )
 
     new_disbursements_df = disbursements.calculate_new_disbursements(
-        parameters=parameters
+        disbursement_parameters=disbursement_parameters
     )
 
     helper.upload_file(
@@ -70,7 +72,7 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    parameters = helper.read_parameters_file(
+    disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
@@ -86,7 +88,8 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
 
     monthly_repayment_new_disbursements_df = (
         interest_income.calculate_monthly_repayments_new_disbursements(
-            new_disbursements_df=new_disbursements_df, parameters=parameters
+            new_disbursements_df=new_disbursements_df,
+            disbursement_parameters=disbursement_parameters,
         )
     )
 
@@ -105,7 +108,7 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
 
     loan_schedules_for_all_new_disbursements = interest_income.generate_loan_schedules_for_all_new_disbursements(
         new_disbursements_df=new_disbursements_df,
-        parameters=parameters,
+        disbursement_parameters=disbursement_parameters,
         monthly_repayment_new_disbursements_df=monthly_repayment_new_disbursements_df,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
@@ -216,7 +219,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    parameters = helper.read_parameters_file(
+    disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
@@ -233,7 +236,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     admin_fee_for_all_new_disbursements_df = (
         other_income.calculate_admin_fee_for_all_new_disbursements(
             new_disbursements_df=new_disbursements_df,
-            parameters=parameters,
+            disbursement_parameters=disbursement_parameters,
             months_to_forecast=MONTHS_TO_FORECAST,
         )
     )
@@ -250,7 +253,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     credit_insurance_fee_for_all_new_disbursements_df = (
         other_income.calculate_credit_insurance_fee_for_all_new_disbursements(
             new_disbursements_df=new_disbursements_df,
-            parameters=parameters,
+            disbursement_parameters=disbursement_parameters,
             months_to_forecast=MONTHS_TO_FORECAST,
         )
     )
@@ -373,7 +376,14 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    parameters = helper.read_parameters_file(
+    other_parameters = helper.read_other_parameters_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        valuation_date=VALUATION_DATE,
+    )
+
+    disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
@@ -390,7 +400,8 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
     salaries_and_pension_and_statutory_contributions_df = (
         expenses.calculate_salaries_and_pension_and_statutory_contributions(
             new_disbursements_df=new_disbursements_df,
-            parameters=parameters,
+            disbursement_parameters=disbursement_parameters,
+            other_parameters=other_parameters,
             months_to_forecast=MONTHS_TO_FORECAST,
             valuation_date=VALUATION_DATE,
         )
@@ -415,7 +426,7 @@ def calculate_provisions(tenant_name: str, project_id: str):
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    parameters = helper.read_parameters_file(
+    disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
@@ -439,7 +450,8 @@ def calculate_provisions(tenant_name: str, project_id: str):
 
     provision_for_credit_loss_for_all_new_disbursements_df = (
         expenses.calculate_provision_for_credit_loss_for_all_new_disbursements(
-            new_disbursements_df=new_disbursements_df, parameters=parameters
+            new_disbursements_df=new_disbursements_df,
+            disbursement_parameters=disbursement_parameters,
         )
     )
 

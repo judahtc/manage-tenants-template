@@ -4,8 +4,8 @@ import pandas as pd
 from application.modeling import helper
 
 
-def add_other_assets(parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame):
-    other_assets = parameters.loc[
+def add_other_assets(other_parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame):
+    other_assets = other_parameters.loc[
         [
             "INTANGIBLE_ASSETS",
             "INVESTMENT_IN_SUBSIDIARIES",
@@ -34,9 +34,9 @@ def add_other_assets(parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame)
 
 
 def add_equity_and_intercompany_loans(
-    parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame
+    other_parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame
 ):
-    equity_and_intercompany_loans = parameters.loc[
+    equity_and_intercompany_loans = other_parameters.loc[
         [
             "TREASURY_SHARES",
             "INTERCOMPANY_LOANS",

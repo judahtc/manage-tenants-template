@@ -104,12 +104,36 @@ def read_raw_file(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
-def read_parameters_file(
+def read_disbursement_parameters_file(
     tenant_name: str, project_id: int, boto3_session, valuation_date: str
 ):
     try:
         df = wr.s3.read_parquet(
-            f"s3://{tenant_name}/project_{project_id}/raw/parameters.parquet",
+            f"s3://{tenant_name}/project_{project_id}/raw/disbursement_parameters.parquet",
+            boto3_session=boto3_session,
+        )
+
+        df = df.set_index(df.columns[0])
+        df.index.name = ""
+        df.columns = pd.period_range(
+            valuation_date, periods=int(df.columns[-1]), freq="M"
+        )
+
+        df.columns = list(map(str, df.columns))
+
+        return df
+    except ClientError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
+def read_other_parameters_file(
+    tenant_name: str, project_id: int, boto3_session, valuation_date: str
+):
+    try:
+        df = wr.s3.read_parquet(
+            f"s3://{tenant_name}/project_{project_id}/raw/other_parameters.parquet",
             boto3_session=boto3_session,
         )
 

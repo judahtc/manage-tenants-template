@@ -33,21 +33,28 @@ def read_files_for_generating_income(
     valuation_date: str,
     boto3_session,
 ):
-    income_statement_index = helper.read_raw_file(
+    expenses_certain = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
-        file_name=constants.RawFiles.income_statement_index,
-        set_index=False,
-    )
-    variable_inputs_income_statement = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=boto3_session,
-        file_name=constants.RawFiles.variable_inputs_income_statement,
+        file_name=constants.RawFiles.expenses_certain,
     )
 
-    parameters = helper.read_parameters_file(
+    expenses_uncertain = helper.read_raw_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=boto3_session,
+        file_name=constants.RawFiles.expenses_uncertain,
+    )
+
+    other_parameters = helper.read_other_parameters_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=boto3_session,
+        valuation_date=valuation_date,
+    )
+
+    disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
@@ -73,13 +80,6 @@ def read_files_for_generating_income(
         project_id=project_id,
         boto3_session=boto3_session,
         file_name=constants.IntermediateFiles.finance_costs_df,
-    )
-
-    static_inputs_income_statement = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=boto3_session,
-        file_name=constants.RawFiles.static_inputs_income_statement,
     )
 
     provision_for_credit_loss_for_all_new_disbursements_df = helper.read_intermediate_file(
@@ -125,13 +125,13 @@ def read_files_for_generating_income(
     )
 
     return (
-        parameters,
-        income_statement_index,
-        variable_inputs_income_statement,
+        other_parameters,
+        disbursement_parameters,
+        expenses_certain,
         opening_balances,
         depreciations_df,
         finance_costs_df,
-        static_inputs_income_statement,
+        expenses_uncertain,
         provision_for_credit_loss_for_all_new_disbursements_df,
         new_disbursements_df,
         other_income_df,
@@ -169,8 +169,9 @@ def aggregate_expenses_in_income_statement(income_statement_df: pd.DataFrame):
 
 
 def calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_business_aquisition_and_total_interest_income(
-    variable_inputs_income_statement: pd.DataFrame,
-    parameters: pd.DataFrame,
+    expenses_uncertain: pd.DataFrame,
+    other_parameters: pd.DataFrame,
+    disbursement_parameters: pd.DataFrame,
     new_disbursements_df: pd.DataFrame,
     provision_for_credit_loss_for_all_new_disbursements_df: pd.DataFrame,
     opening_balances: pd.DataFrame,
@@ -179,16 +180,20 @@ def calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_busi
     valuation_date: str,
     months_to_forecast: int,
 ):
-    variable_expenses = expenses.calculate_variable_expenses(
-        variable_inputs_income_statement=variable_inputs_income_statement,
-        parameters=parameters,
+    uncertain_expenses = expenses.calculate_uncertain_expenses(
+        expenses_uncertain=expenses_uncertain,
+        other_parameters=other_parameters,
         valuation_date=valuation_date,
         months_to_forecast=months_to_forecast,
     )
 
     business_acquisition = expenses.calculate_business_acqusition(
-        business_acquisition_percent=parameters.loc["BUSINESS_ACQUISITION_PERCENT"],
-        agent_contribution_percent=parameters.loc["AGENT_CONTRIBUTION_PERCENT"],
+        business_acquisition_percent=disbursement_parameters.loc[
+            "BUSINESS_ACQUISITION_PERCENT"
+        ],
+        agent_contribution_percent=disbursement_parameters.loc[
+            "AGENT_CONTRIBUTION_PERCENT"
+        ],
         consumer_ssb_disbursements=new_disbursements_df["consumer_ssb_disbursements"],
         consumer_pvt_disbursements=new_disbursements_df["consumer_pvt_disbursements"],
     )
@@ -212,7 +217,7 @@ def calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_busi
     )
 
     return (
-        variable_expenses,
+        uncertain_expenses,
         business_acquisition,
         change_in_provision_for_credit_loss,
         total_interest_income,
@@ -227,13 +232,13 @@ def generate_income_statement(tenant_name: str, project_id: str):
     MONTHS_TO_FORECAST = 12
 
     (
-        parameters,
-        income_statement_index,
-        variable_inputs_income_statement,
+        other_parameters,
+        disbursement_parameters,
+        expenses_certain,
         opening_balances,
         depreciations_df,
         finance_costs_df,
-        static_inputs_income_statement,
+        expenses_uncertain,
         provision_for_credit_loss_for_all_new_disbursements_df,
         new_disbursements_df,
         other_income_df,
@@ -248,19 +253,19 @@ def generate_income_statement(tenant_name: str, project_id: str):
     )
 
     income_statement_df = income_statement.generate_income_statement_template(
-        income_statement_index=income_statement_index,
         valuation_date=VALUATION_DATE,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
 
     (
-        variable_expenses,
+        uncertain_expenses,
         business_acquisition,
         change_in_provision_for_credit_loss,
         total_interest_income,
     ) = calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_business_aquisition_and_total_interest_income(
-        variable_inputs_income_statement=variable_inputs_income_statement,
-        parameters=parameters,
+        expenses_uncertain=expenses_uncertain,
+        other_parameters=other_parameters,
+        disbursement_parameters=disbursement_parameters,
         new_disbursements_df=new_disbursements_df,
         provision_for_credit_loss_for_all_new_disbursements_df=provision_for_credit_loss_for_all_new_disbursements_df,
         interest_income_new_disbursement_df=interest_income_new_disbursement_df,
@@ -276,10 +281,10 @@ def generate_income_statement(tenant_name: str, project_id: str):
         other_income=other_income_df["total"],
     )
 
-    income_statement_df = income_statement.insert_static_and_variable_inputs(
+    income_statement_df = income_statement.insert_expenses(
         income_statement=income_statement_df,
-        static_inputs_income_statement=static_inputs_income_statement,
-        variable_expenses=variable_expenses,
+        expenses_certain=expenses_certain,
+        uncertain_expenses=uncertain_expenses,
     )
 
     income_statement_df = income_statement.insert_salaries_and_pensions_and_statutory_contributions(
@@ -294,7 +299,7 @@ def generate_income_statement(tenant_name: str, project_id: str):
 
     income_statement_df = income_statement.insert_credit_loss_provision(
         income_statement=income_statement_df,
-        change_in_provisin_for_credit_loss=change_in_provision_for_credit_loss,
+        change_in_provision_for_credit_loss=change_in_provision_for_credit_loss,
     )
 
     income_statement_df = income_statement.insert_business_acquisition(
@@ -317,7 +322,7 @@ def generate_income_statement(tenant_name: str, project_id: str):
     )
 
     income_statement_df = income_statement.calculate_tax(
-        income_statement=income_statement_df, tax_rate=parameters.loc["TAX_RATE"]
+        income_statement=income_statement_df, tax_rate=other_parameters.loc["TAX_RATE"]
     )
 
     helper.upload_file(
@@ -338,7 +343,7 @@ def read_files_for_generating_direct_cashflow(
     boto3_session,
     valuation_date: str,
 ):
-    parameters = helper.read_parameters_file(
+    other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
@@ -444,7 +449,7 @@ def read_files_for_generating_direct_cashflow(
         finance_costs_df,
         existing_loans_schedules_capital_repayments_df,
         capital_repayment_new_disbursements_df,
-        parameters,
+        other_parameters,
         new_disbursements_df,
         other_income_df,
         existing_loans_schedules_interest_incomes_df,
@@ -454,14 +459,6 @@ def read_files_for_generating_direct_cashflow(
         details_of_long_term_borrowing,
         details_of_short_term_borrowing,
     )
-
-
-def get_total_disbursements(new_disbursements_df: pd.DataFrame):
-    total_disbursements = new_disbursements_df["total"]
-    total_disbursements.index = pd.PeriodIndex(
-        total_disbursements.index, freq="M"
-    ).strftime("%b-%Y")
-    return total_disbursements
 
 
 @router.get("/{tenant_name}/{project_id}/generate-direct-cashflow")
@@ -482,7 +479,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         finance_costs_df,
         existing_loans_schedules_capital_repayments_df,
         capital_repayment_new_disbursements_df,
-        parameters,
+        other_parameters,
         new_disbursements_df,
         other_income_df,
         existing_loans_schedules_interest_incomes_df,
@@ -498,36 +495,36 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         valuation_date=VALUATION_DATE,
     )
 
-    ## From Parameeters
-
+    ## From Parameters
     direct_cashflow_df.loc[
         "Receipts From Receivables"
     ] = helper.change_period_index_to_strftime(
         helper.add_series(
             [
-                parameters.loc["RECEIPTS_FROM_OTHER_RECEIVABLES"],
-                parameters.loc["RECEIPTS_FROM_TRADE_RECEIVABLES"],
-                parameters.loc["RECEIPTS_FROM_INTERGROUP_RECEIVABLES"],
+                other_parameters.loc["RECEIPTS_FROM_OTHER_RECEIVABLES"],
+                other_parameters.loc["RECEIPTS_FROM_TRADE_RECEIVABLES"],
+                other_parameters.loc["RECEIPTS_FROM_INTERGROUP_RECEIVABLES"],
             ]
         )
     )
 
     direct_cashflow_df.loc[
         "Purchase Of Inventory"
-    ] = helper.change_period_index_to_strftime(parameters.loc["NEW_INVENTORY"])
+    ] = helper.change_period_index_to_strftime(other_parameters.loc["NEW_INVENTORY"])
+
     direct_cashflow_df.loc[
         "Payments To Payables"
     ] = -helper.change_period_index_to_strftime(
         helper.add_series(
             [
-                parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
-                parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
+                other_parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
+                other_parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
             ]
         )
     )
 
     direct_cashflow_df.loc["Dividend Paid"] = -helper.change_period_index_to_strftime(
-        parameters.loc["DIVIDEND_PAID"]
+        other_parameters.loc["DIVIDEND_PAID"]
     )
 
     ## From Calculations/Income Statement
@@ -546,13 +543,13 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     ## Equity and Intercompany Loans
 
     direct_cashflow_df = direct_cashflow.add_equity_and_intercompany_loans(
-        parameters=parameters, direct_cashflow_df=direct_cashflow_df
+        other_parameters=other_parameters, direct_cashflow_df=direct_cashflow_df
     )
 
     ## Other Assets
 
     direct_cashflow_df = direct_cashflow.add_other_assets(
-        parameters=parameters, direct_cashflow_df=direct_cashflow_df
+        other_parameters=other_parameters, direct_cashflow_df=direct_cashflow_df
     )
 
     # Tax Paid
@@ -793,7 +790,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    parameters = helper.read_parameters_file(
+    other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
@@ -894,7 +891,9 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
 
     balance_sheet_df.loc[
         "Provision For Taxation"
-    ] = helper.change_period_index_to_strftime(parameters.loc["PROVISION_FOR_TAX"])
+    ] = helper.change_period_index_to_strftime(
+        other_parameters.loc["PROVISION_FOR_TAX"]
+    )
 
     opening_balances = helper.columns_to_screaming_snake_case(opening_balances)
 
@@ -923,44 +922,49 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         "Closing Balance"
     ]
 
+    # Receivables and Payables
     trade_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
         opening_receivables=opening_balances["TRADE_RECEIVABLES"].iat[0],
-        receipts_from_receivables=parameters.loc["RECEIPTS_FROM_TRADE_RECEIVABLES"],
-        new_receivables=parameters.loc["NEW_TRADE_RECEIVABLES"],
+        receipts_from_receivables=other_parameters.loc[
+            "RECEIPTS_FROM_TRADE_RECEIVABLES"
+        ],
+        new_receivables=other_parameters.loc["NEW_TRADE_RECEIVABLES"],
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
 
     other_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
         opening_receivables=opening_balances["OTHER_RECEIVABLES"].iat[0],
-        receipts_from_receivables=parameters.loc["RECEIPTS_FROM_OTHER_RECEIVABLES"],
-        new_receivables=parameters.loc["NEW_OTHER_RECEIVABLES"],
+        receipts_from_receivables=other_parameters.loc[
+            "RECEIPTS_FROM_OTHER_RECEIVABLES"
+        ],
+        new_receivables=other_parameters.loc["NEW_OTHER_RECEIVABLES"],
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
 
     intergroup_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
         opening_receivables=opening_balances["INTERGROUP_RECEIVABLES"].iat[0],
-        receipts_from_receivables=parameters.loc[
+        receipts_from_receivables=other_parameters.loc[
             "RECEIPTS_FROM_INTERGROUP_RECEIVABLES"
         ],
-        new_receivables=parameters.loc["NEW_INTERGROUP_RECEIVABLES"],
+        new_receivables=other_parameters.loc["NEW_INTERGROUP_RECEIVABLES"],
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
 
     trade_payables_schedule_df = balance_sheet.generate_payables_schedule(
         opening_payables=opening_balances["TRADE_PAYABLES"].iat[0],
-        payments_to_payables=parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
-        new_payables=parameters.loc["NEW_TRADE_PAYABLES"],
+        payments_to_payables=other_parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
+        new_payables=other_parameters.loc["NEW_TRADE_PAYABLES"],
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
 
     other_payables_schedule_df = balance_sheet.generate_payables_schedule(
         opening_payables=opening_balances["OTHER_PAYABLES"].iat[0],
-        payments_to_payables=parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
-        new_payables=parameters.loc["NEW_OTHER_PAYABLES"],
+        payments_to_payables=other_parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
+        new_payables=other_parameters.loc["NEW_OTHER_PAYABLES"],
         months_to_forecast=MONTHS_TO_FORECAST,
         valuation_date=VALUATION_DATE,
     )
@@ -988,104 +992,107 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
 
     inventories_schedule = balance_sheet.generate_inventories_schedule(
         opening_inventories=opening_balances["INVENTORIES"].iat[0],
-        new_inventories=parameters.loc["NEW_INVENTORY"],
-        inventories_used=parameters.loc["INVENTORY_USED"],
+        new_inventories=other_parameters.loc["NEW_INVENTORY"],
+        inventories_used=other_parameters.loc["INVENTORY_USED"],
         valuation_date=VALUATION_DATE,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
 
     balance_sheet_df.loc["Inventories"] = inventories_schedule.loc["Closing Balance"]
 
+    # Equity and Intercompany loans
     balance_sheet_df.loc[
         "Issued Share Capital"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["SHARE_CAPITAL"].cumsum()
+        other_parameters.loc["SHARE_CAPITAL"].cumsum()
         + opening_balances["ISSUED_SHARE_CAPITAL"].iat[0]
     )
 
     balance_sheet_df.loc["Intercompany Loans"] = helper.change_period_index_to_strftime(
-        parameters.loc["INTERCOMPANY_LOANS"].cumsum()
+        other_parameters.loc["INTERCOMPANY_LOANS"].cumsum()
         + opening_balances["INTERCOMPANY_LOANS"].iat[0]
     )
 
     balance_sheet_df.loc["Share Premium"] = helper.change_period_index_to_strftime(
-        parameters.loc["SHARE_PREMIUM"].cumsum()
+        other_parameters.loc["SHARE_PREMIUM"].cumsum()
         + opening_balances["SHARE_PREMIUM"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Other Components Of Equity"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["OTHER_COMPONENTS_OF_EQUITY"].cumsum()
+        other_parameters.loc["OTHER_COMPONENTS_OF_EQUITY"].cumsum()
         + opening_balances["OTHER_COMPONENTS_OF_EQUITY"].iat[0]
     )
 
     balance_sheet_df.loc["Treasury Shares"] = helper.change_period_index_to_strftime(
-        parameters.loc["TREASURY_SHARES"].cumsum()
+        other_parameters.loc["TREASURY_SHARES"].cumsum()
         + opening_balances["TREASURY_SHARES"].iat[0]
     )
 
     balance_sheet_df.loc["Retained Earnings"] = (
         income_statement_df.loc["PROFIT/(LOSS) FOR PERIOD"]
-        - helper.change_period_index_to_strftime(parameters.loc["DIVIDEND_PAID"])
+        - helper.change_period_index_to_strftime(other_parameters.loc["DIVIDEND_PAID"])
     ).cumsum()
 
     balance_sheet_df.loc["Capital And Reserves"] = balance_sheet_df.loc[
         "Issued Share Capital":"Retained Earnings"
     ].sum()
 
+    # Other Assets
     balance_sheet_df.loc["Intangible Assets"] = helper.change_period_index_to_strftime(
-        parameters.loc["INTANGIBLE_ASSETS"].cumsum()
+        other_parameters.loc["INTANGIBLE_ASSETS"].cumsum()
         + opening_balances["INTANGIBLE_ASSETS"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Investment In Subsidiaries"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["INVESTMENT_IN_SUBSIDIARIES"].cumsum()
+        other_parameters.loc["INVESTMENT_IN_SUBSIDIARIES"].cumsum()
         + opening_balances["INVESTMENT_IN_SUBSIDIARIES"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Investment In Associates"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["INVESTMENT_IN_ASSOCIATES"].cumsum()
+        other_parameters.loc["INVESTMENT_IN_ASSOCIATES"].cumsum()
         + opening_balances["INVESTMENT_IN_ASSOCIATES"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Investment Properties"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["INVESTMENT_PROPERTIES"].cumsum()
+        other_parameters.loc["INVESTMENT_PROPERTIES"].cumsum()
         + opening_balances["INVESTMENT_PROPERTIES"].iat[0]
     )
 
     balance_sheet_df.loc["Equity Investments"] = helper.change_period_index_to_strftime(
-        parameters.loc["EQUITY_INVESTMENTS"].cumsum()
+        other_parameters.loc["EQUITY_INVESTMENTS"].cumsum()
         + opening_balances["EQUITY_INVESTMENTS"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Long Term Money Market Investments"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["LONG_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
+        other_parameters.loc["LONG_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
         + opening_balances["LONG_TERM_MONEY_MARKET_INVESTMENTS"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Short Term Money Market Investments"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["SHORT_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
+        other_parameters.loc["SHORT_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
         + opening_balances["SHORT_TERM_MONEY_MARKET_INVESTMENTS"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Loans To Related Entities"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["LOANS_TO_RELATED_ENTITIES"].cumsum()
+        other_parameters.loc["LOANS_TO_RELATED_ENTITIES"].cumsum()
         + opening_balances["LOANS_TO_RELATED_ENTITIES"].iat[0]
     )
 
+    # Calculating Totals
     balance_sheet_df = balance_sheet.sum_financial_statements_totals(balance_sheet_df)
     balance_sheet_df = balance_sheet.calculate_final_balances(
         balance_sheet_df=balance_sheet_df
@@ -1175,7 +1182,7 @@ def generate_statement_of_cashflows(
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    parameters = helper.read_parameters_file(
+    other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
@@ -1293,18 +1300,22 @@ def generate_statement_of_cashflows(
     ]
     statement_of_cashflow_df.loc[
         "Dividend Paid"
-    ] = helper.change_period_index_to_strftime(parameters.loc["DIVIDEND_PAID"])
+    ] = helper.change_period_index_to_strftime(other_parameters.loc["DIVIDEND_PAID"])
     statement_of_cashflow_df.loc[
         "Treasury Movements"
-    ] = helper.change_period_index_to_strftime(parameters.loc["TREASURY_MOVEMENTS"])
+    ] = helper.change_period_index_to_strftime(
+        other_parameters.loc["TREASURY_MOVEMENTS"]
+    )
     statement_of_cashflow_df.loc[
         "Interest Expense Accrued"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["INTEREST_EXPENSE_ACCRUED"]
+        other_parameters.loc["INTEREST_EXPENSE_ACCRUED"]
     )
     statement_of_cashflow_df.loc[
         "Other Non-Cash Items"
-    ] = helper.change_period_index_to_strftime(parameters.loc["OTHER_NON_CASH_ITEMS"])
+    ] = helper.change_period_index_to_strftime(
+        other_parameters.loc["OTHER_NON_CASH_ITEMS"]
+    )
     statement_of_cashflow_df.loc["Interest Paid"] = -finance_costs_df.loc["total"]
     statement_of_cashflow_df.loc["Tax Paid"] = tax_schedule_df.loc["Tax Paid"]
     statement_of_cashflow_df.loc[
