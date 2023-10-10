@@ -13,7 +13,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 # import emails_helper
-import main
+import application.main as main
 from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
 from application.aws_helper import helper
 from application.utils import models, schemas, utils

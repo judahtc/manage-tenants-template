@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 # import emails_helper
-import main
+import application.main as main
 from application.utils import models
 from application.utils import schemas
 from application.utils import utils
