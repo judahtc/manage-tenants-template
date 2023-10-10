@@ -13,6 +13,7 @@ def calculate_admin_fee_new_disbursements(
     average_loan_term = int(average_loan_term.mean())
 
     admin_fee = disbursements * admin_fee_percentage / average_loan_term
+
     admin_fee = np.repeat(admin_fee.values, average_loan_term).reshape(
         len(admin_fee), average_loan_term
     )
@@ -60,6 +61,7 @@ def calculate_admin_fee_existing_loans(
     months_to_forecast: int,
     valuation_date: str,
 ):
+    
     admin_fee_existing = loan_amount * admin_fee_percentage / loan_term_months
 
     admin_fees_existing_loans = []
@@ -72,8 +74,11 @@ def calculate_admin_fee_existing_loans(
             name=i,
         )
         admin_fees_existing_loans.append(temp)
+
     admin_fees_existing_loans = pd.concat(admin_fees_existing_loans, axis=1).T.fillna(0)
+    
     admin_fees_existing_loans = admin_fees_existing_loans.iloc[:, :months_to_forecast]
+
     admin_fees_existing_loans.columns = helper.generate_columns(
         valuation_date, period=months_to_forecast
     )
