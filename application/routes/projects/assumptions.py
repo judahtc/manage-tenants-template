@@ -14,7 +14,7 @@ from passlib.context import CryptContext
 from fastapi.responses import JSONResponse
 import boto3
 from typing import List
-import application.main as main
+import main as main
 import random
 import string
 from application.auth.jwt_handler import signJWT, decodeJWT

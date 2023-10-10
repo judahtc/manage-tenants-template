@@ -30,7 +30,6 @@ from application.utils.database import SessionLocal, get_db
 
 router = APIRouter(tags=["INTERMEDIATE CALCULATIONS"])
 
-
 @router.get("/{tenant_name}/{project_id}/calculate-new-disbursements")
 def calculate_new_disbursements(
     tenant_name: str, project_id: str, db: Session = Depends(get_db)

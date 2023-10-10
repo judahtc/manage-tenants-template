@@ -15,7 +15,7 @@ from passlib.context import CryptContext
 from fastapi.responses import JSONResponse
 import boto3
 from decouple import config
-import application.main as main
+import main as main
 import random
 import string
 from fastapi import FastAPI, HTTPException, status, File, UploadFile, Depends, Form, Header, Request

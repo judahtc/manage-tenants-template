@@ -37,7 +37,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
-import application.main as main
+import main as main
 from application.auth.jwt_bearer import JwtBearer
 from application.auth.jwt_handler import decodeJWT, signJWT
 from application.routes.tenants import crud
