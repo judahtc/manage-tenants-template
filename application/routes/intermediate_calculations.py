@@ -450,28 +450,34 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     VALUATION_DATE = "2023-01"
     MONTHS_TO_FORECAST = 12
 
-    details_of_borrowing = helper.read_raw_file(
+    details_of_long_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.details_of_borrowing,
+        file_name=constants.RawFiles.details_of_long_term_borrowing,
         set_index=False,
     )
 
-    details_of_borrowing = helper.columns_to_snake_case(details_of_borrowing)
+    details_of_short_term_borrowing = helper.read_raw_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.RawFiles.details_of_short_term_borrowing,
+        set_index=False,
+    )
 
-    details_of_long_term_borrowings = details_of_borrowing.loc[
-        details_of_borrowing["tenure"] > 12
-    ]
-    details_of_short_term_borrowings = details_of_borrowing.loc[
-        details_of_borrowing["tenure"] <= 12
-    ]
+    details_of_long_term_borrowing = helper.columns_to_snake_case(
+        details_of_long_term_borrowing
+    )
+    details_of_short_term_borrowing = helper.columns_to_snake_case(
+        details_of_short_term_borrowing
+    )
 
     long_term_borrowings_schedules = borrowings.calculate_borrowings_schedules(
-        borrowings=details_of_long_term_borrowings
+        details_of_long_term_borrowing
     )
     short_term_borrowings_schedules = borrowings.calculate_borrowings_schedules(
-        borrowings=details_of_short_term_borrowings
+        details_of_short_term_borrowing
     )
 
     capital_repayment_borrowings_df = pd.concat(

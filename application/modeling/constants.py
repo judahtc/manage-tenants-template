@@ -22,7 +22,8 @@ MY_SESSION = boto3.Session(
 
 class RawFiles(str, Enum):
     details_of_assets = "details_of_assets"
-    details_of_borrowing = "details_of_borrowing"
+    details_of_long_term_borrowing = "details_of_long_term_borrowing"
+    details_of_short_term_borrowing = "details_of_short_term_borrowing"
     income_statement_index = "income_statement_index"
     static_inputs_income_statement = "static_inputs_income_statement"
     variable_inputs_income_statement = "variable_inputs_income_statement"

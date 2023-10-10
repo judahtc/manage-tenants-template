@@ -99,7 +99,7 @@ def generate_direct_cashflow_template(valuation_date, months_to_forecast):
                 "Opening Balance",
                 "Closing Balance",
             ],
-            name="CASHFLOW_STATEMENT",
+            name="DIRECT_CASHFLOW_STATEMENT",
         ),
         columns=helper.generate_columns(valuation_date, months_to_forecast),
         data=np.nan,
@@ -161,7 +161,7 @@ def calculate_direct_cashflow_borrowing(
         ),
         inplace=True,
     )
-    
+
     direct_cashflow_borrowing = details_of_new_borrowing[
         ["nominal_amount", "effective_date"]
     ]
@@ -387,20 +387,29 @@ def generate_tax_schedule(
 
 
 def calculate_long_and_short_term_borrowing_for_direct_cashflow(
-    details_of_borrowing: pd.DataFrame,
+    details_of_long_term_borrowing: pd.DataFrame,
+    details_of_short_term_borrowing: pd.DataFrame,
     valuation_date: str,
     months_to_forecast: int,
 ):
-    details_of_borrowing["effective_date"] = helper.convert_to_datetime(
-        details_of_borrowing["effective_date"]
+    details_of_long_term_borrowing["effective_date"] = helper.convert_to_datetime(
+        details_of_long_term_borrowing["effective_date"]
     )
-    details_of_new_long_term_borrowing = details_of_borrowing.loc[
-        (details_of_borrowing["tenure"] > 12)
-        & (details_of_borrowing["effective_date"] > pd.Timestamp(valuation_date))
+    details_of_short_term_borrowing["effective_date"] = helper.convert_to_datetime(
+        details_of_short_term_borrowing["effective_date"]
+    )
+
+    details_of_new_long_term_borrowing = details_of_long_term_borrowing.loc[
+        (
+            details_of_long_term_borrowing["effective_date"]
+            > pd.Timestamp(valuation_date)
+        )
     ]
-    details_of_new_short_term_borrowing = details_of_borrowing.loc[
-        (details_of_borrowing["tenure"] <= 12)
-        & (details_of_borrowing["effective_date"] > pd.Timestamp(valuation_date))
+    details_of_new_short_term_borrowing = details_of_short_term_borrowing.loc[
+        (
+            details_of_short_term_borrowing["effective_date"]
+            > pd.Timestamp(valuation_date)
+        )
     ]
 
     short_term_borrowing = calculate_direct_cashflow_borrowing(

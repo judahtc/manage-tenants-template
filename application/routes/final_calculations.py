@@ -359,11 +359,19 @@ def read_files_for_generating_direct_cashflow(
         file_name=constants.RawFiles.details_of_assets,
     )
 
-    details_of_borrowing = helper.read_raw_file(
+    details_of_long_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
-        file_name=constants.RawFiles.details_of_borrowing,
+        file_name=constants.RawFiles.details_of_long_term_borrowing,
+        set_index=False,
+    )
+
+    details_of_short_term_borrowing = helper.read_raw_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=boto3_session,
+        file_name=constants.RawFiles.details_of_short_term_borrowing,
         set_index=False,
     )
 
@@ -443,7 +451,8 @@ def read_files_for_generating_direct_cashflow(
         opening_balances,
         interest_income_new_disbursement_df,
         details_of_assets,
-        details_of_borrowing,
+        details_of_long_term_borrowing,
+        details_of_short_term_borrowing,
     )
 
 
@@ -480,7 +489,8 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         opening_balances,
         interest_income_new_disbursement_df,
         details_of_assets,
-        details_of_borrowing,
+        details_of_long_term_borrowing,
+        details_of_short_term_borrowing,
     ) = read_files_for_generating_direct_cashflow(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -574,11 +584,17 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
 
     direct_cashflow_df.loc["Capital Expenses"] = -capital_expenses
 
-    details_of_borrowing = helper.columns_to_snake_case(details_of_borrowing)
+    details_of_long_term_borrowing = helper.columns_to_snake_case(
+        details_of_long_term_borrowing
+    )
+    details_of_short_term_borrowing = helper.columns_to_snake_case(
+        details_of_short_term_borrowing
+    )
 
     long_and_short_term_borrowing_df = (
         direct_cashflow.calculate_long_and_short_term_borrowing_for_direct_cashflow(
-            details_of_borrowing=details_of_borrowing,
+            details_of_long_term_borrowing=details_of_long_term_borrowing,
+            details_of_short_term_borrowing=details_of_short_term_borrowing,
             valuation_date=VALUATION_DATE,
             months_to_forecast=MONTHS_TO_FORECAST,
         )
