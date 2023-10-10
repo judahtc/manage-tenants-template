@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from application.modeling import helper
+from application.modeling import borrowings, helper
 
 
 def calculate_admin_fee_new_disbursements(
@@ -61,7 +61,6 @@ def calculate_admin_fee_existing_loans(
     months_to_forecast: int,
     valuation_date: str,
 ):
-    
     admin_fee_existing = loan_amount * admin_fee_percentage / loan_term_months
 
     admin_fees_existing_loans = []
@@ -76,7 +75,7 @@ def calculate_admin_fee_existing_loans(
         admin_fees_existing_loans.append(temp)
 
     admin_fees_existing_loans = pd.concat(admin_fees_existing_loans, axis=1).T.fillna(0)
-    
+
     admin_fees_existing_loans = admin_fees_existing_loans.iloc[:, :months_to_forecast]
 
     admin_fees_existing_loans.columns = helper.generate_columns(
@@ -254,23 +253,44 @@ def calculate_other_income_existing_loans(
         )
     )
 
-    admin_fee_existing_loans = calculate_admin_fee_existing_loans(
-        loan_amount=existing_loans["loan_amount"],
-        admin_fee_percentage=existing_loans["admin_fee"],
-        loan_term_months=existing_loans["loan_term"],
-        remaining_term_months=existing_loans["remaining_term_months"],
-        valuation_date=valuation_date,
-        months_to_forecast=months_to_forecast,
+    # admin_fee_existing_loans = calculate_admin_fee_existing_loans(
+    #     loan_amount=existing_loans["loan_amount"],
+    #     admin_fee_percentage=existing_loans["admin_fee"],
+    #     loan_term_months=existing_loans["loan_term"],
+    #     remaining_term_months=existing_loans["remaining_term_months"],
+    #     valuation_date=valuation_date,
+    #     months_to_forecast=months_to_forecast,
+    # )
+
+    admin_fee_existing_loans = borrowings.calculate_straight_line_payments(
+        effective_dates=existing_loans["disbursement_date"],
+        tenures=existing_loans["loan_term"],
+        frequencies=existing_loans["admin_fee"] * 0 + 12,
+        amounts=existing_loans["admin_fee"]
+        * existing_loans["loan_amount"]
+        / existing_loans["loan_term"],
+        loan_identifiers=existing_loans["loan_number"],
     )
 
-    credit_insurance_fee_existing_loans = calculate_credit_insurance_fee_existing_loans(
-        loan_amount=existing_loans["loan_amount"],
-        credit_insurance_fee_percentage=existing_loans["credit_insurance_fee"],
-        loan_term_months=existing_loans["loan_term"],
-        remaining_term_months=existing_loans["remaining_term_months"],
-        valuation_date=valuation_date,
-        months_to_forecast=months_to_forecast,
+    admin_fee_existing_loans = admin_fee_existing_loans.sum().loc[
+        helper.generate_columns(valuation_date, months_to_forecast)
+    ]
+
+    credit_insurance_fee_existing_loans = borrowings.calculate_straight_line_payments(
+        effective_dates=existing_loans["disbursement_date"],
+        tenures=existing_loans["loan_term"],
+        frequencies=existing_loans["admin_fee"] * 0 + 12,
+        amounts=(
+            existing_loans["credit_insurance_fee"]
+            * existing_loans["loan_amount"]
+            / existing_loans["loan_term"]
+        ),
+        loan_identifiers=existing_loans["loan_number"],
     )
+
+    credit_insurance_fee_existing_loans = credit_insurance_fee_existing_loans.sum().loc[
+        helper.generate_columns(valuation_date, months_to_forecast)
+    ]
 
     other_income_existing_loans = helper.add_series(
         [credit_insurance_fee_existing_loans, admin_fee_existing_loans]

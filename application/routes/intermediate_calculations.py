@@ -273,6 +273,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
     )
 
     existing_loans = helper.columns_to_snake_case(existing_loans)
+    existing_loans = existing_loans.loc[existing_loans["closing_balance"] > 0]
 
     other_income_existing_loans_df = other_income.calculate_other_income_existing_loans(
         existing_loans=existing_loans,

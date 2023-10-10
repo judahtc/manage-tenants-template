@@ -20,6 +20,10 @@ def calculate_straight_line_payments(
 ):
     amounts_results = []
     freq_key = {1: "BA", 2: "2BQ", 4: "BQ", 12: "BM"}
+
+    years = tenures / 12
+    number_of_payments = years * frequencies
+
     for i, _ in effective_dates.items():
         effective_date = effective_dates[i]
         tenure = tenures[i]
@@ -40,14 +44,16 @@ def calculate_straight_line_payments(
             index = (
                 pd.date_range(
                     effective_date + pd.DateOffset(months=6),
-                    periods=frequency,
+                    periods=number_of_payments[i],
                     freq=freq_key[frequency],
                 )
             ).strftime("%b-%Y")
         else:
             index = (
                 pd.date_range(
-                    effective_date, periods=frequency, freq=freq_key[frequency]
+                    effective_date,
+                    periods=number_of_payments[i],
+                    freq=freq_key[frequency],
                 )
             ).strftime("%b-%Y")
 
@@ -79,6 +85,7 @@ def calculate_straight_line_loans_schedules(
     effective_dates = helper.convert_to_datetime(effective_dates)
 
     annual_interest = amounts * interest_rates
+
     interest = calculate_interest(
         frequencies=frequencies, annual_interest=annual_interest
     )
