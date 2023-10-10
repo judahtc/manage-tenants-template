@@ -270,6 +270,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.existing_loans,
+        set_index=False,
     )
 
     existing_loans = helper.columns_to_snake_case(existing_loans)
