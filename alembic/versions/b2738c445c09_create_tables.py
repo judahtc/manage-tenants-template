@@ -1,8 +1,8 @@
 """create tables
 
-Revision ID: 50087b1c67cf
+Revision ID: b2738c445c09
 Revises: 
-Create Date: 2023-10-09 16:19:14.905780
+Create Date: 2023-10-10 17:37:03.981420
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '50087b1c67cf'
+revision: str = 'b2738c445c09'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -52,6 +52,7 @@ def upgrade() -> None:
     sa.Column('hashed_password', sa.String(), nullable=True),
     sa.Column('phone_number', sa.String(), nullable=True),
     sa.Column('role', sa.String(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('secret_key', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
@@ -63,13 +64,14 @@ def upgrade() -> None:
     op.create_table('projects',
     sa.Column('project_id', sa.Integer(), nullable=False),
     sa.Column('project_name', sa.String(), nullable=True),
-    sa.Column('created_at', sa.String(), nullable=True),
     sa.Column('description', sa.String(), nullable=True),
-    sa.Column('updated_at', sa.String(), nullable=True),
-    sa.Column('valuation_date', sa.DateTime(), nullable=True),
+    sa.Column('valuation_date', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('imtt', sa.Float(), nullable=True),
     sa.Column('months_to_forecast', sa.Integer(), nullable=True),
     sa.Column('tenant_id', sa.String(), nullable=True),
     sa.Column('project_status', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
     sa.PrimaryKeyConstraint('project_id')
