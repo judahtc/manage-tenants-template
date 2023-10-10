@@ -80,6 +80,9 @@ class IntermediateFiles(str, Enum):
     short_term_borrowings_capital_repayments_df = (
         "short_term_borrowings_capital_repayments_df"
     )
+    existing_loans_schedules_outstanding_balances_df = (
+        "existing_loans_schedules_outstanding_balances_df"
+    )
 
 
 class FinalFiles(str, Enum):

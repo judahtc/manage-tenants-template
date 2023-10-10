@@ -156,18 +156,28 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
     )
 
     existing_loans = helper.columns_to_snake_case(existing_loans)
+    existing_loans = existing_loans.loc[existing_loans["closing_balance"] > 0]
 
     existing_loans_schedules = borrowings.calculate_reducing_balance_loans_schedules(
         interest_rates=existing_loans["interest_rate"],
         effective_dates=existing_loans["disbursement_date"],
-        frequencies=existing_loans["frequency"],
+        frequencies=(existing_loans["interest_rate"] * 0 + 12),
         loan_identifiers=existing_loans["loan_number"],
         tenures=existing_loans["loan_term"],
         amounts=existing_loans["loan_amount"],
+        is_interest_rate_annual=False,
     )
 
     existing_loans_schedules_capital_repayments_df = existing_loans_schedules[
         "capital_repayments"
+    ]
+
+    existing_loans_schedules_interest_incomes_df = existing_loans_schedules[
+        "interest_payments"
+    ]
+
+    existing_loans_schedules_outstanding_balances_df = existing_loans_schedules[
+        "outstanding_balance_at_start"
     ]
 
     helper.upload_file(
@@ -179,9 +189,14 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
         file_stage=constants.FileStage.intermediate,
     )
 
-    existing_loans_schedules_interest_incomes_df = existing_loans_schedules[
-        "interest_payments"
-    ]
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=existing_loans_schedules_outstanding_balances_df,
+        file_name=constants.IntermediateFiles.existing_loans_schedules_outstanding_balances_df,
+        file_stage=constants.FileStage.intermediate,
+    )
 
     helper.upload_file(
         tenant_name=tenant_name,
