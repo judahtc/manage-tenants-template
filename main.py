@@ -1,13 +1,16 @@
+import io
 from typing import List, Union
 
+import awswrangler as wr
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from mangum import Mangum
 from sqlalchemy.orm import Session
 
 from application.auth.jwt_bearer import JwtBearer
 from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
-from application.modeling import helper
+from application.modeling import constants, helper
 from application.routes import final_calculations, intermediate_calculations
 from application.routes.projects import assumptions, projects_router
 from application.routes.tenants import tenants_router
@@ -81,6 +84,36 @@ def upload_files(
         my_session=MY_SESSION,
         files=files,
     )
+
+
+@app.get("/{tenant_name}/{project_id}/download-intermediate-file")
+def download_raw_file(tenant_name: str, project_id: str, file_name: constants.RawFiles):
+    df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=file_name,
+    )
+
+    stream = io.StringIO()
+    df.to_csv(stream, index=True)
+    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    response.headers[
+        "Content-Disposition"
+    ] = f"attachment; file_name={file_name.value}.csv"
+    return response
+
+
+@app.get("/{tenant_name}/{project_id}/raw-filenames")
+def get_raw_filenames(tenant_name: str, project_id: str):
+    raw_files: list = wr.s3.list_objects(
+        f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.raw.value}",
+        boto3_session=constants.MY_SESSION,
+    )
+
+    raw_files = list(map(lambda x: x.split("/")[-1].split(".")[0], raw_files))
+
+    return raw_files
 
 
 # @app.post("/{project_id}/upload-files")
