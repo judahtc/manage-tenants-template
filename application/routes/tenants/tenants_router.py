@@ -71,7 +71,6 @@ async def create_tenant(
     tenant: schemas.TenantBaseCreate, db: Session = Depends(get_db)
 ):
     random_password = utils.generate_random_password()
-
     secret_key = pyotp.random_base32()
 
     uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
