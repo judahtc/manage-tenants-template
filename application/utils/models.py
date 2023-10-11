@@ -16,6 +16,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.types import Enum as SQLAlchemyEnum
 
+from application.utils import schemas
+
 from .database import Base
 
 
@@ -94,7 +96,9 @@ class Projects(Base):
     start_date = Column(Date)
     imtt = Column(Float)
     months_to_forecast = Column(Integer)
-    project_status = Column(String, nullable=False)
+    project_status = Column(
+        String, nullable=False, default=schemas.ProjectStatus.PENDING
+    )
     created_at = Column(DateTime, default=func.now())  # auto captured
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

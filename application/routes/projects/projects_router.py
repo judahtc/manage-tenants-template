@@ -71,8 +71,20 @@ def create_project(
 def upload_project_files(
     project_id: int,
     files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
+    project = crud.get_project_by_id(db=db, project_id=project_id)
+
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project does not exist"
+        )
+
+    crud.update_project_status(
+        project_id=project_id, status=schemas.ProjectStatus.IN_PROGRESS, db=db
+    )
+
     return helper.upload_multiple_files(
         project_id=project_id,
         tenant_name=current_user.tenant.company_name,
