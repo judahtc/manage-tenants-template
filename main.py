@@ -86,9 +86,9 @@ def upload_files(
     )
 
 
-@app.get("/{tenant_name}/{project_id}/download-intermediate-file")
+@app.get("/{tenant_name}/{project_id}/download-raw-file")
 def download_raw_file(tenant_name: str, project_id: str, file_name: constants.RawFiles):
-    df = helper.read_intermediate_file(
+    df = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
