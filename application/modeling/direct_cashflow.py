@@ -127,7 +127,7 @@ def calculate_capital_expenses(
     )
 
     details_of_new_assets = details_of_assets.loc[
-        details_of_assets["acquisition_date"] > start_date
+        details_of_assets["acquisition_date"] > pd.Timestamp(start_date)
     ]
 
     capital_expenses = details_of_new_assets[["book_value", "acquisition_date"]]

@@ -41,8 +41,6 @@ router = APIRouter(
 )
 
 
-
-
 @router.get("/projects/{project_id}/calculations/intermediate/new-disbursements")
 def calculate_new_disbursements(
     project_id: str,

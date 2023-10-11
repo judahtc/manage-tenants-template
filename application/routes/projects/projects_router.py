@@ -129,13 +129,12 @@ def get_projects(
     return projects
 
 
-@router.get("/projects/users/{user_id}")
+@router.get("/projects/current_user/")
 async def get_projects_by_user_id(
-    user_id: int,
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    projects = crud.get_project_by_user_id(db=db, user_id=user_id)
+    projects = crud.get_project_by_user_id(db=db, user_id=current_user.user_id)
     return projects
 
 

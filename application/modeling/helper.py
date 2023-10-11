@@ -4,7 +4,7 @@ from typing import List
 import awswrangler as wr
 import pandas as pd
 from botocore.exceptions import ClientError
-from fastapi import File, HTTPException, UploadFile, status
+from fastapi import File, HTTPException, Response, UploadFile, status
 
 from application.modeling import constants
 
@@ -56,7 +56,7 @@ def upload_multiple_files(
                     path=f"s3://{tenant_name}/project_{project_id}/raw/{j}.parquet",
                     boto3_session=my_session,
                 )
-    return {"message": "done"}
+    return Response(status_code=status.HTTP_200_OK, detail="File Uploaded")
 
 
 def upload_file(
