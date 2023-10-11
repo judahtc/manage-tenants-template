@@ -229,7 +229,7 @@ def generate_income_statement(tenant_name: str, project_id: str):
     # Todo : Get start_date and months_to_forecast from the database using project_id
 
     start_date = "2023-01"
-    MONTHS_TO_FORECAST = 12
+    months_to_forecast = 12
 
     (
         other_parameters,
@@ -254,7 +254,7 @@ def generate_income_statement(tenant_name: str, project_id: str):
 
     income_statement_df = income_statement.generate_income_statement_template(
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     (
@@ -272,7 +272,7 @@ def generate_income_statement(tenant_name: str, project_id: str):
         existing_loans_schedules_interest_incomes_df=existing_loans_schedules_interest_incomes_df,
         opening_balances=opening_balances,
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     income_statement_df = income_statement.insert_revenue(
@@ -466,11 +466,11 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     # Todo : Get start_date and months_to_forecast from the database using project_id
 
     start_date = "2023-01"
-    MONTHS_TO_FORECAST = 12
+    months_to_forecast = 12
     IMTT = 0.02
 
     direct_cashflow_df = direct_cashflow.generate_direct_cashflow_template(
-        start_date=start_date, months_to_forecast=MONTHS_TO_FORECAST
+        start_date=start_date, months_to_forecast=months_to_forecast
     )
 
     (
@@ -560,7 +560,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         taxation=income_statement_df.loc["Taxation"],
         opening_balance=opening_balances["DEFERED_TAXATION"].iat[0],
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     direct_cashflow_df.loc["Tax Paid"] = tax_schedule_df.loc["Tax Paid"]
@@ -576,7 +576,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     capital_expenses = direct_cashflow.calculate_capital_expenses(
         details_of_assets=details_of_assets,
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     direct_cashflow_df.loc["Capital Expenses"] = -capital_expenses
@@ -593,7 +593,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
             details_of_long_term_borrowing=details_of_long_term_borrowing,
             details_of_short_term_borrowing=details_of_short_term_borrowing,
             start_date=start_date,
-            months_to_forecast=MONTHS_TO_FORECAST,
+            months_to_forecast=months_to_forecast,
         )
     )
 
@@ -691,7 +691,7 @@ def generate_loan_book(tenant_name: str, project_id: str):
     # Todo : Get start_date and months_to_forecast from the database using project_id
 
     start_date = "2023-01"
-    MONTHS_TO_FORECAST = 12
+    months_to_forecast = 12
 
     capital_repayment_new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
@@ -740,21 +740,21 @@ def generate_loan_book(tenant_name: str, project_id: str):
     )
 
     loan_book_df = loan_book.generate_loan_book_template(
-        start_date=start_date, months_to_forecast=MONTHS_TO_FORECAST
+        start_date=start_date, months_to_forecast=months_to_forecast
     )
 
     total_capital_repayments = loan_book.aggregate_new_and_existing_loans_capital_repayments(
         capital_repayments_new_disbursements_df=capital_repayment_new_disbursements_df,
         capital_repayments_existing_loans=capital_repayment_existing_loans,
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     total_interest_income = interest_income.aggregate_new_and_existing_loans_interest_income(
         interest_income_new_disbursements_df=interest_income_new_disbursement_df,
         interest_income_existing_loans=existing_loans_schedules_interest_incomes_df.sum(),
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     opening_balances = helper.columns_to_screaming_snake_case(opening_balances)
@@ -788,7 +788,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
     # Todo : Get start_date and months_to_forecast from the database using project_id
 
     start_date = "2023-01"
-    MONTHS_TO_FORECAST = 12
+    months_to_forecast = 12
 
     other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
@@ -861,7 +861,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
 
     balance_sheet_df = balance_sheet.generate_balance_sheet_template(
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     opening_balances = helper.read_raw_file(
@@ -904,7 +904,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         ],
         opening_balances=opening_balances,
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     long_term_loans_schedules_df = balance_sheet.calculate_long_term_loans_schedules(
@@ -914,7 +914,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         ],
         opening_balances=opening_balances,
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     balance_sheet_df.loc["Loans"] = long_term_loans_schedules_df.loc["Closing Balance"]
@@ -929,7 +929,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
             "RECEIPTS_FROM_TRADE_RECEIVABLES"
         ],
         new_receivables=other_parameters.loc["NEW_TRADE_RECEIVABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
         start_date=start_date,
     )
 
@@ -939,7 +939,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
             "RECEIPTS_FROM_OTHER_RECEIVABLES"
         ],
         new_receivables=other_parameters.loc["NEW_OTHER_RECEIVABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
         start_date=start_date,
     )
 
@@ -949,7 +949,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
             "RECEIPTS_FROM_INTERGROUP_RECEIVABLES"
         ],
         new_receivables=other_parameters.loc["NEW_INTERGROUP_RECEIVABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
         start_date=start_date,
     )
 
@@ -957,7 +957,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         opening_payables=opening_balances["TRADE_PAYABLES"].iat[0],
         payments_to_payables=other_parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
         new_payables=other_parameters.loc["NEW_TRADE_PAYABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
         start_date=start_date,
     )
 
@@ -965,7 +965,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         opening_payables=opening_balances["OTHER_PAYABLES"].iat[0],
         payments_to_payables=other_parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
         new_payables=other_parameters.loc["NEW_OTHER_PAYABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
         start_date=start_date,
     )
 
@@ -995,7 +995,7 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         new_inventories=other_parameters.loc["NEW_INVENTORY"],
         inventories_used=other_parameters.loc["INVENTORY_USED"],
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     balance_sheet_df.loc["Inventories"] = inventories_schedule.loc["Closing Balance"]
@@ -1180,7 +1180,7 @@ def generate_statement_of_cashflows(
     # Todo : Get start_date and months_to_forecast from the database using project_id
 
     start_date = "2023-01"
-    MONTHS_TO_FORECAST = 12
+    months_to_forecast = 12
 
     other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
@@ -1288,7 +1288,7 @@ def generate_statement_of_cashflows(
 
     statement_of_cashflow_df = (
         statement_of_cashflows.generate_statement_of_cashflow_template(
-            start_date, MONTHS_TO_FORECAST
+            start_date, months_to_forecast
         )
     )
 
@@ -1327,7 +1327,7 @@ def generate_statement_of_cashflows(
     capital_expenses = direct_cashflow.calculate_capital_expenses(
         details_of_assets=details_of_assets,
         start_date=start_date,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        months_to_forecast=months_to_forecast,
     )
 
     statement_of_cashflow_df.loc["Purchase Of Fixed Assets"] = capital_expenses
@@ -1440,7 +1440,7 @@ def download_final_file(
     # Todo : Get start_date and months_to_forecast from the database using project_id
 
     start_date = "2023-01"
-    MONTHS_TO_FORECAST = 12
+    months_to_forecast = 12
 
     df = helper.read_final_file(
         tenant_name=tenant_name,

@@ -77,7 +77,6 @@ class ProjectResponse(BaseModel):
     updated_at: datetime
 
 
-
 class UserResponse(BaseModel):
     user_id: int
     tenant_id: int
