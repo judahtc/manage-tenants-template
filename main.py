@@ -104,11 +104,9 @@ def upload_files(
 #         files=files,
 #     )
 
-
+app.include_router(tenants_router.router)
+app.include_router(users_router.router)
 app.include_router(projects_router.router)
-
 app.include_router(intermediate_calculations.router)
 app.include_router(final_calculations.router)
 app.include_router(assumptions.router)
-app.include_router(users_router.router)
-app.include_router(tenants_router.router)

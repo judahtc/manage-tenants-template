@@ -77,13 +77,15 @@ async def create_tenant(
         name="Claxon", issuer_name="CBS Budgetting"
     )
 
+    print(random_password)
+
     qrcode_image = crud.create_base64_qrcode_image(uri)
     # try:
 
     crud.create_tenant(
         db=db, tenant=tenant, password=random_password, secret_key=secret_key
     )
-    
+
     # return await crud.activate_admin_sendgrid(body, password=encryption_key, url=url, qrcode_image=qrcode_image)
     return "tenant successfully created"
     # except:

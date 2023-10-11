@@ -28,18 +28,18 @@ def get_password_hash(password):
 
 
 def check_user(db: Session, user: schemas.UserLoginSchema):
-    fbc_user = db.query(models.Users).filter(models.Users.email == user.email).first()
+    db_user = db.query(models.Users).filter(models.Users.email == user.email).first()
 
-    if fbc_user is None:
+    if db_user is None:
         return False
 
-    if not verify_password(user.password, fbc_user.hashed_password):
+    if not verify_password(user.password, db_user.hashed_password):
         return False
 
-    response = signJWT0(fbc_user.user_id, user.email)
-    response["email"] = fbc_user.email
-    response["first_name"] = fbc_user.first_name
-    response["last_name"] = fbc_user.last_name
-    response["is_active"] = fbc_user.is_active
+    response = signJWT0(db_user.user_id, user.email)
+    response["email"] = db_user.email
+    response["first_name"] = db_user.first_name
+    response["last_name"] = db_user.last_name
+    response["is_active"] = db_user.is_active
 
     return response
