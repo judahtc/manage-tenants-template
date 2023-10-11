@@ -116,6 +116,27 @@ async def get_user_by_email(
     return user
 
 
+@router.patch("users/{email}/toggle-active")
+def toggle_users_active(
+    email: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    if current_user.role != schemas.UserRole.ADMIN:
+        raise HTTPException(
+            detail="You're not authorized to perform this action",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    user = crud.get_user_by_email(db=db, email=email)
+    user.is_active = not user.is_active
+
+    db.commit(user)
+    db.refresh()
+
+    return user
+
+
 @router.delete("/users/{email}")
 async def delete_user_by_email(
     email: str,

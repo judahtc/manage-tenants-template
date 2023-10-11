@@ -63,7 +63,7 @@ def read_root():
     }
 
 
-@app.post("/user/login", response_model=schemas.UserLoginResponse)
+@app.post("/v1/login", response_model=schemas.UserLoginResponse)
 def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     user = security.authenticate_user(
         db=db, username=user.email, password=user.password
@@ -92,34 +92,7 @@ def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     return user
 
 
-@app.get("/{tenant_name}/{project_id}/download-raw-file")
-def download_raw_file(tenant_name: str, project_id: str, file_name: constants.RawFiles):
-    df = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=file_name,
-    )
 
-    stream = io.StringIO()
-    df.to_csv(stream, index=True)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers[
-        "Content-Disposition"
-    ] = f"attachment; file_name={file_name.value}.csv"
-    return response
-
-
-@app.get("/{tenant_name}/{project_id}/raw-filenames")
-def get_raw_filenames(tenant_name: str, project_id: str):
-    raw_files: list = wr.s3.list_objects(
-        f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.raw.value}",
-        boto3_session=constants.MY_SESSION,
-    )
-
-    raw_files = list(map(lambda x: x.split("/")[-1].split(".")[0], raw_files))
-
-    return raw_files
 
 
 # @app.post("/{project_id}/upload-files")

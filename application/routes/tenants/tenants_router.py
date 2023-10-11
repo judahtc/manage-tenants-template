@@ -135,3 +135,24 @@ def update_tenant(
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
     return crud.update_Tenant(tenant_name=tenant_name, edit_tenant=edit_tenant, db=db)
+
+
+@router.patch("tenants/{tenant_name}/toggle-active")
+def toggle_tenant_active(
+    tenant_name: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    if current_user.role != schemas.UserRole.SUPERADMIN:
+        raise HTTPException(
+            detail="You're not authorized to perform this action",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    tenant = crud.get_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
+    tenant.is_active = not tenant.is_active
+
+    db.commit(tenant)
+    db.refresh()
+
+    return tenant

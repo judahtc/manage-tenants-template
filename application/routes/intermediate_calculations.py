@@ -41,18 +41,6 @@ router = APIRouter(
 )
 
 
-@router.post("/projects/{project_id}/upload-files")
-def upload_project_files(
-    project_id: int,
-    files: List[UploadFile] = File(...),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
-):
-    return helper.upload_multiple_files(
-        project_id=project_id,
-        tenant_name=current_user.tenant.company_name,
-        my_session=MY_SESSION,
-        files=files,
-    )
 
 
 @router.get("/projects/{project_id}/calculations/intermediate/new-disbursements")

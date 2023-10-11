@@ -39,7 +39,7 @@ from application.auth.jwt_bearer import JwtBearer
 from application.auth.jwt_handler import decodeJWT, signJWT
 from application.auth.security import get_current_active_user
 from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
-from application.modeling import helper
+from application.modeling import constants, helper
 from application.routes.projects import crud
 from application.routes.tenants import crud as tenants_crud
 from application.routes.users import crud as users_crud
@@ -67,26 +67,56 @@ def create_project(
     return project
 
 
-# @router.post("/upload/{project_id}")
-# def upload_files(
-#     project_id: int, files: List[UploadFile] = File(...), current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)
-# ):
+@router.post("/projects/{project_id}/upload-files")
+def upload_project_files(
+    project_id: int,
+    files: List[UploadFile] = File(...),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    return helper.upload_multiple_files(
+        project_id=project_id,
+        tenant_name=current_user.tenant.company_name,
+        my_session=MY_SESSION,
+        files=files,
+    )
 
-#     user_id = current_user['user_id']
-#     email = current_user['email']
 
-#     user = db.query(models.Users).filter(
-#         (models.Users.user_id == user_id) & (models.Users.email == email)).first()
+@router.get("/projects/{project_id}/raw/data")
+def download_raw_file(
+    project_id: str,
+    file_name: constants.RawFiles,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    df = helper.read_raw_file(
+        tenant_name=current_user.tenant.company_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=file_name,
+    )
 
-#     tenant = db.query(models.Tenant).filter(
-#         models.Tenant.tenant_id == user.tenant_id).first()
-#     tenant_name = tenant.company_name
-#     return helper.upload_multiple_files(
-#         project_id=project_id,
-#         tenant_name=tenant_name,
-#         my_session=MY_SESSION,
-#         files=files,
-#     )
+    stream = io.StringIO()
+    df.to_csv(stream, index=True)
+    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    response.headers[
+        "Content-Disposition"
+    ] = f"attachment; file_name={file_name.value}.csv"
+    return response
+
+
+@router.get("/projects/{project_id}/raw/filenames")
+def get_raw_filenames(
+    project_id: str,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+    raw_files: list = wr.s3.list_objects(
+        f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.raw.value}",
+        boto3_session=constants.MY_SESSION,
+    )
+
+    raw_files = list(map(lambda x: x.split("/")[-1].split(".")[0], raw_files))
+
+    return raw_files
 
 
 @router.get("/projects")

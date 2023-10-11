@@ -87,6 +87,13 @@ async def get_current_user(
 async def get_current_active_user(
     current_user: schemas.UserResponse = Depends(get_current_user),
 ) -> schemas.UserLoginResponse:
+    if not current_user.tenant.is_active:
+        raise HTTPException(
+            detail="Tenant is Inactive", status_code=status.HTTP_401_UNAUTHORIZED
+        )
+
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user"
+        )
     return current_user
