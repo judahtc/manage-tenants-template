@@ -4,9 +4,9 @@ import pandas as pd
 from application.modeling import helper
 
 
-def generate_income_statement_template(valuation_date: str, months_to_forecast: int):
+def generate_income_statement_template(start_date: str, months_to_forecast: int):
     income_statement_template = pd.DataFrame(
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
         index=pd.Index(
             [
                 "Interest Income",

@@ -59,7 +59,7 @@ def calculate_admin_fee_existing_loans(
     loan_term_months: pd.Series,
     remaining_term_months: pd.Series,
     months_to_forecast: int,
-    valuation_date: str,
+    start_date: str,
 ):
     admin_fee_existing = loan_amount * admin_fee_percentage / loan_term_months
 
@@ -79,7 +79,7 @@ def calculate_admin_fee_existing_loans(
     admin_fees_existing_loans = admin_fees_existing_loans.iloc[:, :months_to_forecast]
 
     admin_fees_existing_loans.columns = helper.generate_columns(
-        valuation_date, period=months_to_forecast
+        start_date, period=months_to_forecast
     )
     admin_fees_existing_loans
 
@@ -92,7 +92,7 @@ def calculate_credit_insurance_fee_existing_loans(
     loan_term_months: pd.Series,
     remaining_term_months: pd.Series,
     months_to_forecast: int,
-    valuation_date: str,
+    start_date: str,
 ):
     credit_insurance_fee_existing = (
         loan_amount * credit_insurance_fee_percentage / loan_term_months
@@ -115,7 +115,7 @@ def calculate_credit_insurance_fee_existing_loans(
         :, :months_to_forecast
     ]
     credit_insurance_fees_existing_loans.columns = helper.generate_columns(
-        valuation_date, period=months_to_forecast
+        start_date, period=months_to_forecast
     )
     credit_insurance_fees_existing_loans
 
@@ -248,7 +248,7 @@ def calculate_credit_insurance_fee_for_all_new_disbursements(
 
 
 def calculate_other_income_existing_loans(
-    existing_loans: pd.DataFrame, valuation_date: str, months_to_forecast: int
+    existing_loans: pd.DataFrame, start_date: str, months_to_forecast: int
 ):
     existing_loans = existing_loans.assign(
         remaining_term_months=existing_loans.apply(
@@ -257,7 +257,7 @@ def calculate_other_income_existing_loans(
                 (
                     helper.convert_to_datetime(row["disbursement_date"])
                     + np.timedelta64(row["loan_term"], "M")
-                    - np.datetime64(valuation_date)
+                    - np.datetime64(start_date)
                 )
                 // np.timedelta64(1, "M"),
             ),
@@ -270,7 +270,7 @@ def calculate_other_income_existing_loans(
     #     admin_fee_percentage=existing_loans["admin_fee"],
     #     loan_term_months=existing_loans["loan_term"],
     #     remaining_term_months=existing_loans["remaining_term_months"],
-    #     valuation_date=valuation_date,
+    #     start_date=start_date,
     #     months_to_forecast=months_to_forecast,
     # )
 
@@ -285,7 +285,7 @@ def calculate_other_income_existing_loans(
     )
 
     admin_fee_existing_loans = admin_fee_existing_loans.sum().loc[
-        helper.generate_columns(valuation_date, months_to_forecast)
+        helper.generate_columns(start_date, months_to_forecast)
     ]
 
     credit_insurance_fee_existing_loans = borrowings.calculate_straight_line_payments(
@@ -301,7 +301,7 @@ def calculate_other_income_existing_loans(
     )
 
     credit_insurance_fee_existing_loans = credit_insurance_fee_existing_loans.sum().loc[
-        helper.generate_columns(valuation_date, months_to_forecast)
+        helper.generate_columns(start_date, months_to_forecast)
     ]
 
     other_income_existing_loans = helper.add_series(
@@ -320,26 +320,26 @@ def calculate_other_income_existing_loans(
 def aggregate_new_and_existing_loans_admin_fee(
     admin_fee_for_all_new_disbursements_df: pd.Series,
     admin_fee_existing_loans: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     return (
         admin_fee_for_all_new_disbursements_df.sum(axis=1)
         .add(admin_fee_existing_loans, fill_value=0)
-        .reindex(helper.generate_columns(valuation_date, months_to_forecast))
+        .reindex(helper.generate_columns(start_date, months_to_forecast))
     )
 
 
 def aggregate_new_and_existing_loans_credit_insurance_fee(
     credit_insurance_fee_for_all_new_disbursements_df: pd.Series,
     credit_insurance_fee_existing_loans: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     return (
         credit_insurance_fee_for_all_new_disbursements_df.sum(axis=1)
         .add(credit_insurance_fee_existing_loans, fill_value=0)
-        .reindex(helper.generate_columns(valuation_date, months_to_forecast))
+        .reindex(helper.generate_columns(start_date, months_to_forecast))
     )
 
 
@@ -348,20 +348,20 @@ def aggregate_other_income(
     credit_insurance_fee_for_all_new_disbursements_df: pd.DataFrame,
     admin_fee_existing_loans: pd.Series,
     credit_insurance_fee_existing_loans: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     total_admin_fee = aggregate_new_and_existing_loans_admin_fee(
         admin_fee_for_all_new_disbursements_df=admin_fee_for_all_new_disbursements_df,
         admin_fee_existing_loans=admin_fee_existing_loans,
-        valuation_date=valuation_date,
+        start_date=start_date,
         months_to_forecast=months_to_forecast,
     )
 
     total_credit_insurance_fee = aggregate_new_and_existing_loans_credit_insurance_fee(
         credit_insurance_fee_for_all_new_disbursements_df=credit_insurance_fee_for_all_new_disbursements_df,
         credit_insurance_fee_existing_loans=credit_insurance_fee_existing_loans,
-        valuation_date=valuation_date,
+        start_date=start_date,
         months_to_forecast=months_to_forecast,
     )
 

@@ -61,18 +61,18 @@ def upload_project_files(
 def calculate_new_disbursements(
     tenant_name: str, project_id: str, db: Session = Depends(get_db)
 ):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    # Todo : Get start_date and months_to_forecast from the database using project_id
     # project_crud.update_project_status(
     #     project_id=project_id, status="IN_PROGRESS", db=db
     # )
-    VALUATION_DATE = "2023-01"
+    start_date = "2023-01"
     MONTHS_TO_FORECAST = 12
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
     new_disbursements_df = disbursements.calculate_new_disbursements(
@@ -93,16 +93,16 @@ def calculate_new_disbursements(
 
 @router.get("/{tenant_name}/{project_id}/calculate-loan-schedules-new-disbursements")
 def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    # Todo : Get start_date and months_to_forecast from the database using project_id
 
-    VALUATION_DATE = "2023-01"
+    start_date = "2023-01"
     MONTHS_TO_FORECAST = 12
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
@@ -170,9 +170,9 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
 
 @router.get("/{tenant_name}/{project_id}/calculate-loan-schedules-existing-loans")
 def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    # Todo : Get start_date and months_to_forecast from the database using project_id
 
-    VALUATION_DATE = "2023-01"
+    start_date = "2023-01"
     MONTHS_TO_FORECAST = 12
 
     existing_loans = helper.read_raw_file(
@@ -240,16 +240,16 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
 
 @router.get("/{tenant_name}/{project_id}/calculate-other-income")
 def calculate_other_income(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    # Todo : Get start_date and months_to_forecast from the database using project_id
 
-    VALUATION_DATE = "2023-01"
+    start_date = "2023-01"
     MONTHS_TO_FORECAST = 12
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
@@ -306,7 +306,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
 
     other_income_existing_loans_df = other_income.calculate_other_income_existing_loans(
         existing_loans=existing_loans,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
 
@@ -328,7 +328,7 @@ def calculate_other_income(tenant_name: str, project_id: str):
             "credit_insurance_fee_existing_loans"
         ],
         credit_insurance_fee_for_all_new_disbursements_df=credit_insurance_fee_for_all_new_disbursements_df,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
 
@@ -346,9 +346,9 @@ def calculate_other_income(tenant_name: str, project_id: str):
 
 @router.get("/{tenant_name}/{project_id}/calculate-depreciation")
 def calculate_depreciation(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    # Todo : Get start_date and months_to_forecast from the database using project_id
 
-    VALUATION_DATE = "2023-01"
+    start_date = "2023-01"
     MONTHS_TO_FORECAST = 12
 
     details_of_assets = helper.read_raw_file(
@@ -363,7 +363,7 @@ def calculate_depreciation(tenant_name: str, project_id: str):
 
     depreciations_and_nbvs = depreciation.calculate_depreciations_and_nbvs(
         details_of_assets=details_of_assets,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
         months_to_forecast=MONTHS_TO_FORECAST,
     )
 
@@ -397,23 +397,23 @@ def calculate_depreciation(tenant_name: str, project_id: str):
 def calculate_salaries_and_pensions_and_statutory_contributions(
     tenant_name: str, project_id: str
 ):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    # Todo : Get start_date and months_to_forecast from the database using project_id
 
-    VALUATION_DATE = "2023-01"
+    start_date = "2023-01"
     MONTHS_TO_FORECAST = 12
 
     other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
@@ -429,7 +429,7 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
             disbursement_parameters=disbursement_parameters,
             other_parameters=other_parameters,
             months_to_forecast=MONTHS_TO_FORECAST,
-            valuation_date=VALUATION_DATE,
+            start_date=start_date,
         )
     )
 
@@ -447,16 +447,16 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
 
 @router.get("/{tenant_name}/{project_id}/calculate-provisions")
 def calculate_provisions(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    # Todo : Get start_date and months_to_forecast from the database using project_id
 
-    VALUATION_DATE = "2023-01"
+    start_date = "2023-01"
     MONTHS_TO_FORECAST = 12
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
     opening_balances = helper.read_raw_file(
@@ -499,9 +499,9 @@ def calculate_provisions(tenant_name: str, project_id: str):
 def calculate_finance_costs_and_capital_repayment_on_borrowings(
     tenant_name: str, project_id: str
 ):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    # Todo : Get start_date and months_to_forecast from the database using project_id
 
-    VALUATION_DATE = "2023-01"
+    start_date = "2023-01"
     MONTHS_TO_FORECAST = 12
 
     details_of_long_term_borrowing = helper.read_raw_file(

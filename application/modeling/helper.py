@@ -105,7 +105,7 @@ def read_raw_file(
 
 
 def read_disbursement_parameters_file(
-    tenant_name: str, project_id: int, boto3_session, valuation_date: str
+    tenant_name: str, project_id: int, boto3_session, start_date: str
 ):
     try:
         df = wr.s3.read_parquet(
@@ -115,9 +115,7 @@ def read_disbursement_parameters_file(
 
         df = df.set_index(df.columns[0])
         df.index.name = ""
-        df.columns = pd.period_range(
-            valuation_date, periods=int(df.columns[-1]), freq="M"
-        )
+        df.columns = pd.period_range(start_date, periods=int(df.columns[-1]), freq="M")
 
         df.columns = list(map(str, df.columns))
 
@@ -129,7 +127,7 @@ def read_disbursement_parameters_file(
 
 
 def read_other_parameters_file(
-    tenant_name: str, project_id: int, boto3_session, valuation_date: str
+    tenant_name: str, project_id: int, boto3_session, start_date: str
 ):
     try:
         df = wr.s3.read_parquet(
@@ -139,9 +137,7 @@ def read_other_parameters_file(
 
         df = df.set_index(df.columns[0])
         df.index.name = ""
-        df.columns = pd.period_range(
-            valuation_date, periods=int(df.columns[-1]), freq="M"
-        )
+        df.columns = pd.period_range(start_date, periods=int(df.columns[-1]), freq="M")
 
         df.columns = list(map(str, df.columns))
 

@@ -6,17 +6,17 @@ from application.modeling import helper
 def aggregate_new_and_existing_loans_capital_repayments(
     capital_repayments_new_disbursements_df: pd.Series,
     capital_repayments_existing_loans: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     return (
         capital_repayments_new_disbursements_df["total"]
         .add(capital_repayments_existing_loans, fill_value=0)
-        .reindex(helper.generate_columns(valuation_date, months_to_forecast))
+        .reindex(helper.generate_columns(start_date, months_to_forecast))
     )
 
 
-def generate_loan_book_template(valuation_date: str, months_to_forecast: int):
+def generate_loan_book_template(start_date: str, months_to_forecast: int):
     loan_book = pd.DataFrame(
         index=[
             "Opening Balance",
@@ -25,7 +25,7 @@ def generate_loan_book_template(valuation_date: str, months_to_forecast: int):
             "Interest Income",
             "Closing Balance",
         ],
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
     )
     return loan_book
 

@@ -20,7 +20,7 @@ def create_depreciation_and_nbv_series_index(
     details_of_assets,
     remaining_useful_life,
     asset_id,
-    valuation_date,
+    start_date,
 ):
     acquistion_date = details_of_assets.loc[
         details_of_assets.asset_id == asset_id, "acquisition_date"
@@ -28,7 +28,7 @@ def create_depreciation_and_nbv_series_index(
 
     acquistion_date = helper.convert_to_datetime(acquistion_date)
     index = pd.period_range(
-        valuation_date, periods=remaining_useful_life, freq="M"
+        start_date, periods=remaining_useful_life, freq="M"
     ).strftime("%b-%Y")
 
     return index
@@ -36,7 +36,7 @@ def create_depreciation_and_nbv_series_index(
 
 def calculate_reducing_balance_depreciation(
     details_of_assets: pd.DataFrame,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
     new_assets: bool = False,
 ):
@@ -45,7 +45,7 @@ def calculate_reducing_balance_depreciation(
 
     depreciations = []
     nbvs = []
-    df_index = helper.generate_columns(valuation_date, months_to_forecast)
+    df_index = helper.generate_columns(start_date, months_to_forecast)
 
     details_of_assets = details_of_assets.assign(
         remaining_useful_life=details_of_assets.apply(
@@ -54,7 +54,7 @@ def calculate_reducing_balance_depreciation(
                 (
                     helper.convert_to_datetime(row["acquisition_date"])
                     + np.timedelta64(row["life"], "Y")
-                    - np.datetime64(valuation_date)
+                    - np.datetime64(start_date)
                 )
                 // np.timedelta64(1, "M"),
             ),
@@ -78,7 +78,7 @@ def calculate_reducing_balance_depreciation(
             remaining_useful_life=remaining_useful_life,
             asset_id=asset_id,
             # new_assets=new_assets,
-            valuation_date=valuation_date,
+            start_date=start_date,
         )
 
         net_book_value, depreciation = cal_depreciation_and_nbv(
@@ -100,7 +100,7 @@ def calculate_reducing_balance_depreciation(
 
 def calculate_straight_line_depreciation(
     details_of_assets: pd.DataFrame,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     if details_of_assets.empty:
@@ -108,7 +108,7 @@ def calculate_straight_line_depreciation(
 
     depreciations = []
     nbvs = []
-    df_index = helper.generate_columns(valuation_date, months_to_forecast)
+    df_index = helper.generate_columns(start_date, months_to_forecast)
 
     details_of_assets = details_of_assets.assign(
         remaining_useful_life=details_of_assets.apply(
@@ -117,7 +117,7 @@ def calculate_straight_line_depreciation(
                 (
                     helper.convert_to_datetime(row["acquisition_date"])
                     + np.timedelta64(row["life"], "Y")
-                    - pd.Timestamp(valuation_date)
+                    - pd.Timestamp(start_date)
                 )
                 // np.timedelta64(1, "M"),
             ),
@@ -155,7 +155,7 @@ def calculate_straight_line_depreciation(
         index = create_depreciation_and_nbv_series_index(
             details_of_assets=details_of_assets,
             remaining_useful_life=remaining_useful_life,
-            valuation_date=valuation_date,
+            start_date=start_date,
             asset_id=asset_id,
         )
 
@@ -178,7 +178,7 @@ def calculate_straight_line_depreciation(
 
 def calculate_depreciations_and_nbvs(
     details_of_assets: pd.DataFrame,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     details_of_assets_reducing_balance = details_of_assets.loc[
@@ -193,14 +193,14 @@ def calculate_depreciations_and_nbvs(
         calculate_reducing_balance_depreciation(
             details_of_assets=details_of_assets_reducing_balance,
             months_to_forecast=months_to_forecast,
-            valuation_date=valuation_date,
+            start_date=start_date,
         )
     )
 
     depreciation_and_nbv_of_assets_straight_line = calculate_straight_line_depreciation(
         details_of_assets=details_of_assets_straight_line,
         months_to_forecast=months_to_forecast,
-        valuation_date=valuation_date,
+        start_date=start_date,
     )
 
     nbvs_for_assets = pd.concat(

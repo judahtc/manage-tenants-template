@@ -108,13 +108,13 @@ def calculate_monthly_repayments_new_disbursements(
 def aggregate_new_and_existing_loans_interest_income(
     interest_income_new_disbursements_df: pd.Series,
     interest_income_existing_loans: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     return (
         interest_income_new_disbursements_df["total"]
         .add(interest_income_existing_loans, fill_value=0)
-        .reindex(helper.generate_columns(valuation_date, months_to_forecast))
+        .reindex(helper.generate_columns(start_date, months_to_forecast))
     )
 
 
@@ -253,7 +253,7 @@ def generate_loan_schedules_existing_loans(
     outstanding_balance: pd.Series,
     interest_rate_monthly: pd.Series,
     repayment_amount_monthly: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_project: int = 12 * 10,
 ):
     number_of_loans = outstanding_balance.shape[0]
@@ -275,7 +275,7 @@ def generate_loan_schedules_existing_loans(
         )
 
     index = outstanding_balance.index
-    columns = helper.generate_columns(valuation_date, months_to_project)
+    columns = helper.generate_columns(start_date, months_to_project)
 
     return {
         "interest": pd.DataFrame(interest, index=index, columns=columns),
