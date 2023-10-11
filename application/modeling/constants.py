@@ -21,18 +21,11 @@ MY_SESSION = boto3.Session(
 
 
 class RawFiles(str, Enum):
-    details_of_existing_assets = "details_of_existing_assets"
-    details_of_new_assets = "details_of_new_assets"
-    details_of_existing_long_term_borrowing = "details_of_existing_long_term_borrowing"
-    details_of_existing_short_term_borrowing = (
-        "details_of_existing_short_term_borrowing"
-    )
-    details_of_new_short_term_borrowing = "details_of_new_short_term_borrowing"
-    details_of_new_long_term_borrowing = "details_of_new_long_term_borrowing"
+    details_of_assets = "details_of_assets"
+    details_of_borrowing = "details_of_borrowing"
     income_statement_index = "income_statement_index"
     static_inputs_income_statement = "static_inputs_income_statement"
     variable_inputs_income_statement = "variable_inputs_income_statement"
-    disbursements = "disbursements"
     parameters = "parameters"
     existing_loans = "existing_loans"
     opening_balances = "opening_balances"
@@ -47,6 +40,7 @@ class IntermediateFiles(str, Enum):
     credit_insurance_fee_for_all_new_disbursements_df = (
         "credit_insurance_fee_for_all_new_disbursements_df"
     )
+    other_payables_schedule_df = "other_payables_schedule_df"
 
     existing_loans_schedules_capital_repayments_df = (
         "existing_loans_schedules_capital_repayments_df"
@@ -67,7 +61,7 @@ class IntermediateFiles(str, Enum):
         "provision_for_credit_loss_for_all_new_disbursements_df"
     )
     finance_costs_df = "finance_costs_df"
-    capital_repayment_on_borrowings_df = "capital_repayment_on_borrowings_df"
+    capital_repayment_borrowings_df = "capital_repayment_borrowings_df"
     income_statement_df = "income_statement_df"
     direct_cashflow_df = "direct_cashflow_df"
     loan_book_df = "loan_book_df"
@@ -77,6 +71,14 @@ class IntermediateFiles(str, Enum):
 
     short_term_loans_schedules_df = "short_term_loans_schedules_df"
     long_term_loans_schedules_df = "long_term_loans_schedules_df"
+    other_receivables_schedule_df = "other_receivables_schedule_df"
+    intergroup_receivables_schedule_df = "intergroup_receivables_schedule_df"
+    long_term_borrowings_capital_repayments_df = (
+        "long_term_borrowings_capital_repayments_df"
+    )
+    short_term_borrowings_capital_repayments_df = (
+        "short_term_borrowings_capital_repayments_df"
+    )
 
 
 class FinalFiles(str, Enum):

@@ -1,9 +1,0 @@
-company,principal,interest_rate,remaining_loan_term,loan_term,method
-Zimnat Life,50000,0.14,10,12,straight_line
-Zimnat Life,30000,0.13,12,12,straight_line
-Grandre,100000,0.12,7,12,straight_line
-FCB,120383,0.18,5,12,straight_line
-Nurture,500000,0.25,8,12,straight_line
-NMB,450000,0.22,11,12,straight_line
-Beramasamba,30000,0.13,3,12,straight_line
-Dandemutande,25000,0.12,7,12,reducing_balance

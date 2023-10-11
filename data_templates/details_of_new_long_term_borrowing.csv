@@ -1,5 +1,0 @@
-﻿company,principal,interest_rate,loan_term,remaining_loan_term,loan_start_date,method
-ZMF,200000,0.34,60,60,01/07/2023,straight_line
-ZAM,400000,0.25,60,60,01/07/2023,reducing_balance
-NBS,500000,0.185,60,60,01/09/2023,straight_line
-ZB,500000,0.21,60,60,01/10/2023,straight_line

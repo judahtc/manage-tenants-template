@@ -4,76 +4,44 @@ import pandas as pd
 from application.modeling import helper
 
 
-def calculate_agent_salaries(
+def calculate_agent_commission(
     consumer_pvt_disbursements: pd.Series,
     consumer_ssb_disbursements: pd.Series,
-    agent_salary: pd.Series,
-    consumer_pvt_number_of_agents: pd.Series,
-    agent_commission: pd.Series,
+    agent_commission_percentage: pd.Series,
 ):
-    agent_salaries = agent_salary * consumer_pvt_number_of_agents + agent_commission * (
+    agent_commission = agent_commission_percentage * (
         consumer_pvt_disbursements + consumer_ssb_disbursements
     )
-    return agent_salaries
+    return agent_commission
 
 
 def calculate_credit_officer_salaries(
-    sme_disbursements: pd.Series,
     credit_officer_salary: pd.Series,
     sme_number_of_credit_officers: pd.Series,
-    credit_officer_commission: pd.Series,
 ):
-    credit_officer_salaries = (
-        credit_officer_salary * sme_number_of_credit_officers
-        + credit_officer_commission * sme_disbursements
-    )
+    credit_officer_salaries = credit_officer_salary * sme_number_of_credit_officers
     return credit_officer_salaries
 
 
-def calculate_total_salaries(
-    agent_salaries: pd.Series,
-    credit_officer_salaries: pd.Series,
-    other_staff_salary: pd.Series,
-    months_to_forecast: int,
-    valuation_date: str,
+def calculate_credit_officer_commission(
+    sme_disbursements: pd.Series,
+    credit_officer_commission: pd.Series,
 ):
-    total_salaries = agent_salaries + credit_officer_salaries + other_staff_salary
-    total_salaries.index = helper.generate_columns(valuation_date, months_to_forecast)
-    return total_salaries
+    credit_officer_commission = credit_officer_commission * sme_disbursements
+    return credit_officer_commission
 
 
-def generate_trade_receivables_schedule(
-    opening_trade_receivables: int,
-    receipts_from_trade_receivables: pd.Series,
-    new_trade_receivables: pd.Series,
-    valuation_date: str,
-    months_to_forecast: int,
-):
-    receipts_from_trade_receivables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
-    new_trade_receivables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
-
-    trade_receivables = pd.DataFrame(
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
-        index=[
-            "Opening Balance",
-            "New Trade Receivables",
-            "Receipts From Trade Receivables",
-            "Closing Balance",
-        ],
-        data=0,
-    )
-
-    trade_receivables.loc["New Trade Receivables"] = new_trade_receivables
-    trade_receivables.loc[
-        "Receipts From Trade Receivables"
-    ] = -receipts_from_trade_receivables
-    trade_receivables.iloc[0, 0] = opening_trade_receivables
-    trade_receivables = helper.calculate_opening_and_closing_balances(trade_receivables)
-    return trade_receivables
+# def calculate_total_salaries(
+#     agent_commission: pd.Series,
+#     credit_officer_commission: pd.Series
+#     credit_officer_salaries: pd.Series,
+#     other_staff_salary: pd.Series,
+#     months_to_forecast: int,
+#     valuation_date: str,
+# ):
+#     total_salaries = agent_commission + credit_officer_salaries + other_staff_salary
+#     total_salaries.index = helper.generate_columns(valuation_date, months_to_forecast)
+#     return total_salaries
 
 
 def calculate_provision_for_bad_debts(
@@ -303,28 +271,39 @@ def calculate_salaries_and_pension_and_statutory_contributions(
     months_to_forecast: int,
     valuation_date: str,
 ):
-    agent_salaries = calculate_agent_salaries(
+    agent_commission = calculate_agent_commission(
         consumer_pvt_disbursements=new_disbursements_df["consumer_pvt_disbursements"],
-        consumer_pvt_number_of_agents=parameters.loc["CONSUMER_PVT_NUMBER_OF_AGENTS"],
         consumer_ssb_disbursements=new_disbursements_df["consumer_ssb_disbursements"],
-        agent_salary=parameters.loc["AGENT_SALARY"],
-        agent_commission=parameters.loc["AGENT_COMMISSION"],
+        agent_commission_percentage=parameters.loc["AGENT_COMMISSION"],
     )
 
     credit_officer_salaries = calculate_credit_officer_salaries(
-        sme_disbursements=new_disbursements_df["sme_disbursements"],
         credit_officer_salary=parameters.loc["CREDIT_OFFICER_SALARY"],
         sme_number_of_credit_officers=parameters.loc["SME_NUMBER_OF_CREDIT_OFFICERS"],
+    )
+
+    credit_officer_commission = calculate_credit_officer_commission(
+        sme_disbursements=new_disbursements_df["sme_disbursements"],
         credit_officer_commission=parameters.loc["CREDIT_OFFICER_COMMISSION"],
     )
 
-    total_salaries = calculate_total_salaries(
-        agent_salaries=agent_salaries,
-        credit_officer_salaries=credit_officer_salaries,
-        other_staff_salary=parameters.loc["OTHER_STAFF_SALARY"],
-        months_to_forecast=months_to_forecast,
-        valuation_date=valuation_date,
+    # total_salaries = calculate_total_salaries(
+    #     agent_commission=agent_commission,
+    #     credit_officer_commission=credit_officer_commission,
+    #     credit_officer_salaries=credit_officer_salaries,
+    #     other_staff_salary=parameters.loc["OTHER_STAFF_SALARY"],
+    #     months_to_forecast=months_to_forecast,
+    #     valuation_date=valuation_date,
+    # )
+
+    total_salaries = (
+        agent_commission
+        + credit_officer_salaries
+        + parameters.loc["OTHER_STAFF_SALARY"]
+        + credit_officer_commission
     )
+
+    total_salaries = helper.change_period_index_to_strftime(total_salaries)
 
     pensions_and_statutory_contributions_percentage = parameters.loc[
         "PENSION_AND_STATUROTY_CONTRIBUTIONS_PERCENT"
@@ -333,55 +312,22 @@ def calculate_salaries_and_pension_and_statutory_contributions(
     pensions_and_statutory_contributions_percentage.index = helper.generate_columns(
         valuation_date, months_to_forecast
     )
+
     pensions_and_statutory_contributions = (
         total_salaries * pensions_and_statutory_contributions_percentage
     )
 
     return pd.DataFrame(
         {
-            "agent_salaries": agent_salaries.values,
+            "agent_commission": agent_commission.values,
             "credit_officer_salaries": credit_officer_salaries.values,
+            "credit_officer_commission": credit_officer_commission.values,
             "other_staff_salaries": parameters.loc["OTHER_STAFF_SALARY"].values,
             "total": total_salaries.values,
             "pensions_and_statutory_contributions": pensions_and_statutory_contributions,
         },
         index=total_salaries.index,
     )
-
-
-# def calculate_provisions(
-#     trade_receivables_schedule: pd.DataFrame,
-#     provision_for_credit_loss_for_all_new_disbursements_df: pd.DataFrame,
-#     parameters: pd.DataFrame,
-#     valuation_date: str,
-#     months_to_forecast: int,
-# ):
-#     provision_for_bad_debts = calculate_provision_for_bad_debts(
-#         trade_receivables=trade_receivables_schedule.loc["Closing Balance"],
-#         trade_receivables_provision_for_bad_debts_percentage=parameters.loc[
-#             "TRADE_RECEIVABLES_PROVISION_FOR_BAD_DEBTS"
-#         ],
-#         valuation_date=valuation_date,
-#         months_to_forecast=months_to_forecast,
-#     )
-
-#     provision_for_credit_loss = (
-#         provision_for_credit_loss_for_all_new_disbursements_df.sum(axis=1).reindex_like(
-#             provision_for_bad_debts
-#         )
-#     )
-
-#     total_provisions = helper.add_series(
-#         [provision_for_bad_debts, provision_for_credit_loss]
-#     )
-
-#     return pd.DataFrame(
-#         {
-#             "provision_for_bad_debts": provision_for_bad_debts,
-#             "provision_for_credit_loss": provision_for_credit_loss,
-#             "total": total_provisions,
-#         }
-#     )
 
 
 def calculate_finance_costs(

@@ -234,10 +234,25 @@ def calculate_credit_insurance_fee_for_all_new_disbursements(
 def calculate_other_income_existing_loans(
     existing_loans: pd.DataFrame, valuation_date: str, months_to_forecast: int
 ):
+    existing_loans = existing_loans.assign(
+        remaining_term_months=existing_loans.apply(
+            lambda row: np.maximum(
+                0,
+                (
+                    helper.convert_to_datetime(row["disbursement_date"])
+                    + np.timedelta64(row["loan_term"], "M")
+                    - np.datetime64(valuation_date)
+                )
+                // np.timedelta64(1, "M"),
+            ),
+            axis=1,
+        )
+    )
+
     admin_fee_existing_loans = calculate_admin_fee_existing_loans(
         loan_amount=existing_loans["loan_amount"],
-        admin_fee_percentage=existing_loans["admin_fee_percentage"],
-        loan_term_months=existing_loans["loan_term_months"],
+        admin_fee_percentage=existing_loans["admin_fee"],
+        loan_term_months=existing_loans["loan_term"],
         remaining_term_months=existing_loans["remaining_term_months"],
         valuation_date=valuation_date,
         months_to_forecast=months_to_forecast,
@@ -245,10 +260,8 @@ def calculate_other_income_existing_loans(
 
     credit_insurance_fee_existing_loans = calculate_credit_insurance_fee_existing_loans(
         loan_amount=existing_loans["loan_amount"],
-        credit_insurance_fee_percentage=existing_loans[
-            "credit_insurance_fee_percentage"
-        ],
-        loan_term_months=existing_loans["loan_term_months"],
+        credit_insurance_fee_percentage=existing_loans["credit_insurance_fee"],
+        loan_term_months=existing_loans["loan_term"],
         remaining_term_months=existing_loans["remaining_term_months"],
         valuation_date=valuation_date,
         months_to_forecast=months_to_forecast,

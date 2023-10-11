@@ -4,32 +4,103 @@ import pandas as pd
 from application.modeling import helper
 
 
+def add_other_assets(parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame):
+    other_assets = parameters.loc[
+        [
+            "INTANGIBLE_ASSETS",
+            "INVESTMENT_IN_SUBSIDIARIES",
+            "INVESTMENT_IN_ASSOCIATES",
+            "INVESTMENT_PROPERTIES",
+            "EQUITY_INVESTMENTS",
+            "LONG_TERM_MONEY_MARKET_INVESTMENTS",
+            "SHORT_TERM_MONEY_MARKET_INVESTMENTS",
+            "LOANS_TO_RELATED_ENTITIES",
+        ]
+    ]
+
+    purchase_of_other_assets = (np.where(other_assets > 0, 1, 0) * other_assets).sum()
+
+    sale_of_other_assets = (np.where(other_assets < 0, 1, 0) * other_assets).sum()
+
+    direct_cashflow_df.loc[
+        "Purchase Of Other Assets"
+    ] = helper.change_period_index_to_strftime(purchase_of_other_assets)
+
+    direct_cashflow_df.loc[
+        "Sale Of Other Assets"
+    ] = helper.change_period_index_to_strftime(sale_of_other_assets)
+
+    return direct_cashflow_df
+
+
+def add_equity_and_intercompany_loans(
+    parameters: pd.DataFrame, direct_cashflow_df: pd.DataFrame
+):
+    equity_and_intercompany_loans = parameters.loc[
+        [
+            "TREASURY_SHARES",
+            "INTERCOMPANY_LOANS",
+            "SHARE_CAPITAL",
+            "SHARE_PREMIUM",
+            "OTHER_COMPONENTS_OF_EQUITY",
+        ]
+    ]
+
+    issue_of_equity_and_intercompany_loans = (
+        np.where(equity_and_intercompany_loans > 0, 1, 0)
+        * equity_and_intercompany_loans
+    ).sum()
+    sale_of_equity_and_repayments_on_intercompany_loans = (
+        np.where(equity_and_intercompany_loans < 0, 1, 0)
+        * equity_and_intercompany_loans
+    ).sum()
+
+    direct_cashflow_df.loc[
+        "Issue Of Equity And Intercompany Loans"
+    ] = helper.change_period_index_to_strftime(issue_of_equity_and_intercompany_loans)
+
+    direct_cashflow_df.loc[
+        "Repayments On Intercompany Loans and Equity Buyback",
+    ] = -helper.change_period_index_to_strftime(
+        sale_of_equity_and_repayments_on_intercompany_loans
+    )
+
+    return direct_cashflow_df
+
+
 def generate_direct_cashflow_template(valuation_date, months_to_forecast):
     direct_cashflow = pd.DataFrame(
-        index=[
-            "CASH INFLOWS",
-            "Receipts From Trade Receivables",
-            "Capital Repayment",
-            "Interest Income",
-            "Other Income",
-            "Issue Of Shares",
-            "Short Term Borrowing",
-            "Long Term Borrowing",
-            "Total Cash Inflows",
-            "CASH OUTFLOWS",
-            "Disbursements",
-            "Operating Expenses",
-            "Capital Expenses",
-            "Interest Expense",
-            "Dividend Paid",
-            "Capital Repayment On Borrowings",
-            "Tax Paid",
-            "Payments To Trade Payables",
-            "Total Cash Outflows",
-            "Net Increase/Decrease In Cash",
-            "Opening Balance",
-            "Closing Balance",
-        ],
+        index=pd.Index(
+            [
+                "CASH INFLOWS",
+                "Short Term Borrowing",
+                "Long Term Borrowing",
+                "Capital Repayment",
+                "Interest Income",
+                "Other Income",
+                "Receipts From Receivables",
+                "Sale Of Other Assets",
+                "Issue Of Equity And Intercompany Loans",
+                "Total Cash Inflows",
+                "CASH OUTFLOWS",
+                "Disbursements",
+                "Interest Expense",
+                "Capital Repayment On Borrowings",
+                "Operating Expenses",
+                "Capital Expenses",
+                "Payments To Payables",
+                "Repayments On Intercompany Loans and Equity Buyback",
+                "Purchase Of Inventory",
+                "Purchase Of Other Assets",
+                "Dividend Paid",
+                "Tax Paid",
+                "Total Cash Outflows",
+                "Net Increase/Decrease In Cash",
+                "Opening Balance",
+                "Closing Balance",
+            ],
+            name="CASHFLOW_STATEMENT",
+        ),
         columns=helper.generate_columns(valuation_date, months_to_forecast),
         data=np.nan,
     )
@@ -49,17 +120,30 @@ def calculate_operating_expenses(income_statement: pd.DataFrame):
 
 
 def calculate_capital_expenses(
-    details_of_new_assets: pd.DataFrame, valuation_date: str, months_to_forecast: int
+    details_of_assets: pd.DataFrame, valuation_date: str, months_to_forecast: int
 ):
-    capital_expenses = details_of_new_assets[["cost", "purchase_date"]]
+    details_of_assets["acquisition_date"] = helper.convert_to_datetime(
+        details_of_assets["acquisition_date"]
+    )
+
+    details_of_new_assets = details_of_assets.loc[
+        details_of_assets["acquisition_date"] > valuation_date
+    ]
+
+    capital_expenses = details_of_new_assets[["book_value", "acquisition_date"]]
+
     capital_expenses = capital_expenses.assign(
-        purchase_date=helper.convert_to_datetime(capital_expenses["purchase_date"])
+        acquisition_date=helper.convert_to_datetime(
+            capital_expenses["acquisition_date"]
+        )
     )
-    capital_expenses["purchase_date"] = (
-        capital_expenses["purchase_date"].dt.to_period("M").dt.strftime("%b-%Y")
+
+    capital_expenses["acquisition_date"] = (
+        capital_expenses["acquisition_date"].dt.to_period("M").dt.strftime("%b-%Y")
     )
+
     capital_expenses = (
-        capital_expenses.groupby("purchase_date")["cost"]
+        capital_expenses.groupby("acquisition_date")["book_value"]
         .sum()
         .reindex(
             helper.generate_columns(valuation_date, months_to_forecast), fill_value=0
@@ -71,21 +155,28 @@ def calculate_capital_expenses(
 def calculate_direct_cashflow_borrowing(
     details_of_new_borrowing: pd.DataFrame, valuation_date: str, months_to_forecast: int
 ):
+    details_of_new_borrowing.assign(
+        effective_date=helper.convert_to_datetime(
+            details_of_new_borrowing["effective_date"]
+        ),
+        inplace=True,
+    )
+    
     direct_cashflow_borrowing = details_of_new_borrowing[
-        ["principal", "loan_start_date"]
+        ["nominal_amount", "effective_date"]
     ]
     direct_cashflow_borrowing = direct_cashflow_borrowing.assign(
         loan_start_date=helper.convert_to_datetime(
-            direct_cashflow_borrowing["loan_start_date"]
+            direct_cashflow_borrowing["effective_date"]
         )
     )
-    direct_cashflow_borrowing["loan_start_date"] = (
-        direct_cashflow_borrowing["loan_start_date"]
+    direct_cashflow_borrowing["effective_date"] = (
+        direct_cashflow_borrowing["effective_date"]
         .dt.to_period("M")
         .dt.strftime("%b-%Y")
     )
     direct_cashflow_borrowing = (
-        direct_cashflow_borrowing.groupby("loan_start_date")["principal"]
+        direct_cashflow_borrowing.groupby("effective_date")["nominal_amount"]
         .sum()
         .reindex(
             helper.generate_columns(valuation_date, months_to_forecast), fill_value=0
@@ -166,34 +257,6 @@ def calculate_opening_and_closing_balances_for_direct_cashflows(
     direct_cashflow.columns = map(str, direct_cashflow.columns.strftime("%b-%Y"))
 
     return direct_cashflow
-
-
-def generate_loan_book_template(valuation_date: str, months_to_forecast: int):
-    loan_book = pd.DataFrame(
-        index=[
-            "Opening Balance",
-            "New Disbursements",
-            "Capital Repayments",
-            "Closing Balance",
-        ],
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
-    )
-    return loan_book
-
-
-def insert_loan_book_items(
-    loan_book: pd.DataFrame,
-    opening_balance_on_loan_book: float,
-    capital_repayment: pd.Series,
-    disbursements: pd.Series,
-):
-    loan_book.loc[
-        "Opening Balance", loan_book.columns[0]
-    ] = opening_balance_on_loan_book
-    loan_book.loc["Capital Repayments"] = capital_repayment
-    loan_book.loc["New Disbursements"] = disbursements
-
-    return loan_book
 
 
 def calculate_capital_repayment_on_borrowings(
@@ -324,11 +387,22 @@ def generate_tax_schedule(
 
 
 def calculate_long_and_short_term_borrowing_for_direct_cashflow(
-    details_of_new_long_term_borrowing: pd.DataFrame,
-    details_of_new_short_term_borrowing: pd.DataFrame,
+    details_of_borrowing: pd.DataFrame,
     valuation_date: str,
     months_to_forecast: int,
 ):
+    details_of_borrowing["effective_date"] = helper.convert_to_datetime(
+        details_of_borrowing["effective_date"]
+    )
+    details_of_new_long_term_borrowing = details_of_borrowing.loc[
+        (details_of_borrowing["tenure"] > 12)
+        & (details_of_borrowing["effective_date"] > pd.Timestamp(valuation_date))
+    ]
+    details_of_new_short_term_borrowing = details_of_borrowing.loc[
+        (details_of_borrowing["tenure"] <= 12)
+        & (details_of_borrowing["effective_date"] > pd.Timestamp(valuation_date))
+    ]
+
     short_term_borrowing = calculate_direct_cashflow_borrowing(
         details_of_new_borrowing=details_of_new_short_term_borrowing,
         valuation_date=valuation_date,

@@ -1,51 +1,48 @@
+import datetime
+import io
 import json
-from typing import List
-from fastapi import APIRouter, HTTPException, status, Response
-import pandas as pd
-import boto3
-import awswrangler as wr
-from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
-from application.modeling import helper
-from application.utils import models
-from application.auth.jwt_handler import signJWT
-from application.utils import schemas
-from fastapi import HTTPException, status
-from passlib.context import CryptContext
-from fastapi.responses import JSONResponse
-import boto3
-
-import main
+import os
 import random
 import string
-from application.auth.jwt_handler import signJWT, decodeJWT
-from fastapi import FastAPI, HTTPException, status, File, UploadFile, Depends, Form, Header, Request
-from fastapi.staticfiles import StaticFiles
+import urllib
+from datetime import datetime, timedelta
+from typing import List
+
+import awswrangler as wr
+import boto3
+import pandas as pd
+from botocore.exceptions import ClientError
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
+from passlib.context import CryptContext
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from application.utils import models
-import urllib
+from sqlalchemy.orm import Session, sessionmaker
+
+import main
 from application.auth.jwt_bearer import JwtBearer
-from botocore.exceptions import ClientError
-import awswrangler as wr
-import boto3
-import json
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from fastapi.responses import JSONResponse
-import random
-import string
-import datetime
-from fastapi.responses import StreamingResponse
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from fastapi.responses import FileResponse
-import os
-from application.utils.database import SessionLocal, engine
-import io
+from application.auth.jwt_handler import decodeJWT, signJWT
 from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
+from application.modeling import helper
 from application.routes.projects import crud
+from application.utils import models, schemas
+from application.utils.database import SessionLocal, engine
+
 router = APIRouter(tags=["PROJECTS MANAGEMENT"])
 
 
@@ -213,33 +210,33 @@ def create_project(
     return response
 
 
-@router.post("/upload/{project_id}")
-async def upload_files(files: list[UploadFile], project_id: str,  current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
-    try:
-        user_id = current_user['user_id']
-        email = current_user['email']
+# @router.post("/upload/{project_id}")
+# async def upload_files(files: list[UploadFile], project_id: str,  current_user: dict = Depends(JwtBearer()), db: Session = Depends(get_db)):
+#     try:
+#         user_id = current_user['user_id']
+#         email = current_user['email']
 
-        user = db.query(models.Users).filter(
-            (models.Users.user_id == user_id) & (models.Users.email == email)).first()
+#         user = db.query(models.Users).filter(
+#             (models.Users.user_id == user_id) & (models.Users.email == email)).first()
 
-        tenant = db.query(models.Tenant).filter(
-            models.Tenant.tenant_id == user.tenant_id).first()
-    except:
-        raise HTTPException(
-            status_code=403, detail="authentication token expired")
-    for file in files:
-        try:
-            # Generate a unique S3 object key using the file's original name
-            object_key = f"project_{project_id}/raw/{file.filename}"
+#         tenant = db.query(models.Tenant).filter(
+#             models.Tenant.tenant_id == user.tenant_id).first()
+#     except:
+#         raise HTTPException(
+#             status_code=403, detail="authentication token expired")
+#     for file in files:
+#         try:
+#             # Generate a unique S3 object key using the file's original name
+#             object_key = f"project_{project_id}/raw/{file.filename}"
 
-            # Upload the file to S3
-            S3_CLIENT.upload_fileobj(
-                file.file, tenant.company_name, object_key)
+#             # Upload the file to S3
+#             S3_CLIENT.upload_fileobj(
+#                 file.file, tenant.company_name, object_key)
 
-            # Optionally, you can set permissions on the uploaded object
-            # s3.put_object_acl(ACL='public-read', Bucket=S3_BUCKET_NAME, Key=object_key)
+#             # Optionally, you can set permissions on the uploaded object
+#             # s3.put_object_acl(ACL='public-read', Bucket=S3_BUCKET_NAME, Key=object_key)
 
-        except Exception as e:
-            return {"message": str(e)}
+#         except Exception as e:
+#             return {"message": str(e)}
 
-    return {"message": "Files uploaded successfully"}
+#     return {"message": "Files uploaded successfully"}

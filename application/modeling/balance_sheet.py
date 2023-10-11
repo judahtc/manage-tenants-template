@@ -4,37 +4,95 @@ import pandas as pd
 from application.modeling import helper
 
 
-def generate_trade_payables_schedule(
-    opening_trade_payables: int,
-    payments_to_trade_payables: pd.Series,
-    new_trade_payables: pd.Series,
+def generate_inventories_schedule(
+    opening_inventories: int,
+    inventories_used: pd.Series,
+    new_inventories: pd.Series,
     valuation_date: str,
     months_to_forecast: int,
 ):
-    payments_to_trade_payables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
-    new_trade_payables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
+    inventories_used.index = helper.generate_columns(valuation_date, months_to_forecast)
 
-    trade_payables = pd.DataFrame(
+    new_inventories.index = helper.generate_columns(valuation_date, months_to_forecast)
+
+    inventories = pd.DataFrame(
         columns=helper.generate_columns(valuation_date, months_to_forecast),
         index=[
             "Opening Balance",
-            "New Trade Payables",
-            "Payments To Trade Payables",
+            "New Inventories",
+            "Inventories Used",
             "Closing Balance",
         ],
         data=0,
     )
 
-    trade_payables.loc["New Trade Payables"] = new_trade_payables
-    trade_payables.loc["Payments To Trade Payables"] = -payments_to_trade_payables
-    trade_payables.iloc[0, 0] = opening_trade_payables
+    inventories.loc["New Inventories"] = new_inventories
+    inventories.loc["Inventories Used"] = -inventories_used
+    inventories.iloc[0, 0] = opening_inventories
+    inventories = helper.calculate_opening_and_closing_balances(inventories)
+    return inventories
 
-    trade_payables = helper.calculate_opening_and_closing_balances(trade_payables)
-    return trade_payables
+
+def generate_payables_schedule(
+    opening_payables: int,
+    payments_to_payables: pd.Series,
+    new_payables: pd.Series,
+    valuation_date: str,
+    months_to_forecast: int,
+):
+    payments_to_payables.index = helper.generate_columns(
+        valuation_date, months_to_forecast
+    )
+    new_payables.index = helper.generate_columns(valuation_date, months_to_forecast)
+
+    payables = pd.DataFrame(
+        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        index=[
+            "Opening Balance",
+            "New Payables",
+            "Payments To Payables",
+            "Closing Balance",
+        ],
+        data=0,
+    )
+
+    payables.loc["New Payables"] = new_payables
+    payables.loc["Payments To Payables"] = -payments_to_payables
+    payables.iloc[0, 0] = opening_payables
+
+    payables = helper.calculate_opening_and_closing_balances(payables)
+    return payables
+
+
+def generate_receivables_schedule(
+    opening_receivables: int,
+    receipts_from_receivables: pd.Series,
+    new_receivables: pd.Series,
+    valuation_date: str,
+    months_to_forecast: int,
+):
+    receipts_from_receivables.index = helper.generate_columns(
+        valuation_date, months_to_forecast
+    )
+
+    new_receivables.index = helper.generate_columns(valuation_date, months_to_forecast)
+
+    receivables = pd.DataFrame(
+        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        index=[
+            "Opening Balance",
+            "New Receivables",
+            "Receipts From Receivables",
+            "Closing Balance",
+        ],
+        data=0,
+    )
+
+    receivables.loc["New Receivables"] = new_receivables
+    receivables.loc["Receipts From Receivables"] = -receipts_from_receivables
+    receivables.iloc[0, 0] = opening_receivables
+    receivables = helper.calculate_opening_and_closing_balances(receivables)
+    return receivables
 
 
 def generate_balance_sheet_template(valuation_date: str, months_to_forecast: int):
@@ -100,42 +158,42 @@ def generate_balance_sheet_template(valuation_date: str, months_to_forecast: int
     return balance_sheet_template
 
 
-def calculate_other_assets(
-    balance_sheet_df: pd.DataFrame,
-    parameters: pd.DataFrame,
-    opening_balances: pd.DataFrame,
-):
-    other_assets_index = pd.Index(
-        [
-            "INTANGIBLE_ASSETS",
-            "INVESTMENT_IN_SUBSIDIARIES",
-            "INVESTMENT_IN_ASSOCIATES",
-            "INVESTMENT_PROPERTIES",
-            "EQUITY_INVESTMENTS",
-            "LONG_TERM_MONEY_MARKET_INVESTMENTS",
-            "SHORT_TERM_MONEY_MARKET_INVESTMENTS",
-            "LOANS_TO_RELATED_ENTITIES",
-            "INVENTORIES",
-            "OTHER_RECEIVABLES",
-            "INTERGROUP_RECEIVABLES",
-            "OTHER_RECEIVABLES",
-        ]
-    )
+# def calculate_other_assets(
+#     balance_sheet_df: pd.DataFrame,
+#     parameters: pd.DataFrame,
+#     opening_balances: pd.DataFrame,
+# ):
+#     other_assets_index = pd.Index(
+#         [
+#             "INTANGIBLE_ASSETS",
+#             "INVESTMENT_IN_SUBSIDIARIES",
+#             "INVESTMENT_IN_ASSOCIATES",
+#             "INVESTMENT_PROPERTIES",
+#             "EQUITY_INVESTMENTS",
+#             "LONG_TERM_MONEY_MARKET_INVESTMENTS",
+#             "SHORT_TERM_MONEY_MARKET_INVESTMENTS",
+#             "LOANS_TO_RELATED_ENTITIES",
+#             "INVENTORIES",
+#             "OTHER_RECEIVABLES",
+#             "INTERGROUP_RECEIVABLES",
+#             "OTHER_RECEIVABLES",
+#         ]
+#     )
 
-    other_assets = (
-        parameters.loc[other_assets_index].cumsum(axis=1)
-        + opening_balances[other_assets_index].T.values
-    )
+#     other_assets = (
+#         parameters.loc[other_assets_index].cumsum(axis=1)
+#         + opening_balances[other_assets_index].T.values
+#     )
 
-    other_assets.columns = pd.PeriodIndex(other_assets.columns, freq="M").strftime(
-        "%b-%Y"
-    )
+#     other_assets.columns = pd.PeriodIndex(other_assets.columns, freq="M").strftime(
+#         "%b-%Y"
+#     )
 
-    other_assets.index = other_assets_index.str.title().str.replace("_", " ")
+#     other_assets.index = other_assets_index.str.title().str.replace("_", " ")
 
-    balance_sheet_df.loc[other_assets.index] = other_assets
+#     balance_sheet_df.loc[other_assets.index] = other_assets
 
-    return balance_sheet_df
+#     return balance_sheet_df
 
 
 def sum_financial_statements_totals(financial_statement: pd.DataFrame):
@@ -174,7 +232,7 @@ def calculate_final_balances(balance_sheet_df: pd.DataFrame):
 
 def calculate_short_term_loans_schedules(
     long_and_short_term_borrowing_df: pd.DataFrame,
-    capital_repayment_on_borrowings_df: pd.DataFrame,
+    capital_repayment_on_borrowings_df: pd.Series,
     opening_balances: pd.DataFrame,
     valuation_date: str,
     months_to_forecast: int,
@@ -197,9 +255,9 @@ def calculate_short_term_loans_schedules(
         "short_term_borrowing"
     ]
 
-    short_term_loans_schedule.loc["Repayments"] = -capital_repayment_on_borrowings_df[
-        "short_term_borrowing"
-    ]
+    short_term_loans_schedule.loc["Repayments"] = -capital_repayment_on_borrowings_df
+
+    short_term_loans_schedule.loc["Repayments"].fillna(0, inplace=True)
 
     short_term_loans_schedule = helper.calculate_opening_and_closing_balances(
         short_term_loans_schedule
@@ -210,7 +268,7 @@ def calculate_short_term_loans_schedules(
 
 def calculate_long_term_loans_schedules(
     long_and_short_term_borrowing_df: pd.DataFrame,
-    capital_repayment_on_borrowings_df: pd.DataFrame,
+    capital_repayment_on_borrowings_df: pd.Series,
     opening_balances: pd.DataFrame,
     valuation_date: str,
     months_to_forecast: int,
@@ -233,9 +291,7 @@ def calculate_long_term_loans_schedules(
         "long_term_borrowing"
     ]
 
-    long_term_loans_schedule.loc["Repayments"] = -capital_repayment_on_borrowings_df[
-        "long_term_borrowing"
-    ]
+    long_term_loans_schedule.loc["Repayments"] = -capital_repayment_on_borrowings_df
 
     long_term_loans_schedule = helper.calculate_opening_and_closing_balances(
         long_term_loans_schedule
