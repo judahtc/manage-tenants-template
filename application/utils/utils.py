@@ -23,6 +23,8 @@ def generate_random_key():
     return secret_key
 
 
+
+
 def check_otp(otp: str, secret_key: str, user_id: str):
     try:
         verify_otp = pyotp.TOTP(secret_key).verify(otp)

@@ -73,8 +73,7 @@ class ProjectsCreate(BaseModel):
     project_name: str
     description: str
     valuation_date: str
-    months_to_forecast: str 
-    
+    months_to_forecast: str
 
 
 class Projects(ProjectsBase):
@@ -134,20 +133,18 @@ class UserBase(BaseModel):
     token: str
 
 
-class UserBaseRead(BaseModel):
+class UserBaseResponse(BaseModel):
+    user_id: int
     tenant_id: int
     email: str
+    first_name: str
     last_name: str
     is_active: bool
-    is_creator: bool
+    role: str
     created_at: datetime
     phone_number: str
-    user_id: int
-    first_name: str
-    is_admin: bool
-    is_viewer: bool
     updated_at: datetime
-    work_address: str
+    created_at: datetime
 
     class Config:
         orm_mode = True
@@ -178,8 +175,6 @@ class UsersBaseCreate(BaseModel):
     first_name: str
     last_name: str
     phone_number: str
-    work_address: str
-    password: str
 
     class Config:
         orm_mode = True

@@ -6,6 +6,8 @@ from fastapi import HTTPException, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWTError
 from passlib.context import CryptContext
+from application.routes.users import crud as users_crud
+from application.utils import crud
 
 JWT_SECRET = config("secret")
 JWT_ALGORITHM = config("algorithm")
