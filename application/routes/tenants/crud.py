@@ -106,17 +106,11 @@ def get_tenant_by_id(db: Session, tenant_id: int):
     return db.query(models.Tenant).get(tenant_id)
 
 
-def delete_tenant(db: Session, tenant_name: str):
-    try:
-        tenant = get_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
-        if tenant is not None:
-            db.delete(tenant)
-            db.commit()
-            return {"response": "tenant successfully deleted "}
-        else:
-            return {"response": "tenant does not exist "}
-    except:
-        return {"response": "tenant does not exist "}
+def delete_tenant_by_tenant_name(db: Session, tenant_name: str):
+    tenant = get_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
+    db.delete(tenant)
+    db.commit()
+    return tenant
 
 
 def update_Tenant(tenant_name: str, edit_tenant: schemas.TenantUpdate, db: Session):

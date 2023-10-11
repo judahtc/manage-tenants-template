@@ -27,7 +27,7 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def check_user(db: Session, user: schemas.UserLoginSchema):
+def check_user(db: Session, user: schemas.UserLogin):
     db_user = db.query(models.Users).filter(models.Users.email == user.email).first()
 
     if db_user is None:

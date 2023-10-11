@@ -94,6 +94,25 @@ class UserResponse(BaseModel):
         orm_mode = True
 
 
+class UserLoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user_id: int
+    tenant_id: int
+    email: str
+    first_name: str
+    last_name: str
+    is_active: bool
+    role: str
+    created_at: datetime
+    phone_number: str
+    updated_at: datetime
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
 # -------------------------------------------------------  FROM PARDON -----------------------------------
 
 
@@ -192,7 +211,7 @@ class TokenData(BaseModel):
     username: Union[str, None] = None
 
 
-class UserLoginSchema(BaseModel):
+class UserLogin(BaseModel):
     email: str
     password: str
 

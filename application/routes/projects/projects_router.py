@@ -37,6 +37,7 @@ from sqlalchemy.orm import Session, sessionmaker
 import main as main
 from application.auth.jwt_bearer import JwtBearer
 from application.auth.jwt_handler import decodeJWT, signJWT
+from application.auth.security import get_current_active_user
 from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
 from application.modeling import helper
 from application.routes.projects import crud
@@ -45,18 +46,17 @@ from application.routes.users import crud as users_crud
 from application.utils import models, schemas
 from application.utils.database import SessionLocal, engine, get_db
 
-router = APIRouter(tags=["PROJECTS MANAGEMENT"])
+router = APIRouter(
+    tags=["PROJECTS MANAGEMENT"], dependencies=[Depends(get_current_active_user)]
+)
 
 
 @router.post("/projects/")
 def create_project(
     project: schemas.ProjectCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    current_user_email = current_user.get("email")
-    current_user = users_crud.get_user_by_email(db, email=current_user_email)
-
     project = crud.create_projects(
         user_id=current_user.user_id,
         tenant_id=current_user.tenant_id,
@@ -65,8 +65,6 @@ def create_project(
     )
 
     return project
-
-
 
 
 # @router.post("/upload/{project_id}")
@@ -93,22 +91,21 @@ def create_project(
 
 @router.get("/projects")
 def get_projects(
-    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    current_user_email = current_user.get("email")
-    current_user = users_crud.get_user_by_email(db, email=current_user_email)
     projects = crud.get_projects_by_tenant_id(db=db, tenant_id=current_user.tenant_id)
 
     return projects
 
 
-@router.get("/projects/user")
+@router.get("/projects/users/{user_id}")
 async def get_projects_by_user_id(
-    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    current_user_email = current_user.get("email")
-    current_user = users_crud.get_user_by_email(db, email=current_user_email)
-    projects = crud.get_project_by_user_id(db=db, user_id=current_user.user_id)
+    projects = crud.get_project_by_user_id(db=db, user_id=user_id)
     return projects
 
 
@@ -116,10 +113,7 @@ async def get_projects_by_user_id(
 def get_project_by_id(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
 ):
-    current_user_email = current_user.get("email")
-    current_user = users_crud.get_user_by_email(db, email=current_user_email)
     db_project = crud.get_project_by_user_id(db, project_id=project_id)
 
     if db_project is None:
@@ -135,7 +129,6 @@ def update_project_by_id(
     project_id: str,
     edit_project: schemas.ProjectUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
 ):
     return crud.update_project_by_id(
         project_id=project_id, edit_project=edit_project, db=db
@@ -146,7 +139,6 @@ def update_project_by_id(
 async def delete_project_by_id(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
 ):
     db_project = crud.get_project_by_user_id(db, project_id=project_id)
     if db_project is None:

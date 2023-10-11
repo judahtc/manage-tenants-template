@@ -40,6 +40,7 @@ from sqlalchemy.orm import Session, sessionmaker
 import main as main
 from application.auth.jwt_bearer import JwtBearer
 from application.auth.jwt_handler import decodeJWT, signJWT
+from application.auth.security import get_current_active_user
 from application.routes.tenants import crud
 from application.utils import models, schemas, utils
 from application.utils.database import SessionLocal, engine, get_db
@@ -85,7 +86,9 @@ async def create_tenant(
 
 @router.get("/tenant/{tenant_name}")
 def get_tenant(
-    tenant_name: str, db: Session = Depends(get_db)
+    tenant_name: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ) -> Union[schemas.TenantBaseResponse, dict, None]:
     # tenant_id=1
     return crud.get_tenant_by_tenant_name(tenant_name=tenant_name, db=db)
@@ -93,18 +96,35 @@ def get_tenant(
 
 @router.get("/tenants/", response_model=List[schemas.TenantBaseResponse])
 def get_tenants(
-    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
     tenants = crud.get_tenants(db)
     return tenants
 
 
 @router.delete("/tenants/{tenant_name}")
-async def delete_tenant(tenant_name: str, db: Session = Depends(get_db)):
-    try:
-        return crud.delete_tenant(db=db, tenant_name=tenant_name)
-    except:
-        return {"response": "tenant does not exist "}
+async def delete_tenant(
+    tenant_name: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    if current_user.role != schemas.UserRole.SUPERADMIN:
+        raise HTTPException(
+            detail="You are not authorized to perform action",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    db_tenant = crud.get_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
+
+    if db_tenant is None:
+        raise HTTPException(
+            detail="Tenant does not exist", status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    crud.delete_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put("/tenants/{tenant_name}")
@@ -112,6 +132,6 @@ def update_tenant(
     tenant_name: str,
     edit_tenant: schemas.TenantUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
     return crud.update_Tenant(tenant_name=tenant_name, edit_tenant=edit_tenant, db=db)

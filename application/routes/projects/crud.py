@@ -15,23 +15,23 @@ from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
 from application.utils import models, schemas, utils
 
 
-def get_project_by_id(db: Session, project_id: int):
+def get_project_by_id(db: Session, project_id: int) -> models.Projects:
     return db.query(models.Projects).get(project_id)
 
 
-def get_projects_by_tenant_id(db: Session, tenant_id: int):
+def get_projects_by_tenant_id(db: Session, tenant_id: int) -> list[models.Projects]:
     return (
         db.query(models.Projects).filter(models.Projects.tenant_id == tenant_id).all()
     )
 
 
-def get_project_by_user_id(db: Session, user_id: int):
+def get_project_by_user_id(db: Session, user_id: int) -> list[models.Projects]:
     return db.query(models.Projects).filter(models.Projects.user_id == user_id).all()
 
 
 def create_projects(
     user_id: int, tenant_id: str, db: Session, project: schemas.ProjectCreate
-):
+) -> models.Projects:
     db_project = models.Projects(
         project_name=project.project_name,
         description=project.description,
@@ -73,7 +73,7 @@ def addAssumptionsMetadata(
 
 def update_project_by_id(
     project_id: str, edit_project: schemas.ProjectUpdate, db: Session
-):
+) -> models.Projects:
     project = get_project_by_id(db=db, project_id=project_id)
 
     project.project_name = edit_project.project_name
@@ -84,14 +84,14 @@ def update_project_by_id(
     return project
 
 
-def update_project_status(project_id: str, status: str, db: Session):
+def update_project_status(project_id: str, status: str, db: Session) -> models.Projects:
     project = get_project_by_id(db=db, project_id=project_id)
     project.project_status = status
     db.commit()
     return project
 
 
-def delete_project_by_id(db: Session, project_id: str):
+def delete_project_by_id(db: Session, project_id: str) -> models.Projects:
     project = get_project_by_id(db=db, project_id=project_id)
     db.delete(project)
     db.commit()

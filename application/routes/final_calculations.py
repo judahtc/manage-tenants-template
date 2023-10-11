@@ -8,6 +8,7 @@ from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
 
 from application.auth.jwt_bearer import JwtBearer
+from application.auth.security import get_current_active_user
 from application.aws_helper.helper import S3_CLIENT
 from application.modeling import (
     balance_sheet,
@@ -21,10 +22,13 @@ from application.modeling import (
     statement_of_cashflows,
 )
 from application.routes.projects import crud as project_crud
-from application.utils import models
+from application.routes.users import crud as users_crud
+from application.utils import models, schemas
 from application.utils.database import get_db
 
-router = APIRouter(tags=["FINAL CALCULATIONS"])
+router = APIRouter(
+    tags=["FINAL CALCULATIONS"], dependencies=[Depends(get_current_active_user)]
+)
 
 
 def read_files_for_generating_income(
@@ -224,12 +228,16 @@ def calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_busi
     )
 
 
-@router.get("/{tenant_name}/{project_id}/generate-income-statement")
-def generate_income_statement(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+@router.get("/projects/{project_id}/calculations/income-statement")
+def generate_income_statement(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     (
         other_parameters,
@@ -461,13 +469,17 @@ def read_files_for_generating_direct_cashflow(
     )
 
 
-@router.get("/{tenant_name}/{project_id}/generate-direct-cashflow")
-def generate_direct_cashflow(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
-    IMTT = 0.02
+@router.get("/projects/{project_id}/calculations/direct-cashflow")
+def generate_direct_cashflow(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    imtt = project.imtt
+    tenant_name = current_user.tenant.company_name
 
     direct_cashflow_df = direct_cashflow.generate_direct_cashflow_template(
         start_date=start_date, months_to_forecast=months_to_forecast
@@ -640,7 +652,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     )
 
     income_statement_df.loc["2% Taxation"] = (
-        direct_cashflow_df.loc["Total Cash Outflows"] * IMTT
+        direct_cashflow_df.loc["Total Cash Outflows"] * imtt
     )
 
     income_statement_df = income_statement.calculate_profit_or_loss_for_period(
@@ -686,12 +698,16 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/generate-loan-book")
-def generate_loan_book(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+@router.get("/projects/{project_id}/calculations/loan-book")
+def generate_loan_book(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     capital_repayment_new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
@@ -783,12 +799,16 @@ def generate_loan_book(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/generate-balance-sheet")
-def generate_balance_sheet(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+@router.get("/projects/{project_id}/calculations/balance-sheet")
+def generate_balance_sheet(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
@@ -802,13 +822,6 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.net_book_values_df,
-    )
-
-    capital_repayment_borrowings_df = helper.read_intermediate_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=constants.IntermediateFiles.capital_repayment_borrowings_df,
     )
 
     long_and_short_term_borrowing_df = helper.read_intermediate_file(
@@ -1173,14 +1186,16 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/generate-statement-of-cashflows")
+@router.get("/projects/{project_id}/calculations/statement-of-cashflows")
 def generate_statement_of_cashflows(
-    tenant_name: str, project_id: str, db: Session = Depends(get_db)
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
@@ -1429,18 +1444,19 @@ def generate_statement_of_cashflows(
         file_name=constants.FinalFiles.statement_of_cashflow_df,
         file_stage=constants.FileStage.final,
     )
-    # project_crud.update_project_status(project_id=project_id, status="COMPLETED", db=db)
+    project_crud.update_project_status(
+        project_id=project_id, status=schemas.ProjectStatus.COMPLETED, db=db
+    )
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/download-final-file")
+@router.get("/projects/{project_id}/results")
 def download_final_file(
-    tenant_name: str, project_id: str, file_name: constants.FinalFiles
+    project_id: str,
+    file_name: constants.FinalFiles,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+    tenant_name = current_user.tenant.company_name
 
     df = helper.read_final_file(
         tenant_name=tenant_name,
@@ -1462,10 +1478,14 @@ def download_final_file(
     return response
 
 
-@router.get("/{tenant_name}/{project_id}/download-intermediate-file")
+@router.get("/projects/{project_id}/results/intermediate")
 def download_intermediate_file(
-    tenant_name: str, project_id: str, file_name: constants.IntermediateFiles
+    project_id: int,
+    file_name: constants.IntermediateFiles,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
+    tenant_name = current_user.tenant.company_name
+
     df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -1482,8 +1502,13 @@ def download_intermediate_file(
     return response
 
 
-@router.get("/{tenant_name}/{project_id}/final-filenames")
-def get_final_filenames(tenant_name: str, project_id: str):
+@router.get("/projects/{project_id}/results/filenames")
+def get_final_filenames(
+    project_id: int,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+
     final_files: list = wr.s3.list_objects(
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.final.value}",
         boto3_session=constants.MY_SESSION,

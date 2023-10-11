@@ -40,32 +40,22 @@ from sqlalchemy.orm import Session, sessionmaker
 import main as main
 from application.auth.jwt_bearer import JwtBearer
 from application.auth.jwt_handler import decodeJWT, signJWT
+from application.auth.security import get_current_active_user
 from application.routes.users import crud, emails
 from application.utils import models, schemas, utils
-from application.utils.database import SessionLocal, engine
+from application.utils.database import SessionLocal, engine, get_db
 
-router = APIRouter(tags=["USER MANAGEMENT"])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
+router = APIRouter(
+    tags=["USER MANAGEMENT"], dependencies=[Depends(get_current_active_user)]
+)
 
 
 @router.post("/users/", response_model=schemas.UserResponse)
 async def create_user(
     user: schemas.UsersBaseCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    current_user_email = current_user.get("email")
-    current_user = crud.get_user_by_email(db=db, email=current_user_email)
-
     if current_user.role != schemas.UserRole.ADMIN:
         raise HTTPException(
             detail="You're not authorized to perform this action",
@@ -102,19 +92,19 @@ async def create_user(
 
 
 @router.get("/users/", response_model=list[schemas.UserResponse])
-def read_users(
-    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+def get_users_by_tenant_id(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    user_email = current_user.get("email")
-    user = crud.get_user_by_email(db=db, email=user_email)
-    users = crud.get_users(db, tenant_id=user.user_id)
+    users = crud.get_users(db, tenant_id=current_user.tenant_id)
 
     return users
 
 
 @router.get("/users/{email}", response_model=schemas.UserResponse)
-async def read_user_by_email(
-    email: str, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+async def get_user_by_email(
+    email: str,
+    db: Session = Depends(get_db),
 ):
     user = crud.get_user_by_email(db=db, email=email)
 
@@ -128,11 +118,10 @@ async def read_user_by_email(
 
 @router.delete("/users/{email}")
 async def delete_user_by_email(
-    email: str, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
-) -> dict:
-    current_user_email = current_user.get("email")
-    current_user = crud.get_user_by_email(db=db, email=current_user_email)
-
+    email: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
     if current_user.role != schemas.UserRole.ADMIN:
         raise HTTPException(
             detail="You're not authorized to perform this action",
@@ -152,10 +141,10 @@ async def delete_user_by_email(
 
 
 @router.put("/users/{email}")
-def update_user(
+def update_user_by_email(
     email: str,
     edit_user: schemas.UserUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
     return crud.update_by_email(email, edit_user=edit_user, db=db)

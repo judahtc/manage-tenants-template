@@ -17,6 +17,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from application.auth.jwt_bearer import JwtBearer
+from application.auth.security import get_current_active_user
 from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
 from application.modeling import (
     borrowings,
@@ -32,41 +33,37 @@ from application.modeling import (
 from application.routes.projects import crud as project_crud
 from application.routes.tenants import crud as tenants_crud
 from application.routes.users import crud as users_crud
+from application.utils import schemas
 from application.utils.database import SessionLocal, get_db
 
-router = APIRouter(tags=["INTERMEDIATE CALCULATIONS"])
+router = APIRouter(
+    tags=["INTERMEDIATE CALCULATIONS"], dependencies=[Depends(get_current_active_user)]
+)
 
 
 @router.post("/projects/{project_id}/upload-files")
 def upload_project_files(
-    tenant_name: str,
     project_id: int,
     files: List[UploadFile] = File(...),
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(JwtBearer()),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    current_user_email = current_user.get("email")
-    current_user = users_crud.get_user_by_email(db, email=current_user_email)
-    tenant = tenants_crud.get_tenant_by_id(db, tenant_id=current_user.tenant_id)
-
     return helper.upload_multiple_files(
         project_id=project_id,
-        tenant_name=tenant_name,
+        tenant_name=current_user.tenant.company_name,
         my_session=MY_SESSION,
         files=files,
     )
 
 
-@router.get("/{tenant_name}/{project_id}/calculate-new-disbursements")
+@router.get("/projects/{project_id}/calculations/intermediate/new-disbursements")
 def calculate_new_disbursements(
-    tenant_name: str, project_id: str, db: Session = Depends(get_db)
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-    # project_crud.update_project_status(
-    #     project_id=project_id, status="IN_PROGRESS", db=db
-    # )
-    start_date = "2023-01"
-    months_to_forecast = 12
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    tenant_name = current_user.tenant.company_name
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
@@ -91,12 +88,18 @@ def calculate_new_disbursements(
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/calculate-loan-schedules-new-disbursements")
-def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+@router.get(
+    "/projects/{project_id}/calculations/intermediate/loan-schedules-new-disbursements"
+)
+def calculate_loan_schedules_new_disbursements(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
@@ -168,13 +171,14 @@ def calculate_loan_schedules_new_disbursements(tenant_name: str, project_id: str
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/calculate-loan-schedules-existing-loans")
-def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
-
+@router.get(
+    "/projects/{project_id}/calculations/intermediate/loan-schedules-existing-loans"
+)
+def calculate_loan_schedules_existing_loans(
+    project_id: str,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
     existing_loans = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -238,12 +242,16 @@ def calculate_loan_schedules_existing_loans(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/calculate-other-income")
-def calculate_other_income(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+@router.get("/projects/{project_id}/calculations/intermediate/other-income")
+def calculate_other_income(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
@@ -344,12 +352,16 @@ def calculate_other_income(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/calculate-depreciation")
-def calculate_depreciation(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+@router.get("/projects/{project_id}/calculations/intermediate/depreciation")
+def calculate_depreciation(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     details_of_assets = helper.read_raw_file(
         tenant_name=tenant_name,
@@ -392,15 +404,17 @@ def calculate_depreciation(tenant_name: str, project_id: str):
 
 
 @router.get(
-    "/{tenant_name}/{project_id}/calculate-salaries-and-pensions-and-statutory-contributions"
+    "/projects/{project_id}/calculations/intermediate/salaries-and-pensions-and-statutory-contributions"
 )
 def calculate_salaries_and_pensions_and_statutory_contributions(
-    tenant_name: str, project_id: str
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
@@ -445,26 +459,21 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
     return {"messages": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/calculate-provisions")
-def calculate_provisions(tenant_name: str, project_id: str):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+@router.get("/projects/{project_id}/calculations/intermediate/provisions")
+def calculate_provisions(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    tenant_name = current_user.tenant.company_name
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
-    )
-
-    opening_balances = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=constants.RawFiles.opening_balances,
-        set_index=False,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
@@ -494,15 +503,13 @@ def calculate_provisions(tenant_name: str, project_id: str):
 
 
 @router.get(
-    "/{tenant_name}/{project_id}/calculate-finance-costs-and-capital-repayment-on-borrowings"
+    "/projects/{project_id}/calculations/intermediate/finance-costs-and-capital-repayment-on-borrowings"
 )
 def calculate_finance_costs_and_capital_repayment_on_borrowings(
-    tenant_name: str, project_id: str
+    project_id: str,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    # Todo : Get start_date and months_to_forecast from the database using project_id
-
-    start_date = "2023-01"
-    months_to_forecast = 12
+    tenant_name = current_user.tenant.company_name
 
     details_of_long_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
@@ -523,6 +530,7 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     details_of_long_term_borrowing = helper.columns_to_snake_case(
         details_of_long_term_borrowing
     )
+
     details_of_short_term_borrowing = helper.columns_to_snake_case(
         details_of_short_term_borrowing
     )
@@ -606,7 +614,7 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/intermediate-filenames")
+@router.get("/projects/{project_id}/results/intermediate/filenames")
 def get_intermediate_filenames(tenant_name: str, project_id: str):
     intermediate_files: list = wr.s3.list_objects(
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.intermediate.value}",

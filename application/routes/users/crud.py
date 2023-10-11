@@ -28,11 +28,11 @@ def get_tenant_name(tenant_id: str, db: Session):
     return tenant_name.company_name
 
 
-def get_user_by_email(db: Session, email: str):
+def get_user_by_email(db: Session, email: str) -> models.Users:
     return db.query(models.Users).filter(models.Users.email == email).first()
 
 
-def delete_by_email(db: Session, email: str):
+def delete_by_email(db: Session, email: str) -> models.Users:
     user = get_user_by_email(db=db, email=email)
     db.delete(user)
     db.commit()
@@ -94,7 +94,7 @@ def create_user(
     secret_key: str,
     password: str,
     admin,
-):
+) -> models.Users:
     db_user = db.query(models.Users).filter(models.Users.email == user.email).first()
 
     if db_user is not None:
