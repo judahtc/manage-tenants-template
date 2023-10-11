@@ -55,7 +55,9 @@ def get_db():
         db.close()
 
 
-@router.post("/users/", response_model=schemas.UserBaseResponse)
+
+
+@router.post("/users/", response_model=schemas.UserResponse)
 async def create_user(
     user: schemas.UsersBaseCreate,
     db: Session = Depends(get_db),
@@ -99,7 +101,7 @@ async def create_user(
     return created_user
 
 
-@router.get("/users/", response_model=list[schemas.UserBaseResponse])
+@router.get("/users/", response_model=list[schemas.UserResponse])
 def read_users(
     db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
 ):
@@ -110,7 +112,7 @@ def read_users(
     return users
 
 
-@router.get("/users/{email}", response_model=schemas.UserBaseResponse)
+@router.get("/users/{email}", response_model=schemas.UserResponse)
 async def read_user_by_email(
     email: str, db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
 ):

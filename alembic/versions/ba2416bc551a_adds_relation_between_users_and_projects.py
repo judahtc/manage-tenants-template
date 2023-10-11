@@ -1,8 +1,8 @@
-"""create tables
+"""adds relation between users and projects
 
-Revision ID: f563f3bfad61
-Revises: 
-Create Date: 2023-10-11 09:05:13.918646
+Revision ID: ba2416bc551a
+Revises: 38531253b84f
+Create Date: 2023-10-11 12:18:18.023032
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f563f3bfad61'
-down_revision: Union[str, None] = None
+revision: str = 'ba2416bc551a'
+down_revision: Union[str, None] = '38531253b84f'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

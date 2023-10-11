@@ -1,7 +1,16 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -27,7 +36,7 @@ class Tenant(Base):
     )  # requires input
 
     users = relationship("Users", back_populates="tenant")
-    # projects = relationship("Projects", back_populates="tenant")
+    projects = relationship("Projects", back_populates="tenant")
 
 
 class Users(Base):
@@ -77,19 +86,20 @@ class Users(Base):
 class Projects(Base):
     __tablename__ = "projects"
 
+    tenant_id = Column(Integer, ForeignKey("tenants.tenant_id"))
+    user_id = Column(Integer, ForeignKey("users.user_id"))
     project_id = Column(Integer, primary_key=True, index=True)
     project_name = Column(String)
     description = Column(String)
-    valuation_date = Column(DateTime(timezone=True))
+    start_date = Column(Date)
     imtt = Column(Float)
     months_to_forecast = Column(Integer)
-    tenant_id = Column(String)
     project_status = Column(String, nullable=False)
     created_at = Column(DateTime, default=func.now())  # auto captured
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
-    user_id = Column(Integer, ForeignKey("users.user_id"))
     users = relationship("Users", back_populates="projects")
+    tenant = relationship("Tenant", back_populates="projects")
 
 
 class AuditTrail(Base):

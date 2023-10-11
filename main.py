@@ -65,22 +65,10 @@ def login(user: schemas.UserLoginSchema, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email and password",
+            detail="Incorrect email or password",
         )
 
     return user
-
-
-@app.post("/{tenant_name}/{project_id}/upload-files")
-def upload_files(
-    tenant_name: str, project_id: int, files: List[UploadFile] = File(...)
-):
-    return helper.upload_multiple_files(
-        project_id=project_id,
-        tenant_name=tenant_name,
-        my_session=MY_SESSION,
-        files=files,
-    )
 
 
 # @app.post("/{project_id}/upload-files")
@@ -109,4 +97,4 @@ app.include_router(users_router.router)
 app.include_router(projects_router.router)
 app.include_router(intermediate_calculations.router)
 app.include_router(final_calculations.router)
-app.include_router(assumptions.router)
+# app.include_router(assumptions.router)

@@ -42,16 +42,7 @@ from application.auth.jwt_bearer import JwtBearer
 from application.auth.jwt_handler import decodeJWT, signJWT
 from application.routes.tenants import crud
 from application.utils import models, schemas, utils
-from application.utils.database import SessionLocal, engine
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
+from application.utils.database import SessionLocal, engine, get_db
 
 router = APIRouter(tags=["TENANTS MANAGEMENT"])
 
@@ -92,20 +83,20 @@ async def create_tenant(
     #     return {"response":"tenant not created"}
 
 
-@router.get("/tenants/", response_model=List[schemas.TenantBaseResponse])
-def read_tenants(
-    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
-):
-    tenants = crud.get_tenants(db)
-    return tenants
-
-
 @router.get("/tenant/{tenant_name}")
 def get_tenant(
     tenant_name: str, db: Session = Depends(get_db)
 ) -> Union[schemas.TenantBaseResponse, dict, None]:
     # tenant_id=1
     return crud.get_tenant_by_tenant_name(tenant_name=tenant_name, db=db)
+
+
+@router.get("/tenants/", response_model=List[schemas.TenantBaseResponse])
+def get_tenants(
+    db: Session = Depends(get_db), current_user: dict = Depends(JwtBearer())
+):
+    tenants = crud.get_tenants(db)
+    return tenants
 
 
 @router.delete("/tenants/{tenant_name}")

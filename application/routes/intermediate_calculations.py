@@ -1,3 +1,5 @@
+from typing import List, Union
+
 import awswrangler as wr
 import pandas as pd
 from fastapi import (
@@ -14,6 +16,8 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from application.auth.jwt_bearer import JwtBearer
+from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
 from application.modeling import (
     borrowings,
     constants,
@@ -26,9 +30,31 @@ from application.modeling import (
     other_income,
 )
 from application.routes.projects import crud as project_crud
+from application.routes.tenants import crud as tenants_crud
+from application.routes.users import crud as users_crud
 from application.utils.database import SessionLocal, get_db
 
 router = APIRouter(tags=["INTERMEDIATE CALCULATIONS"])
+
+
+@router.post("/projects/{project_id}/upload-files")
+def upload_project_files(
+    tenant_name: str,
+    project_id: int,
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(JwtBearer()),
+):
+    current_user_email = current_user.get("email")
+    current_user = users_crud.get_user_by_email(db, email=current_user_email)
+    tenant = tenants_crud.get_tenant_by_id(db, tenant_id=current_user.tenant_id)
+
+    return helper.upload_multiple_files(
+        project_id=project_id,
+        tenant_name=tenant_name,
+        my_session=MY_SESSION,
+        files=files,
+    )
 
 
 @router.get("/{tenant_name}/{project_id}/calculate-new-disbursements")

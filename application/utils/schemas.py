@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional, Set, Union
 
@@ -9,7 +9,7 @@ from sqlalchemy.types import Enum as SQLAlchemyEnum
 # from enum import Enum
 
 
-class ProjectStatusEnum(str, Enum):
+class ProjectStatus(str, Enum):
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
@@ -55,28 +55,42 @@ class UserCreate(UserBase):
     password: str
 
 
-class User(UserBase):
-    class Config:
-        orm_mode = True
+class ProjectCreate(BaseModel):
+    project_name: str
+    description: str
+    start_date: date
+    months_to_forecast: int
+    imtt: float
 
 
-class ProjectsBase(BaseModel):
+class ProjectResponse(BaseModel):
+    tenant_id: int
+    user_id: int
     project_id: int
     project_name: str
     start_date: str
+    months_to_forecast: int
+    project_status: str
+    imtt: float
+    description: str
+    created_at: datetime
+    updated_at: datetime
+
+
+
+class UserResponse(BaseModel):
     user_id: int
-    description: str
-    project_status: object
+    tenant_id: int
+    email: str
+    first_name: str
+    last_name: str
+    is_active: bool
+    role: str
+    created_at: datetime
+    phone_number: str
+    updated_at: datetime
+    created_at: datetime
 
-
-class ProjectsCreate(BaseModel):
-    project_name: str
-    description: str
-    valuation_date: str
-    months_to_forecast: str
-
-
-class Projects(ProjectsBase):
     class Config:
         orm_mode = True
 
@@ -131,23 +145,6 @@ class UserBase(BaseModel):
     phone_number: str
     work_address: str
     token: str
-
-
-class UserBaseResponse(BaseModel):
-    user_id: int
-    tenant_id: int
-    email: str
-    first_name: str
-    last_name: str
-    is_active: bool
-    role: str
-    created_at: datetime
-    phone_number: str
-    updated_at: datetime
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
 
 
 class UserUpdate(BaseModel):
@@ -207,6 +204,8 @@ class UserLoginSchema(BaseModel):
 class ProjectUpdate(BaseModel):
     project_name: str
     description: str
+    start_date: date
+    imtt: float
 
 
 class ProjectStatusUpdate(BaseModel):

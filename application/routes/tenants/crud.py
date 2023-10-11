@@ -40,7 +40,6 @@ def create_tenant(
     )
 
     if user is not None:
-        # return "user exist"
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=f"User already exist"
         )
@@ -82,13 +81,9 @@ def create_tenant(
 
 def create_base64_qrcode_image(uri: str):
     qrcode_image = qrcode.make(uri)
-
     buffer = BytesIO()
-
     qrcode_image.save(buffer)
-
     image_bytes = buffer.getvalue()
-
     qrcode_image_base64 = base64.b64encode(image_bytes).decode("utf-8")
 
     return qrcode_image_base64
@@ -100,20 +95,15 @@ def get_tenants(db: Session):
 
 
 def get_tenant_by_tenant_name(tenant_name: str, db: Session):
-    try:
-        tenant = (
-            db.query(models.Tenant)
-            .filter(models.Tenant.company_name == tenant_name)
-            .first()
-        )
+    return (
+        db.query(models.Tenant)
+        .filter(models.Tenant.company_name == tenant_name)
+        .first()
+    )
 
-        if tenant is not None:
-            return tenant
-        else:
-            return {"response": "tenant does not exist"}
 
-    except:
-        return {"response": "tenant does not exist"}
+def get_tenant_by_id(db: Session, tenant_id: int):
+    return db.query(models.Tenant).get(tenant_id)
 
 
 def delete_tenant(db: Session, tenant_name: str):
