@@ -150,12 +150,14 @@ async def get_projects_by_user_id(
     return projects
 
 
-@router.get("/projects/{project_id}", response_model=list[schemas.ProjectResponse])
+@router.get(
+    "/projects/{project_id}",
+)
 def get_project_by_id(
     project_id: int,
     db: Session = Depends(get_db),
 ):
-    db_project = crud.get_project_by_user_id(db, project_id=project_id)
+    db_project = crud.get_project_by_id(db, project_id=project_id)
 
     if db_project is None:
         raise HTTPException(

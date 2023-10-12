@@ -99,7 +99,7 @@ def create_user(
 
     if db_user is not None:
         raise HTTPException(
-            details="User already exists", status_code=status.HTTP_409_CONFLICT
+            detail="User already exists", status_code=status.HTTP_409_CONFLICT
         )
 
     db_user = models.Users(
