@@ -22,3 +22,4 @@ fastapi-mail==1.2.4
 sendgrid
 qrcode==7.4.2
 pyotp==2.8.0
+alembic==1.12.0
