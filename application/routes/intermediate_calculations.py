@@ -579,6 +579,7 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
         file_name=constants.IntermediateFiles.short_term_borrowings_capital_repayments_df,
         file_stage=constants.FileStage.intermediate,
     )
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -601,7 +602,12 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
 
 
 @router.get("/projects/{project_id}/results/intermediate/filenames")
-def get_intermediate_filenames(tenant_name: str, project_id: str):
+def get_intermediate_filenames(
+    project_id: str,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+
     intermediate_files: list = wr.s3.list_objects(
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.intermediate.value}",
         boto3_session=constants.MY_SESSION,
