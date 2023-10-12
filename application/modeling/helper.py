@@ -56,7 +56,7 @@ def upload_multiple_files(
                     path=f"s3://{tenant_name}/project_{project_id}/raw/{j}.parquet",
                     boto3_session=my_session,
                 )
-    return Response(status_code=status.HTTP_200_OK, detail="File Uploaded")
+    return {"message": "done"}
 
 
 def upload_file(
