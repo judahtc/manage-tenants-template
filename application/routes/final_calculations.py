@@ -8,6 +8,7 @@ from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
 
 from application.auth.jwt_bearer import JwtBearer
+from application.auth.security import get_current_active_user
 from application.aws_helper.helper import S3_CLIENT
 from application.modeling import (
     balance_sheet,
@@ -21,37 +22,47 @@ from application.modeling import (
     statement_of_cashflows,
 )
 from application.routes.projects import crud as project_crud
-from application.utils import models
+from application.routes.users import crud as users_crud
+from application.utils import models, schemas
 from application.utils.database import get_db
 
-router = APIRouter(tags=["FINAL CALCULATIONS"])
+router = APIRouter(
+    tags=["FINAL CALCULATIONS"], dependencies=[Depends(get_current_active_user)]
+)
 
 
 def read_files_for_generating_income(
     tenant_name: str,
     project_id: int,
-    valuation_date: str,
+    start_date: str,
     boto3_session,
 ):
-    income_statement_index = helper.read_raw_file(
+    expenses_certain = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
-        file_name=constants.RawFiles.income_statement_index,
-        set_index=False,
-    )
-    variable_inputs_income_statement = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=boto3_session,
-        file_name=constants.RawFiles.variable_inputs_income_statement,
+        file_name=constants.RawFiles.expenses_certain,
     )
 
-    parameters = helper.read_parameters_file(
+    expenses_uncertain = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
-        valuation_date=valuation_date,
+        file_name=constants.RawFiles.expenses_uncertain,
+    )
+
+    other_parameters = helper.read_other_parameters_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=boto3_session,
+        start_date=start_date,
+    )
+
+    disbursement_parameters = helper.read_disbursement_parameters_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=boto3_session,
+        start_date=start_date,
     )
 
     opening_balances = helper.read_raw_file(
@@ -73,13 +84,6 @@ def read_files_for_generating_income(
         project_id=project_id,
         boto3_session=boto3_session,
         file_name=constants.IntermediateFiles.finance_costs_df,
-    )
-
-    static_inputs_income_statement = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=boto3_session,
-        file_name=constants.RawFiles.static_inputs_income_statement,
     )
 
     provision_for_credit_loss_for_all_new_disbursements_df = helper.read_intermediate_file(
@@ -125,13 +129,13 @@ def read_files_for_generating_income(
     )
 
     return (
-        parameters,
-        income_statement_index,
-        variable_inputs_income_statement,
+        other_parameters,
+        disbursement_parameters,
+        expenses_certain,
         opening_balances,
         depreciations_df,
         finance_costs_df,
-        static_inputs_income_statement,
+        expenses_uncertain,
         provision_for_credit_loss_for_all_new_disbursements_df,
         new_disbursements_df,
         other_income_df,
@@ -169,26 +173,31 @@ def aggregate_expenses_in_income_statement(income_statement_df: pd.DataFrame):
 
 
 def calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_business_aquisition_and_total_interest_income(
-    variable_inputs_income_statement: pd.DataFrame,
-    parameters: pd.DataFrame,
+    expenses_uncertain: pd.DataFrame,
+    other_parameters: pd.DataFrame,
+    disbursement_parameters: pd.DataFrame,
     new_disbursements_df: pd.DataFrame,
     provision_for_credit_loss_for_all_new_disbursements_df: pd.DataFrame,
     opening_balances: pd.DataFrame,
     interest_income_new_disbursement_df: pd.DataFrame,
     existing_loans_schedules_interest_incomes_df: pd.DataFrame,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
-    variable_expenses = expenses.calculate_variable_expenses(
-        variable_inputs_income_statement=variable_inputs_income_statement,
-        parameters=parameters,
-        valuation_date=valuation_date,
+    uncertain_expenses = expenses.calculate_uncertain_expenses(
+        expenses_uncertain=expenses_uncertain,
+        other_parameters=other_parameters,
+        start_date=start_date,
         months_to_forecast=months_to_forecast,
     )
 
     business_acquisition = expenses.calculate_business_acqusition(
-        business_acquisition_percent=parameters.loc["BUSINESS_ACQUISITION_PERCENT"],
-        agent_contribution_percent=parameters.loc["AGENT_CONTRIBUTION_PERCENT"],
+        business_acquisition_percent=disbursement_parameters.loc[
+            "BUSINESS_ACQUISITION_PERCENT"
+        ],
+        agent_contribution_percent=disbursement_parameters.loc[
+            "AGENT_CONTRIBUTION_PERCENT"
+        ],
         consumer_ssb_disbursements=new_disbursements_df["consumer_ssb_disbursements"],
         consumer_pvt_disbursements=new_disbursements_df["consumer_pvt_disbursements"],
     )
@@ -200,40 +209,44 @@ def calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_busi
         provision_for_credit_loss_opening_balances=float(
             opening_balances["PROVISION_FOR_CREDIT_LOSS"].iat[0]
         ),
-        valuation_date=valuation_date,
+        start_date=start_date,
         months_to_forecast=months_to_forecast,
     )
 
     total_interest_income = interest_income.aggregate_new_and_existing_loans_interest_income(
         interest_income_new_disbursements_df=interest_income_new_disbursement_df,
         interest_income_existing_loans=existing_loans_schedules_interest_incomes_df.sum(),
-        valuation_date=valuation_date,
+        start_date=start_date,
         months_to_forecast=months_to_forecast,
     )
 
     return (
-        variable_expenses,
+        uncertain_expenses,
         business_acquisition,
         change_in_provision_for_credit_loss,
         total_interest_income,
     )
 
 
-@router.get("/{tenant_name}/{project_id}/generate-income-statement")
-def generate_income_statement(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
-
-    VALUATION_DATE = "2023-01"
-    MONTHS_TO_FORECAST = 12
+@router.get("/projects/{project_id}/calculations/income-statement")
+def generate_income_statement(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     (
-        parameters,
-        income_statement_index,
-        variable_inputs_income_statement,
+        other_parameters,
+        disbursement_parameters,
+        expenses_certain,
         opening_balances,
         depreciations_df,
         finance_costs_df,
-        static_inputs_income_statement,
+        expenses_uncertain,
         provision_for_credit_loss_for_all_new_disbursements_df,
         new_disbursements_df,
         other_income_df,
@@ -243,31 +256,31 @@ def generate_income_statement(tenant_name: str, project_id: str):
     ) = read_files_for_generating_income(
         tenant_name=tenant_name,
         project_id=project_id,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
         boto3_session=constants.MY_SESSION,
     )
 
     income_statement_df = income_statement.generate_income_statement_template(
-        income_statement_index=income_statement_index,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     (
-        variable_expenses,
+        uncertain_expenses,
         business_acquisition,
         change_in_provision_for_credit_loss,
         total_interest_income,
     ) = calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_business_aquisition_and_total_interest_income(
-        variable_inputs_income_statement=variable_inputs_income_statement,
-        parameters=parameters,
+        expenses_uncertain=expenses_uncertain,
+        other_parameters=other_parameters,
+        disbursement_parameters=disbursement_parameters,
         new_disbursements_df=new_disbursements_df,
         provision_for_credit_loss_for_all_new_disbursements_df=provision_for_credit_loss_for_all_new_disbursements_df,
         interest_income_new_disbursement_df=interest_income_new_disbursement_df,
         existing_loans_schedules_interest_incomes_df=existing_loans_schedules_interest_incomes_df,
         opening_balances=opening_balances,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     income_statement_df = income_statement.insert_revenue(
@@ -276,10 +289,10 @@ def generate_income_statement(tenant_name: str, project_id: str):
         other_income=other_income_df["total"],
     )
 
-    income_statement_df = income_statement.insert_static_and_variable_inputs(
+    income_statement_df = income_statement.insert_expenses(
         income_statement=income_statement_df,
-        static_inputs_income_statement=static_inputs_income_statement,
-        variable_expenses=variable_expenses,
+        expenses_certain=expenses_certain,
+        uncertain_expenses=uncertain_expenses,
     )
 
     income_statement_df = income_statement.insert_salaries_and_pensions_and_statutory_contributions(
@@ -294,7 +307,7 @@ def generate_income_statement(tenant_name: str, project_id: str):
 
     income_statement_df = income_statement.insert_credit_loss_provision(
         income_statement=income_statement_df,
-        change_in_provisin_for_credit_loss=change_in_provision_for_credit_loss,
+        change_in_provision_for_credit_loss=change_in_provision_for_credit_loss,
     )
 
     income_statement_df = income_statement.insert_business_acquisition(
@@ -317,7 +330,7 @@ def generate_income_statement(tenant_name: str, project_id: str):
     )
 
     income_statement_df = income_statement.calculate_tax(
-        income_statement=income_statement_df, tax_rate=parameters.loc["TAX_RATE"]
+        income_statement=income_statement_df, tax_rate=other_parameters.loc["TAX_RATE"]
     )
 
     helper.upload_file(
@@ -336,13 +349,13 @@ def read_files_for_generating_direct_cashflow(
     tenant_name: str,
     project_id: int,
     boto3_session,
-    valuation_date: str,
+    start_date: str,
 ):
-    parameters = helper.read_parameters_file(
+    other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
-        valuation_date=valuation_date,
+        start_date=start_date,
     )
 
     interest_income_new_disbursement_df = helper.read_intermediate_file(
@@ -359,11 +372,19 @@ def read_files_for_generating_direct_cashflow(
         file_name=constants.RawFiles.details_of_assets,
     )
 
-    details_of_borrowing = helper.read_raw_file(
+    details_of_long_term_borrowing = helper.read_raw_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
-        file_name=constants.RawFiles.details_of_borrowing,
+        file_name=constants.RawFiles.details_of_long_term_borrowing,
+        set_index=False,
+    )
+
+    details_of_short_term_borrowing = helper.read_raw_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=boto3_session,
+        file_name=constants.RawFiles.details_of_short_term_borrowing,
         set_index=False,
     )
 
@@ -436,35 +457,32 @@ def read_files_for_generating_direct_cashflow(
         finance_costs_df,
         existing_loans_schedules_capital_repayments_df,
         capital_repayment_new_disbursements_df,
-        parameters,
+        other_parameters,
         new_disbursements_df,
         other_income_df,
         existing_loans_schedules_interest_incomes_df,
         opening_balances,
         interest_income_new_disbursement_df,
         details_of_assets,
-        details_of_borrowing,
+        details_of_long_term_borrowing,
+        details_of_short_term_borrowing,
     )
 
 
-def get_total_disbursements(new_disbursements_df: pd.DataFrame):
-    total_disbursements = new_disbursements_df["total"]
-    total_disbursements.index = pd.PeriodIndex(
-        total_disbursements.index, freq="M"
-    ).strftime("%b-%Y")
-    return total_disbursements
-
-
-@router.get("/{tenant_name}/{project_id}/generate-direct-cashflow")
-def generate_direct_cashflow(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
-
-    VALUATION_DATE = "2023-01"
-    MONTHS_TO_FORECAST = 12
-    IMTT = 0.02
+@router.get("/projects/{project_id}/calculations/direct-cashflow")
+def generate_direct_cashflow(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    imtt = project.imtt
+    tenant_name = current_user.tenant.company_name
 
     direct_cashflow_df = direct_cashflow.generate_direct_cashflow_template(
-        valuation_date=VALUATION_DATE, months_to_forecast=MONTHS_TO_FORECAST
+        start_date=start_date, months_to_forecast=months_to_forecast
     )
 
     (
@@ -473,51 +491,52 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
         finance_costs_df,
         existing_loans_schedules_capital_repayments_df,
         capital_repayment_new_disbursements_df,
-        parameters,
+        other_parameters,
         new_disbursements_df,
         other_income_df,
         existing_loans_schedules_interest_incomes_df,
         opening_balances,
         interest_income_new_disbursement_df,
         details_of_assets,
-        details_of_borrowing,
+        details_of_long_term_borrowing,
+        details_of_short_term_borrowing,
     ) = read_files_for_generating_direct_cashflow(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
-    ## From Parameeters
-
+    ## From Parameters
     direct_cashflow_df.loc[
         "Receipts From Receivables"
     ] = helper.change_period_index_to_strftime(
         helper.add_series(
             [
-                parameters.loc["RECEIPTS_FROM_OTHER_RECEIVABLES"],
-                parameters.loc["RECEIPTS_FROM_TRADE_RECEIVABLES"],
-                parameters.loc["RECEIPTS_FROM_INTERGROUP_RECEIVABLES"],
+                other_parameters.loc["RECEIPTS_FROM_OTHER_RECEIVABLES"],
+                other_parameters.loc["RECEIPTS_FROM_TRADE_RECEIVABLES"],
+                other_parameters.loc["RECEIPTS_FROM_INTERGROUP_RECEIVABLES"],
             ]
         )
     )
 
     direct_cashflow_df.loc[
         "Purchase Of Inventory"
-    ] = helper.change_period_index_to_strftime(parameters.loc["NEW_INVENTORY"])
+    ] = helper.change_period_index_to_strftime(other_parameters.loc["NEW_INVENTORY"])
+
     direct_cashflow_df.loc[
         "Payments To Payables"
     ] = -helper.change_period_index_to_strftime(
         helper.add_series(
             [
-                parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
-                parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
+                other_parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
+                other_parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
             ]
         )
     )
 
     direct_cashflow_df.loc["Dividend Paid"] = -helper.change_period_index_to_strftime(
-        parameters.loc["DIVIDEND_PAID"]
+        other_parameters.loc["DIVIDEND_PAID"]
     )
 
     ## From Calculations/Income Statement
@@ -536,13 +555,13 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     ## Equity and Intercompany Loans
 
     direct_cashflow_df = direct_cashflow.add_equity_and_intercompany_loans(
-        parameters=parameters, direct_cashflow_df=direct_cashflow_df
+        other_parameters=other_parameters, direct_cashflow_df=direct_cashflow_df
     )
 
     ## Other Assets
 
     direct_cashflow_df = direct_cashflow.add_other_assets(
-        parameters=parameters, direct_cashflow_df=direct_cashflow_df
+        other_parameters=other_parameters, direct_cashflow_df=direct_cashflow_df
     )
 
     # Tax Paid
@@ -552,8 +571,8 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     tax_schedule_df = direct_cashflow.generate_tax_schedule(
         taxation=income_statement_df.loc["Taxation"],
         opening_balance=opening_balances["DEFERED_TAXATION"].iat[0],
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     direct_cashflow_df.loc["Tax Paid"] = tax_schedule_df.loc["Tax Paid"]
@@ -568,19 +587,25 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
 
     capital_expenses = direct_cashflow.calculate_capital_expenses(
         details_of_assets=details_of_assets,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     direct_cashflow_df.loc["Capital Expenses"] = -capital_expenses
 
-    details_of_borrowing = helper.columns_to_snake_case(details_of_borrowing)
+    details_of_long_term_borrowing = helper.columns_to_snake_case(
+        details_of_long_term_borrowing
+    )
+    details_of_short_term_borrowing = helper.columns_to_snake_case(
+        details_of_short_term_borrowing
+    )
 
     long_and_short_term_borrowing_df = (
         direct_cashflow.calculate_long_and_short_term_borrowing_for_direct_cashflow(
-            details_of_borrowing=details_of_borrowing,
-            valuation_date=VALUATION_DATE,
-            months_to_forecast=MONTHS_TO_FORECAST,
+            details_of_long_term_borrowing=details_of_long_term_borrowing,
+            details_of_short_term_borrowing=details_of_short_term_borrowing,
+            start_date=start_date,
+            months_to_forecast=months_to_forecast,
         )
     )
 
@@ -627,7 +652,7 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     )
 
     income_statement_df.loc["2% Taxation"] = (
-        direct_cashflow_df.loc["Total Cash Outflows"] * IMTT
+        direct_cashflow_df.loc["Total Cash Outflows"] * imtt
     )
 
     income_statement_df = income_statement.calculate_profit_or_loss_for_period(
@@ -673,12 +698,16 @@ def generate_direct_cashflow(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/generate-loan-book")
-def generate_loan_book(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
-
-    VALUATION_DATE = "2023-01"
-    MONTHS_TO_FORECAST = 12
+@router.get("/projects/{project_id}/calculations/loan-book")
+def generate_loan_book(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
     capital_repayment_new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
@@ -727,21 +756,21 @@ def generate_loan_book(tenant_name: str, project_id: str):
     )
 
     loan_book_df = loan_book.generate_loan_book_template(
-        valuation_date=VALUATION_DATE, months_to_forecast=MONTHS_TO_FORECAST
+        start_date=start_date, months_to_forecast=months_to_forecast
     )
 
     total_capital_repayments = loan_book.aggregate_new_and_existing_loans_capital_repayments(
         capital_repayments_new_disbursements_df=capital_repayment_new_disbursements_df,
         capital_repayments_existing_loans=capital_repayment_existing_loans,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     total_interest_income = interest_income.aggregate_new_and_existing_loans_interest_income(
         interest_income_new_disbursements_df=interest_income_new_disbursement_df,
         interest_income_existing_loans=existing_loans_schedules_interest_incomes_df.sum(),
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     opening_balances = helper.columns_to_screaming_snake_case(opening_balances)
@@ -770,18 +799,22 @@ def generate_loan_book(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/generate-balance-sheet")
-def generate_balance_sheet(tenant_name: str, project_id: str):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+@router.get("/projects/{project_id}/calculations/balance-sheet")
+def generate_balance_sheet(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
-    VALUATION_DATE = "2023-01"
-    MONTHS_TO_FORECAST = 12
-
-    parameters = helper.read_parameters_file(
+    other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
     net_book_values_df = helper.read_intermediate_file(
@@ -789,13 +822,6 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.net_book_values_df,
-    )
-
-    capital_repayment_borrowings_df = helper.read_intermediate_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=constants.IntermediateFiles.capital_repayment_borrowings_df,
     )
 
     long_and_short_term_borrowing_df = helper.read_intermediate_file(
@@ -847,8 +873,8 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
     )
 
     balance_sheet_df = balance_sheet.generate_balance_sheet_template(
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     opening_balances = helper.read_raw_file(
@@ -878,7 +904,9 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
 
     balance_sheet_df.loc[
         "Provision For Taxation"
-    ] = helper.change_period_index_to_strftime(parameters.loc["PROVISION_FOR_TAX"])
+    ] = helper.change_period_index_to_strftime(
+        other_parameters.loc["PROVISION_FOR_TAX"]
+    )
 
     opening_balances = helper.columns_to_screaming_snake_case(opening_balances)
 
@@ -888,8 +916,8 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
             "total"
         ],
         opening_balances=opening_balances,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     long_term_loans_schedules_df = balance_sheet.calculate_long_term_loans_schedules(
@@ -898,8 +926,8 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
             "total"
         ],
         opening_balances=opening_balances,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     balance_sheet_df.loc["Loans"] = long_term_loans_schedules_df.loc["Closing Balance"]
@@ -907,46 +935,51 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
         "Closing Balance"
     ]
 
+    # Receivables and Payables
     trade_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
         opening_receivables=opening_balances["TRADE_RECEIVABLES"].iat[0],
-        receipts_from_receivables=parameters.loc["RECEIPTS_FROM_TRADE_RECEIVABLES"],
-        new_receivables=parameters.loc["NEW_TRADE_RECEIVABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
-        valuation_date=VALUATION_DATE,
+        receipts_from_receivables=other_parameters.loc[
+            "RECEIPTS_FROM_TRADE_RECEIVABLES"
+        ],
+        new_receivables=other_parameters.loc["NEW_TRADE_RECEIVABLES"],
+        months_to_forecast=months_to_forecast,
+        start_date=start_date,
     )
 
     other_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
         opening_receivables=opening_balances["OTHER_RECEIVABLES"].iat[0],
-        receipts_from_receivables=parameters.loc["RECEIPTS_FROM_OTHER_RECEIVABLES"],
-        new_receivables=parameters.loc["NEW_OTHER_RECEIVABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
-        valuation_date=VALUATION_DATE,
+        receipts_from_receivables=other_parameters.loc[
+            "RECEIPTS_FROM_OTHER_RECEIVABLES"
+        ],
+        new_receivables=other_parameters.loc["NEW_OTHER_RECEIVABLES"],
+        months_to_forecast=months_to_forecast,
+        start_date=start_date,
     )
 
     intergroup_receivables_schedule_df = balance_sheet.generate_receivables_schedule(
         opening_receivables=opening_balances["INTERGROUP_RECEIVABLES"].iat[0],
-        receipts_from_receivables=parameters.loc[
+        receipts_from_receivables=other_parameters.loc[
             "RECEIPTS_FROM_INTERGROUP_RECEIVABLES"
         ],
-        new_receivables=parameters.loc["NEW_INTERGROUP_RECEIVABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
-        valuation_date=VALUATION_DATE,
+        new_receivables=other_parameters.loc["NEW_INTERGROUP_RECEIVABLES"],
+        months_to_forecast=months_to_forecast,
+        start_date=start_date,
     )
 
     trade_payables_schedule_df = balance_sheet.generate_payables_schedule(
         opening_payables=opening_balances["TRADE_PAYABLES"].iat[0],
-        payments_to_payables=parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
-        new_payables=parameters.loc["NEW_TRADE_PAYABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
-        valuation_date=VALUATION_DATE,
+        payments_to_payables=other_parameters.loc["PAYMENTS_TO_TRADE_PAYABLES"],
+        new_payables=other_parameters.loc["NEW_TRADE_PAYABLES"],
+        months_to_forecast=months_to_forecast,
+        start_date=start_date,
     )
 
     other_payables_schedule_df = balance_sheet.generate_payables_schedule(
         opening_payables=opening_balances["OTHER_PAYABLES"].iat[0],
-        payments_to_payables=parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
-        new_payables=parameters.loc["NEW_OTHER_PAYABLES"],
-        months_to_forecast=MONTHS_TO_FORECAST,
-        valuation_date=VALUATION_DATE,
+        payments_to_payables=other_parameters.loc["PAYMENTS_TO_OTHER_PAYABLES"],
+        new_payables=other_parameters.loc["NEW_OTHER_PAYABLES"],
+        months_to_forecast=months_to_forecast,
+        start_date=start_date,
     )
 
     balance_sheet_df.loc["Trade Payables"] = trade_payables_schedule_df.loc[
@@ -972,104 +1005,107 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
 
     inventories_schedule = balance_sheet.generate_inventories_schedule(
         opening_inventories=opening_balances["INVENTORIES"].iat[0],
-        new_inventories=parameters.loc["NEW_INVENTORY"],
-        inventories_used=parameters.loc["INVENTORY_USED"],
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        new_inventories=other_parameters.loc["NEW_INVENTORY"],
+        inventories_used=other_parameters.loc["INVENTORY_USED"],
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     balance_sheet_df.loc["Inventories"] = inventories_schedule.loc["Closing Balance"]
 
+    # Equity and Intercompany loans
     balance_sheet_df.loc[
         "Issued Share Capital"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["SHARE_CAPITAL"].cumsum()
+        other_parameters.loc["SHARE_CAPITAL"].cumsum()
         + opening_balances["ISSUED_SHARE_CAPITAL"].iat[0]
     )
 
     balance_sheet_df.loc["Intercompany Loans"] = helper.change_period_index_to_strftime(
-        parameters.loc["INTERCOMPANY_LOANS"].cumsum()
+        other_parameters.loc["INTERCOMPANY_LOANS"].cumsum()
         + opening_balances["INTERCOMPANY_LOANS"].iat[0]
     )
 
     balance_sheet_df.loc["Share Premium"] = helper.change_period_index_to_strftime(
-        parameters.loc["SHARE_PREMIUM"].cumsum()
+        other_parameters.loc["SHARE_PREMIUM"].cumsum()
         + opening_balances["SHARE_PREMIUM"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Other Components Of Equity"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["OTHER_COMPONENTS_OF_EQUITY"].cumsum()
+        other_parameters.loc["OTHER_COMPONENTS_OF_EQUITY"].cumsum()
         + opening_balances["OTHER_COMPONENTS_OF_EQUITY"].iat[0]
     )
 
     balance_sheet_df.loc["Treasury Shares"] = helper.change_period_index_to_strftime(
-        parameters.loc["TREASURY_SHARES"].cumsum()
+        other_parameters.loc["TREASURY_SHARES"].cumsum()
         + opening_balances["TREASURY_SHARES"].iat[0]
     )
 
     balance_sheet_df.loc["Retained Earnings"] = (
         income_statement_df.loc["PROFIT/(LOSS) FOR PERIOD"]
-        - helper.change_period_index_to_strftime(parameters.loc["DIVIDEND_PAID"])
+        - helper.change_period_index_to_strftime(other_parameters.loc["DIVIDEND_PAID"])
     ).cumsum()
 
     balance_sheet_df.loc["Capital And Reserves"] = balance_sheet_df.loc[
         "Issued Share Capital":"Retained Earnings"
     ].sum()
 
+    # Other Assets
     balance_sheet_df.loc["Intangible Assets"] = helper.change_period_index_to_strftime(
-        parameters.loc["INTANGIBLE_ASSETS"].cumsum()
+        other_parameters.loc["INTANGIBLE_ASSETS"].cumsum()
         + opening_balances["INTANGIBLE_ASSETS"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Investment In Subsidiaries"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["INVESTMENT_IN_SUBSIDIARIES"].cumsum()
+        other_parameters.loc["INVESTMENT_IN_SUBSIDIARIES"].cumsum()
         + opening_balances["INVESTMENT_IN_SUBSIDIARIES"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Investment In Associates"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["INVESTMENT_IN_ASSOCIATES"].cumsum()
+        other_parameters.loc["INVESTMENT_IN_ASSOCIATES"].cumsum()
         + opening_balances["INVESTMENT_IN_ASSOCIATES"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Investment Properties"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["INVESTMENT_PROPERTIES"].cumsum()
+        other_parameters.loc["INVESTMENT_PROPERTIES"].cumsum()
         + opening_balances["INVESTMENT_PROPERTIES"].iat[0]
     )
 
     balance_sheet_df.loc["Equity Investments"] = helper.change_period_index_to_strftime(
-        parameters.loc["EQUITY_INVESTMENTS"].cumsum()
+        other_parameters.loc["EQUITY_INVESTMENTS"].cumsum()
         + opening_balances["EQUITY_INVESTMENTS"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Long Term Money Market Investments"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["LONG_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
+        other_parameters.loc["LONG_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
         + opening_balances["LONG_TERM_MONEY_MARKET_INVESTMENTS"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Short Term Money Market Investments"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["SHORT_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
+        other_parameters.loc["SHORT_TERM_MONEY_MARKET_INVESTMENTS"].cumsum()
         + opening_balances["SHORT_TERM_MONEY_MARKET_INVESTMENTS"].iat[0]
     )
 
     balance_sheet_df.loc[
         "Loans To Related Entities"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["LOANS_TO_RELATED_ENTITIES"].cumsum()
+        other_parameters.loc["LOANS_TO_RELATED_ENTITIES"].cumsum()
         + opening_balances["LOANS_TO_RELATED_ENTITIES"].iat[0]
     )
 
+    # Calculating Totals
     balance_sheet_df = balance_sheet.sum_financial_statements_totals(balance_sheet_df)
     balance_sheet_df = balance_sheet.calculate_final_balances(
         balance_sheet_df=balance_sheet_df
@@ -1150,20 +1186,22 @@ def generate_balance_sheet(tenant_name: str, project_id: str):
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/generate-statement-of-cashflows")
+@router.get("/projects/{project_id}/calculations/statement-of-cashflows")
 def generate_statement_of_cashflows(
-    tenant_name: str, project_id: str, db: Session = Depends(get_db)
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
+    project = project_crud.get_project_by_id(db=db, project_id=project_id)
+    start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
+    tenant_name = current_user.tenant.company_name
 
-    VALUATION_DATE = "2023-01"
-    MONTHS_TO_FORECAST = 12
-
-    parameters = helper.read_parameters_file(
+    other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        valuation_date=VALUATION_DATE,
+        start_date=start_date,
     )
 
     opening_balances = helper.read_raw_file(
@@ -1265,7 +1303,7 @@ def generate_statement_of_cashflows(
 
     statement_of_cashflow_df = (
         statement_of_cashflows.generate_statement_of_cashflow_template(
-            VALUATION_DATE, MONTHS_TO_FORECAST
+            start_date, months_to_forecast
         )
     )
 
@@ -1277,18 +1315,22 @@ def generate_statement_of_cashflows(
     ]
     statement_of_cashflow_df.loc[
         "Dividend Paid"
-    ] = helper.change_period_index_to_strftime(parameters.loc["DIVIDEND_PAID"])
+    ] = helper.change_period_index_to_strftime(other_parameters.loc["DIVIDEND_PAID"])
     statement_of_cashflow_df.loc[
         "Treasury Movements"
-    ] = helper.change_period_index_to_strftime(parameters.loc["TREASURY_MOVEMENTS"])
+    ] = helper.change_period_index_to_strftime(
+        other_parameters.loc["TREASURY_MOVEMENTS"]
+    )
     statement_of_cashflow_df.loc[
         "Interest Expense Accrued"
     ] = helper.change_period_index_to_strftime(
-        parameters.loc["INTEREST_EXPENSE_ACCRUED"]
+        other_parameters.loc["INTEREST_EXPENSE_ACCRUED"]
     )
     statement_of_cashflow_df.loc[
         "Other Non-Cash Items"
-    ] = helper.change_period_index_to_strftime(parameters.loc["OTHER_NON_CASH_ITEMS"])
+    ] = helper.change_period_index_to_strftime(
+        other_parameters.loc["OTHER_NON_CASH_ITEMS"]
+    )
     statement_of_cashflow_df.loc["Interest Paid"] = -finance_costs_df.loc["total"]
     statement_of_cashflow_df.loc["Tax Paid"] = tax_schedule_df.loc["Tax Paid"]
     statement_of_cashflow_df.loc[
@@ -1299,8 +1341,8 @@ def generate_statement_of_cashflows(
 
     capital_expenses = direct_cashflow.calculate_capital_expenses(
         details_of_assets=details_of_assets,
-        valuation_date=VALUATION_DATE,
-        months_to_forecast=MONTHS_TO_FORECAST,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     statement_of_cashflow_df.loc["Purchase Of Fixed Assets"] = capital_expenses
@@ -1402,18 +1444,19 @@ def generate_statement_of_cashflows(
         file_name=constants.FinalFiles.statement_of_cashflow_df,
         file_stage=constants.FileStage.final,
     )
-    # project_crud.update_project_status(project_id=project_id, status="COMPLETED", db=db)
+    project_crud.update_project_status(
+        project_id=project_id, status=schemas.ProjectStatus.COMPLETED, db=db
+    )
     return {"message": "done"}
 
 
-@router.get("/{tenant_name}/{project_id}/download-final-file")
+@router.get("/projects/{project_id}/results")
 def download_final_file(
-    tenant_name: str, project_id: str, file_name: constants.FinalFiles
+    project_id: str,
+    file_name: constants.FinalFiles,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    # Todo : Get valuation_date and months_to_forecast from the database using project_id
-
-    VALUATION_DATE = "2023-01"
-    MONTHS_TO_FORECAST = 12
+    tenant_name = current_user.tenant.company_name
 
     df = helper.read_final_file(
         tenant_name=tenant_name,
@@ -1435,10 +1478,14 @@ def download_final_file(
     return response
 
 
-@router.get("/{tenant_name}/{project_id}/download-intermediate-file")
+@router.get("/projects/{project_id}/results/intermediate")
 def download_intermediate_file(
-    tenant_name: str, project_id: str, file_name: constants.IntermediateFiles
+    project_id: int,
+    file_name: constants.IntermediateFiles,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
+    tenant_name = current_user.tenant.company_name
+
     df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -1455,8 +1502,13 @@ def download_intermediate_file(
     return response
 
 
-@router.get("/{tenant_name}/{project_id}/final-filenames")
-def get_final_filenames(tenant_name: str, project_id: str):
+@router.get("/projects/{project_id}/results/filenames")
+def get_final_filenames(
+    project_id: int,
+    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+
     final_files: list = wr.s3.list_objects(
         f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.final.value}",
         boto3_session=constants.MY_SESSION,

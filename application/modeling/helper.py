@@ -4,7 +4,7 @@ from typing import List
 import awswrangler as wr
 import pandas as pd
 from botocore.exceptions import ClientError
-from fastapi import File, HTTPException, UploadFile, status
+from fastapi import File, HTTPException, Response, UploadFile, status
 
 from application.modeling import constants
 
@@ -56,7 +56,7 @@ def upload_multiple_files(
                     path=f"s3://{tenant_name}/project_{project_id}/raw/{j}.parquet",
                     boto3_session=my_session,
                 )
-    return {"message": "done"}
+    return Response(status_code=status.HTTP_200_OK, detail="File Uploaded")
 
 
 def upload_file(
@@ -104,20 +104,40 @@ def read_raw_file(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
-def read_parameters_file(
-    tenant_name: str, project_id: int, boto3_session, valuation_date: str
+def read_disbursement_parameters_file(
+    tenant_name: str, project_id: int, boto3_session, start_date: str
 ):
     try:
         df = wr.s3.read_parquet(
-            f"s3://{tenant_name}/project_{project_id}/raw/parameters.parquet",
+            f"s3://{tenant_name}/project_{project_id}/raw/disbursement_parameters.parquet",
             boto3_session=boto3_session,
         )
 
         df = df.set_index(df.columns[0])
         df.index.name = ""
-        df.columns = pd.period_range(
-            valuation_date, periods=int(df.columns[-1]), freq="M"
+        df.columns = pd.period_range(start_date, periods=int(df.columns[-1]), freq="M")
+
+        df.columns = list(map(str, df.columns))
+
+        return df
+    except ClientError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
+def read_other_parameters_file(
+    tenant_name: str, project_id: int, boto3_session, start_date: str
+):
+    try:
+        df = wr.s3.read_parquet(
+            f"s3://{tenant_name}/project_{project_id}/raw/other_parameters.parquet",
+            boto3_session=boto3_session,
         )
+
+        df = df.set_index(df.columns[0])
+        df.index.name = ""
+        df.columns = pd.period_range(start_date, periods=int(df.columns[-1]), freq="M")
 
         df.columns = list(map(str, df.columns))
 

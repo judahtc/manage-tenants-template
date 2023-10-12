@@ -20,6 +20,10 @@ def calculate_straight_line_payments(
 ):
     amounts_results = []
     freq_key = {1: "BA", 2: "2BQ", 4: "BQ", 12: "BM"}
+
+    years = tenures / 12
+    number_of_payments = years * frequencies
+
     for i, _ in effective_dates.items():
         effective_date = effective_dates[i]
         tenure = tenures[i]
@@ -40,14 +44,16 @@ def calculate_straight_line_payments(
             index = (
                 pd.date_range(
                     effective_date + pd.DateOffset(months=6),
-                    periods=frequency,
+                    periods=number_of_payments[i],
                     freq=freq_key[frequency],
                 )
             ).strftime("%b-%Y")
         else:
             index = (
                 pd.date_range(
-                    effective_date, periods=frequency, freq=freq_key[frequency]
+                    effective_date,
+                    periods=number_of_payments[i],
+                    freq=freq_key[frequency],
                 )
             ).strftime("%b-%Y")
 
@@ -79,6 +85,7 @@ def calculate_straight_line_loans_schedules(
     effective_dates = helper.convert_to_datetime(effective_dates)
 
     annual_interest = amounts * interest_rates
+
     interest = calculate_interest(
         frequencies=frequencies, annual_interest=annual_interest
     )
@@ -112,6 +119,7 @@ def calculate_reducing_balance_loans_schedules(
     loan_identifiers: pd.Series,
     tenures: pd.Series,
     amounts: pd.Series,
+    is_interest_rate_annual: bool = True,
 ):
     outstanding_balances_results = []
     interest_payments_results = []
@@ -124,10 +132,15 @@ def calculate_reducing_balance_loans_schedules(
     years = tenures / 12
     number_of_payments = years * frequencies
 
-    effective_interest_rate = np.power(1 + interest_rates, 1 / frequencies) - 1
+    if is_interest_rate_annual:
+        effective_interest_rate = np.power(1 + interest_rates, 1 / frequencies) - 1
+    else:
+        effective_interest_rate = interest_rates
+
     annuity_factor = (
         1 - (1 + effective_interest_rate) ** (-number_of_payments)
     ) / effective_interest_rate
+
     repayment = amounts / annuity_factor
 
     for index, _ in interest_rates.items():

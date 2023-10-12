@@ -60,31 +60,31 @@ def generate_loan_schedule_new_disbursements(
 
 
 def calculate_monthly_repayments_new_disbursements(
-    new_disbursements_df: pd.DataFrame, parameters: pd.DataFrame
+    new_disbursements_df: pd.DataFrame, disbursement_parameters: pd.DataFrame
 ):
     # Todo: Try using a loop on this one
 
     sme_monthly_repayment = calculate_repayment_amount(
         disbursements=new_disbursements_df["sme_disbursements"],
-        monthly_interest_rate=parameters.loc["SME_INTEREST_RATE"],
-        average_loan_term=parameters.loc["SME_AVERAGE_LOAN_TERM"],
+        monthly_interest_rate=disbursement_parameters.loc["SME_INTEREST_RATE"],
+        average_loan_term=disbursement_parameters.loc["SME_AVERAGE_LOAN_TERM"],
     )
 
     consumer_ssb_monthly_repayment = calculate_repayment_amount(
         disbursements=new_disbursements_df["consumer_ssb_disbursements"],
-        monthly_interest_rate=parameters.loc["CONSUMER_SSB_INTEREST_RATE"],
-        average_loan_term=parameters.loc["CONSUMER_SSB_AVERAGE_LOAN_TERM"],
+        monthly_interest_rate=disbursement_parameters.loc["CONSUMER_SSB_INTEREST_RATE"],
+        average_loan_term=disbursement_parameters.loc["CONSUMER_SSB_AVERAGE_LOAN_TERM"],
     )
     consumer_pvt_monthly_repayment = calculate_repayment_amount(
         disbursements=new_disbursements_df["consumer_pvt_disbursements"],
-        monthly_interest_rate=parameters.loc["CONSUMER_PVT_INTEREST_RATE"],
-        average_loan_term=parameters.loc["CONSUMER_PVT_AVERAGE_LOAN_TERM"],
+        monthly_interest_rate=disbursement_parameters.loc["CONSUMER_PVT_INTEREST_RATE"],
+        average_loan_term=disbursement_parameters.loc["CONSUMER_PVT_AVERAGE_LOAN_TERM"],
     )
 
     b2b_monthly_repayment = calculate_repayment_amount(
         disbursements=new_disbursements_df["b2b_disbursements"],
-        monthly_interest_rate=parameters.loc["B2B_INTEREST_RATE"],
-        average_loan_term=parameters.loc["B2B_AVERAGE_LOAN_TERM"],
+        monthly_interest_rate=disbursement_parameters.loc["B2B_INTEREST_RATE"],
+        average_loan_term=disbursement_parameters.loc["B2B_AVERAGE_LOAN_TERM"],
     )
 
     return pd.DataFrame(
@@ -108,19 +108,19 @@ def calculate_monthly_repayments_new_disbursements(
 def aggregate_new_and_existing_loans_interest_income(
     interest_income_new_disbursements_df: pd.Series,
     interest_income_existing_loans: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     return (
         interest_income_new_disbursements_df["total"]
         .add(interest_income_existing_loans, fill_value=0)
-        .reindex(helper.generate_columns(valuation_date, months_to_forecast))
+        .reindex(helper.generate_columns(start_date, months_to_forecast))
     )
 
 
 def generate_loan_schedules_for_all_new_disbursements(
     new_disbursements_df: pd.DataFrame,
-    parameters: pd.DataFrame,
+    disbursement_parameters: pd.DataFrame,
     monthly_repayment_new_disbursements_df: pd.DataFrame,
     months_to_forecast: int,
 ):
@@ -128,7 +128,7 @@ def generate_loan_schedules_for_all_new_disbursements(
 
     sme_loan_schedules = generate_loan_schedule_new_disbursements(
         disbursements=new_disbursements_df["sme_disbursements"],
-        monthly_interest_rate=parameters.loc["SME_INTEREST_RATE"],
+        monthly_interest_rate=disbursement_parameters.loc["SME_INTEREST_RATE"],
         repayment_amount=monthly_repayment_new_disbursements_df[
             "sme_monthly_repayment"
         ],
@@ -137,7 +137,7 @@ def generate_loan_schedules_for_all_new_disbursements(
 
     consumer_ssb_loan_schedules = generate_loan_schedule_new_disbursements(
         disbursements=new_disbursements_df["consumer_ssb_disbursements"],
-        monthly_interest_rate=parameters.loc["CONSUMER_SSB_INTEREST_RATE"],
+        monthly_interest_rate=disbursement_parameters.loc["CONSUMER_SSB_INTEREST_RATE"],
         repayment_amount=monthly_repayment_new_disbursements_df[
             "consumer_ssb_monthly_repayment"
         ],
@@ -146,7 +146,7 @@ def generate_loan_schedules_for_all_new_disbursements(
 
     b2b_loan_schedules = generate_loan_schedule_new_disbursements(
         disbursements=new_disbursements_df["b2b_disbursements"],
-        monthly_interest_rate=parameters.loc["B2B_INTEREST_RATE"],
+        monthly_interest_rate=disbursement_parameters.loc["B2B_INTEREST_RATE"],
         repayment_amount=monthly_repayment_new_disbursements_df[
             "b2b_monthly_repayment"
         ],
@@ -155,7 +155,7 @@ def generate_loan_schedules_for_all_new_disbursements(
 
     consumer_pvt_loan_schedules = generate_loan_schedule_new_disbursements(
         disbursements=new_disbursements_df["consumer_pvt_disbursements"],
-        monthly_interest_rate=parameters.loc["CONSUMER_PVT_INTEREST_RATE"],
+        monthly_interest_rate=disbursement_parameters.loc["CONSUMER_PVT_INTEREST_RATE"],
         repayment_amount=monthly_repayment_new_disbursements_df[
             "consumer_pvt_monthly_repayment"
         ],
@@ -253,7 +253,7 @@ def generate_loan_schedules_existing_loans(
     outstanding_balance: pd.Series,
     interest_rate_monthly: pd.Series,
     repayment_amount_monthly: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_project: int = 12 * 10,
 ):
     number_of_loans = outstanding_balance.shape[0]
@@ -275,7 +275,7 @@ def generate_loan_schedules_existing_loans(
         )
 
     index = outstanding_balance.index
-    columns = helper.generate_columns(valuation_date, months_to_project)
+    columns = helper.generate_columns(start_date, months_to_project)
 
     return {
         "interest": pd.DataFrame(interest, index=index, columns=columns),

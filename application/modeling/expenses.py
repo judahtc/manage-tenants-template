@@ -37,44 +37,44 @@ def calculate_credit_officer_commission(
 #     credit_officer_salaries: pd.Series,
 #     other_staff_salary: pd.Series,
 #     months_to_forecast: int,
-#     valuation_date: str,
+#     start_date: str,
 # ):
 #     total_salaries = agent_commission + credit_officer_salaries + other_staff_salary
-#     total_salaries.index = helper.generate_columns(valuation_date, months_to_forecast)
+#     total_salaries.index = helper.generate_columns(start_date, months_to_forecast)
 #     return total_salaries
 
 
 def calculate_provision_for_bad_debts(
     trade_receivables: pd.Series,
     trade_receivables_provision_for_bad_debts_percentage: float,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     provision_for_bad_debts = (
         trade_receivables * trade_receivables_provision_for_bad_debts_percentage
     )
     provision_for_bad_debts.index = helper.generate_columns(
-        valuation_date, months_to_forecast
+        start_date, months_to_forecast
     )
     return provision_for_bad_debts
 
 
-def calculate_variable_expenses(
-    variable_inputs_income_statement: pd.DataFrame,
-    parameters: pd.DataFrame,
-    valuation_date: str,
+def calculate_uncertain_expenses(
+    expenses_uncertain: pd.DataFrame,
+    other_parameters: pd.DataFrame,
+    start_date: str,
     months_to_forecast: int,
 ):
-    inflation_rates = (parameters.loc["INFLATION_RATE"] + 1).cumprod()
-    inflation_rates.index = helper.generate_columns(valuation_date, months_to_forecast)
+    inflation_rates = (other_parameters.loc["INFLATION_RATE"] + 1).cumprod()
+    inflation_rates.index = helper.generate_columns(start_date, months_to_forecast)
     mean_expenses = pd.DataFrame(
-        np.repeat(variable_inputs_income_statement.T.mean(), 12).values.reshape(
-            variable_inputs_income_statement.index.shape[0], months_to_forecast
+        np.repeat(expenses_uncertain.T.mean(), 12).values.reshape(
+            expenses_uncertain.index.shape[0], months_to_forecast
         ),
-        index=variable_inputs_income_statement.index,
+        index=expenses_uncertain.index,
     )
     mean_expenses.columns = helper.generate_columns(
-        valuation_date, period=months_to_forecast
+        start_date, period=months_to_forecast
     )
     return mean_expenses * inflation_rates
 
@@ -82,11 +82,11 @@ def calculate_variable_expenses(
 def calculate_pensions_and_statutory_contributions(
     salaries: pd.Series,
     pensions_and_statutory_contributions_percentage: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     pensions_and_statutory_contributions_percentage.index = helper.generate_columns(
-        valuation_date, months_to_forecast
+        start_date, months_to_forecast
     )
     pensions_and_statutory_contributions = (
         salaries * pensions_and_statutory_contributions_percentage
@@ -98,7 +98,7 @@ def calculate_change_in_provision_for_credit_loss(
     provision_for_credit_loss: pd.Series,
     provision_for_credit_loss_opening_balances: float,
     months_to_forecast: int,
-    valuation_date: str,
+    start_date: str,
 ):
     provision_for_credit_loss.index = pd.PeriodIndex(
         provision_for_credit_loss.index, freq="M"
@@ -110,7 +110,7 @@ def calculate_change_in_provision_for_credit_loss(
 
     provision_for_credit_loss = provision_for_credit_loss.sort_index().diff().dropna()
     provision_for_credit_loss.index = helper.generate_columns(
-        valuation_date, months_to_forecast
+        start_date, months_to_forecast
     )
     return provision_for_credit_loss
 
@@ -146,24 +146,24 @@ def convert_interest_array_to_series(interest_array, start_date):
     )
 
 
-def reindex_columns(df, valuation_date, months_to_forecast):
+def reindex_columns(df, start_date, months_to_forecast):
     return df.reindex(
-        helper.generate_columns(valuation_date, months_to_forecast),
+        helper.generate_columns(start_date, months_to_forecast),
         axis=1,
         fill_value=0,
     )
 
 
-def determine_start_date(df, valuation_date, idx):
+def determine_start_date(df, start_date, idx):
     if "loan_start_date" in df.columns:
         start_date = df.loc[idx, "loan_start_date"]
     else:
-        start_date = valuation_date
+        start_date = start_date
     return start_date
 
 
 def calculate_interest_expense_on_borrowing(
-    details_of_borrowing, months_to_forecast, valuation_date
+    details_of_borrowing, months_to_forecast, start_date
 ):
     interests = []
     temp = details_of_borrowing.copy()
@@ -175,7 +175,7 @@ def calculate_interest_expense_on_borrowing(
     )
     to_pad = temp.loan_term.max()
     for i in range(len(temp)):
-        start_date = determine_start_date(temp, valuation_date=valuation_date, idx=i)
+        start_date = determine_start_date(temp, start_date=start_date, idx=i)
         interest = calculate_interest_expense(temp, to_pad=to_pad, idx=i)
         interest = convert_interest_array_to_series(
             interest_array=interest, start_date=start_date
@@ -184,7 +184,7 @@ def calculate_interest_expense_on_borrowing(
     interest_expense = pd.concat(interests, axis=1).T.fillna(0)
     interest_expense = reindex_columns(
         interest_expense,
-        valuation_date=valuation_date,
+        start_date=start_date,
         months_to_forecast=months_to_forecast,
     )
     interest_expense.index = temp["company"]
@@ -226,23 +226,23 @@ def calculate_provision_for_credit_loss(
 
 
 def calculate_provision_for_credit_loss_for_all_new_disbursements(
-    new_disbursements_df: pd.DataFrame, parameters: pd.DataFrame
+    new_disbursements_df: pd.DataFrame, disbursement_parameters: pd.DataFrame
 ):
     sme_provision_for_credit_loss = calculate_provision_for_credit_loss(
         new_disbursements_df["sme_disbursements"],
-        parameters.loc["SME_PROVISION_FOR_CREDIT_LOSS"],
+        disbursement_parameters.loc["SME_PROVISION_FOR_CREDIT_LOSS"],
     )
     b2b_provision_for_credit_loss = calculate_provision_for_credit_loss(
         new_disbursements_df["b2b_disbursements"],
-        parameters.loc["B2B_PROVISION_FOR_CREDIT_LOSS"],
+        disbursement_parameters.loc["B2B_PROVISION_FOR_CREDIT_LOSS"],
     )
     consumer_ssb_provision_for_credit_loss = calculate_provision_for_credit_loss(
         new_disbursements_df["consumer_ssb_disbursements"],
-        parameters.loc["CONSUMER_SSB_PROVISION_FOR_CREDIT_LOSS"],
+        disbursement_parameters.loc["CONSUMER_SSB_PROVISION_FOR_CREDIT_LOSS"],
     )
     consumer_pvt_provision_for_credit_loss = calculate_provision_for_credit_loss(
         new_disbursements_df["consumer_pvt_disbursements"],
-        parameters.loc["CONSUMER_PVT_PROVISION_FOR_CREDIT_LOSS"],
+        disbursement_parameters.loc["CONSUMER_PVT_PROVISION_FOR_CREDIT_LOSS"],
     )
 
     provision_for_credit_loss_new_disbursements = helper.add_series(
@@ -267,24 +267,34 @@ def calculate_provision_for_credit_loss_for_all_new_disbursements(
 
 def calculate_salaries_and_pension_and_statutory_contributions(
     new_disbursements_df: pd.DataFrame,
-    parameters: pd.DataFrame,
+    disbursement_parameters: pd.DataFrame,
+    other_parameters: pd.DataFrame,
     months_to_forecast: int,
-    valuation_date: str,
+    start_date: str,
 ):
+    other_staff_salary = other_parameters.loc["OTHER_STAFF_SALARY"]
+    pensions_and_statutory_contributions_percentage = other_parameters.loc[
+        "PENSION_AND_STATUROTY_CONTRIBUTIONS_PERCENT"
+    ]
+
     agent_commission = calculate_agent_commission(
         consumer_pvt_disbursements=new_disbursements_df["consumer_pvt_disbursements"],
         consumer_ssb_disbursements=new_disbursements_df["consumer_ssb_disbursements"],
-        agent_commission_percentage=parameters.loc["AGENT_COMMISSION"],
+        agent_commission_percentage=disbursement_parameters.loc["AGENT_COMMISSION"],
     )
 
     credit_officer_salaries = calculate_credit_officer_salaries(
-        credit_officer_salary=parameters.loc["CREDIT_OFFICER_SALARY"],
-        sme_number_of_credit_officers=parameters.loc["SME_NUMBER_OF_CREDIT_OFFICERS"],
+        credit_officer_salary=disbursement_parameters.loc["CREDIT_OFFICER_SALARY"],
+        sme_number_of_credit_officers=disbursement_parameters.loc[
+            "SME_NUMBER_OF_CREDIT_OFFICERS"
+        ],
     )
 
     credit_officer_commission = calculate_credit_officer_commission(
         sme_disbursements=new_disbursements_df["sme_disbursements"],
-        credit_officer_commission=parameters.loc["CREDIT_OFFICER_COMMISSION"],
+        credit_officer_commission=disbursement_parameters.loc[
+            "CREDIT_OFFICER_COMMISSION"
+        ],
     )
 
     # total_salaries = calculate_total_salaries(
@@ -293,36 +303,32 @@ def calculate_salaries_and_pension_and_statutory_contributions(
     #     credit_officer_salaries=credit_officer_salaries,
     #     other_staff_salary=parameters.loc["OTHER_STAFF_SALARY"],
     #     months_to_forecast=months_to_forecast,
-    #     valuation_date=valuation_date,
+    #     start_date=start_date,
     # )
 
     total_salaries = (
         agent_commission
         + credit_officer_salaries
-        + parameters.loc["OTHER_STAFF_SALARY"]
+        + other_staff_salary
         + credit_officer_commission
     )
 
     total_salaries = helper.change_period_index_to_strftime(total_salaries)
 
-    pensions_and_statutory_contributions_percentage = parameters.loc[
-        "PENSION_AND_STATUROTY_CONTRIBUTIONS_PERCENT"
-    ]
-
     pensions_and_statutory_contributions_percentage.index = helper.generate_columns(
-        valuation_date, months_to_forecast
+        start_date, months_to_forecast
     )
 
     pensions_and_statutory_contributions = (
-        total_salaries * pensions_and_statutory_contributions_percentage
-    )
+        credit_officer_salaries + other_staff_salary
+    ) * pensions_and_statutory_contributions_percentage
 
     return pd.DataFrame(
         {
             "agent_commission": agent_commission.values,
             "credit_officer_salaries": credit_officer_salaries.values,
             "credit_officer_commission": credit_officer_commission.values,
-            "other_staff_salaries": parameters.loc["OTHER_STAFF_SALARY"].values,
+            "other_staff_salaries": other_staff_salary.values,
             "total": total_salaries.values,
             "pensions_and_statutory_contributions": pensions_and_statutory_contributions,
         },
@@ -335,14 +341,14 @@ def calculate_finance_costs(
     details_of_existing_short_term_borrowing: pd.DataFrame,
     details_of_new_short_term_borrowing: pd.DataFrame,
     details_of_new_long_term_borrowing: pd.DataFrame,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     interest_expense_existing_long_term_borrowing = (
         calculate_interest_expense_on_borrowing(
             details_of_borrowing=details_of_existing_long_term_borrowing,
             months_to_forecast=months_to_forecast,
-            valuation_date=valuation_date,
+            start_date=start_date,
         )
     )
 
@@ -350,20 +356,20 @@ def calculate_finance_costs(
         calculate_interest_expense_on_borrowing(
             details_of_borrowing=details_of_existing_short_term_borrowing,
             months_to_forecast=months_to_forecast,
-            valuation_date=valuation_date,
+            start_date=start_date,
         )
     )
 
     interest_expense_new_short_term_borrowing = calculate_interest_expense_on_borrowing(
         details_of_borrowing=details_of_new_short_term_borrowing,
         months_to_forecast=months_to_forecast,
-        valuation_date=valuation_date,
+        start_date=start_date,
     )
 
     interest_expense_new_long_term_borrowing = calculate_interest_expense_on_borrowing(
         details_of_borrowing=details_of_new_long_term_borrowing,
         months_to_forecast=months_to_forecast,
-        valuation_date=valuation_date,
+        start_date=start_date,
     )
 
     interest_expense_short_term_borrowing = (

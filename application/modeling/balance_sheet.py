@@ -8,15 +8,15 @@ def generate_inventories_schedule(
     opening_inventories: int,
     inventories_used: pd.Series,
     new_inventories: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
-    inventories_used.index = helper.generate_columns(valuation_date, months_to_forecast)
+    inventories_used.index = helper.generate_columns(start_date, months_to_forecast)
 
-    new_inventories.index = helper.generate_columns(valuation_date, months_to_forecast)
+    new_inventories.index = helper.generate_columns(start_date, months_to_forecast)
 
     inventories = pd.DataFrame(
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
         index=[
             "Opening Balance",
             "New Inventories",
@@ -37,16 +37,14 @@ def generate_payables_schedule(
     opening_payables: int,
     payments_to_payables: pd.Series,
     new_payables: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
-    payments_to_payables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
-    )
-    new_payables.index = helper.generate_columns(valuation_date, months_to_forecast)
+    payments_to_payables.index = helper.generate_columns(start_date, months_to_forecast)
+    new_payables.index = helper.generate_columns(start_date, months_to_forecast)
 
     payables = pd.DataFrame(
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
         index=[
             "Opening Balance",
             "New Payables",
@@ -68,17 +66,17 @@ def generate_receivables_schedule(
     opening_receivables: int,
     receipts_from_receivables: pd.Series,
     new_receivables: pd.Series,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     receipts_from_receivables.index = helper.generate_columns(
-        valuation_date, months_to_forecast
+        start_date, months_to_forecast
     )
 
-    new_receivables.index = helper.generate_columns(valuation_date, months_to_forecast)
+    new_receivables.index = helper.generate_columns(start_date, months_to_forecast)
 
     receivables = pd.DataFrame(
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
         index=[
             "Opening Balance",
             "New Receivables",
@@ -95,7 +93,7 @@ def generate_receivables_schedule(
     return receivables
 
 
-def generate_balance_sheet_template(valuation_date: str, months_to_forecast: int):
+def generate_balance_sheet_template(start_date: str, months_to_forecast: int):
     balance_sheet_index = pd.DataFrame(
         {
             "STATEMENT_OF_FINANCIAL_POSITION": [
@@ -151,7 +149,7 @@ def generate_balance_sheet_template(valuation_date: str, months_to_forecast: int
     ].str.strip()
 
     balance_sheet_template = pd.DataFrame(
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
         index=balance_sheet_index["STATEMENT_OF_FINANCIAL_POSITION"],
     )
 
@@ -234,7 +232,7 @@ def calculate_short_term_loans_schedules(
     long_and_short_term_borrowing_df: pd.DataFrame,
     capital_repayment_on_borrowings_df: pd.Series,
     opening_balances: pd.DataFrame,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     short_term_loans_schedule = pd.DataFrame(
@@ -244,7 +242,7 @@ def calculate_short_term_loans_schedules(
             "Repayments",
             "Closing Balance",
         ],
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
     )
 
     short_term_loans_schedule.loc[
@@ -270,7 +268,7 @@ def calculate_long_term_loans_schedules(
     long_and_short_term_borrowing_df: pd.DataFrame,
     capital_repayment_on_borrowings_df: pd.Series,
     opening_balances: pd.DataFrame,
-    valuation_date: str,
+    start_date: str,
     months_to_forecast: int,
 ):
     long_term_loans_schedule = pd.DataFrame(
@@ -280,7 +278,7 @@ def calculate_long_term_loans_schedules(
             "Repayments",
             "Closing Balance",
         ],
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
     )
 
     long_term_loans_schedule.loc[

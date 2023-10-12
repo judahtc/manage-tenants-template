@@ -5,9 +5,11 @@ import awswrangler as wr
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from mangum import Mangum
 from sqlalchemy.orm import Session
 
+from application.auth import security
 from application.auth.jwt_bearer import JwtBearer
 from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
 from application.modeling import constants, helper
@@ -61,59 +63,33 @@ def read_root():
     }
 
 
-@app.post("/user/login")
-def login(user: schemas.UserLoginSchema, db: Session = Depends(get_db)):
-    user = crud.check_user(db=db, user=user)
+@app.post("/v1/login", response_model=schemas.UserLoginResponse)
+def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = security.authenticate_user(
+        db=db, username=user.email, password=user.password
+    )
 
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email and password",
+            detail="Incorrect email or password",
         )
-
     return user
 
 
-@app.post("/{tenant_name}/{project_id}/upload-files")
-def upload_files(
-    tenant_name: str, project_id: int, files: List[UploadFile] = File(...)
-):
-    return helper.upload_multiple_files(
-        project_id=project_id,
-        tenant_name=tenant_name,
-        my_session=MY_SESSION,
-        files=files,
+@app.post("/login", response_model=schemas.UserLoginResponse)
+def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = security.authenticate_user(
+        db=db, username=user.username, password=user.password
     )
 
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
 
-@app.get("/{tenant_name}/{project_id}/download-raw-file")
-def download_raw_file(tenant_name: str, project_id: str, file_name: constants.RawFiles):
-    df = helper.read_raw_file(
-        tenant_name=tenant_name,
-        project_id=project_id,
-        boto3_session=constants.MY_SESSION,
-        file_name=file_name,
-    )
-
-    stream = io.StringIO()
-    df.to_csv(stream, index=True)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers[
-        "Content-Disposition"
-    ] = f"attachment; file_name={file_name.value}.csv"
-    return response
-
-
-@app.get("/{tenant_name}/{project_id}/raw-filenames")
-def get_raw_filenames(tenant_name: str, project_id: str):
-    raw_files: list = wr.s3.list_objects(
-        f"s3://{tenant_name}/project_{project_id}/{constants.FileStage.raw.value}",
-        boto3_session=constants.MY_SESSION,
-    )
-
-    raw_files = list(map(lambda x: x.split("/")[-1].split(".")[0], raw_files))
-
-    return raw_files
+    return user
 
 
 # @app.post("/{project_id}/upload-files")
@@ -137,11 +113,9 @@ def get_raw_filenames(tenant_name: str, project_id: str):
 #         files=files,
 #     )
 
-
+app.include_router(tenants_router.router)
+app.include_router(users_router.router)
 app.include_router(projects_router.router)
-
 app.include_router(intermediate_calculations.router)
 app.include_router(final_calculations.router)
-app.include_router(assumptions.router)
-app.include_router(users_router.router)
-app.include_router(tenants_router.router)
+# app.include_router(assumptions.router)

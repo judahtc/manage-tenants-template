@@ -1,16 +1,24 @@
-from datetime import datetime
+from datetime import date, datetime
+from enum import Enum
 from typing import List, Optional, Set, Union
-import enum
+
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import Column, Integer
 from sqlalchemy.types import Enum as SQLAlchemyEnum
-from pydantic import BaseModel, EmailStr, Field
+
 # from enum import Enum
 
 
-class ProjectStatusEnum(str, enum.Enum):
+class ProjectStatus(str, Enum):
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
+
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    SUPERADMIN = "SUPERADMIN"
+    USER = "USER"
 
 
 class otp(BaseModel):
@@ -47,27 +55,60 @@ class UserCreate(UserBase):
     password: str
 
 
-class User(UserBase):
+class ProjectCreate(BaseModel):
+    project_name: str
+    description: str
+    start_date: date
+    months_to_forecast: int
+    imtt: float
+
+
+class ProjectResponse(BaseModel):
+    tenant_id: int
+    user_id: int
+    project_id: int
+    project_name: str
+    start_date: str
+    months_to_forecast: int
+    project_status: str
+    imtt: float
+    description: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class UserResponse(BaseModel):
+    user_id: int
+    tenant_id: int
+    email: str
+    first_name: str
+    last_name: str
+    is_active: bool
+    role: str
+    created_at: datetime
+    phone_number: str
+    updated_at: datetime
+    created_at: datetime
+
     class Config:
         orm_mode = True
 
 
-class ProjectsBase(BaseModel):
-    project_id: int
-    project_name: str
-    start_date: str
+class UserLoginResponse(BaseModel):
+    access_token: str
+    token_type: str
     user_id: int
-    description: str
-    project_status: object
+    tenant_id: int
+    email: str
+    first_name: str
+    last_name: str
+    is_active: bool
+    role: str
+    created_at: datetime
+    phone_number: str
+    updated_at: datetime
+    created_at: datetime
 
-
-class ProjectsCreate(BaseModel):
-    project_name: str
-    description: str
-    start_date: str
-
-
-class Projects(ProjectsBase):
     class Config:
         orm_mode = True
 
@@ -89,15 +130,12 @@ class TenantBaseResponse(BaseModel):
 
 
 class TenantBaseCreate(BaseModel):
-    tenant_id: int
     admin_email: str
     first_name: str
     last_name: str
     company_name: str
     physical_address: str
     phone_number: str
-    created_at: str
-    password: str
 
     class Config:
         orm_mode = True
@@ -127,25 +165,6 @@ class UserBase(BaseModel):
     token: str
 
 
-class UserBaseRead(BaseModel):
-    tenant_id: int
-    email: str
-    last_name: str
-    is_active: bool
-    is_creator: bool
-    created_at: datetime
-    phone_number: str
-    user_id: int
-    first_name: str
-    is_admin: bool
-    is_viewer: bool
-    updated_at: datetime
-    work_address: str
-
-    class Config:
-        orm_mode = True
-
-
 class UserUpdate(BaseModel):
     email: str
     first_name: str
@@ -171,8 +190,6 @@ class UsersBaseCreate(BaseModel):
     first_name: str
     last_name: str
     phone_number: str
-    work_address: str
-    password: str
 
     class Config:
         orm_mode = True
@@ -194,18 +211,19 @@ class TokenData(BaseModel):
     username: Union[str, None] = None
 
 
-class UserLoginSchema(BaseModel):
+class UserLogin(BaseModel):
     email: str
     password: str
 
     class Config:
-        the_schema = {"user_signUp": {
-            "email": "juloh@gmail.com", "password": "juloh"}}
+        the_schema = {"user_signUp": {"email": "juloh@gmail.com", "password": "juloh"}}
 
 
 class ProjectUpdate(BaseModel):
     project_name: str
     description: str
+    start_date: date
+    imtt: float
 
 
 class ProjectStatusUpdate(BaseModel):

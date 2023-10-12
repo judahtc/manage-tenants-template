@@ -10,7 +10,7 @@ import os
 import random
 import string
 from typing import List
-from application.utils import google_auth
+from application.utils import utils
 import awswrangler as wr
 from botocore.exceptions import ClientError
 from decouple import config

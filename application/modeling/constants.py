@@ -22,11 +22,12 @@ MY_SESSION = boto3.Session(
 
 class RawFiles(str, Enum):
     details_of_assets = "details_of_assets"
-    details_of_borrowing = "details_of_borrowing"
-    income_statement_index = "income_statement_index"
-    static_inputs_income_statement = "static_inputs_income_statement"
-    variable_inputs_income_statement = "variable_inputs_income_statement"
-    parameters = "parameters"
+    details_of_long_term_borrowing = "details_of_long_term_borrowing"
+    details_of_short_term_borrowing = "details_of_short_term_borrowing"
+    disbursement_parameters = "disbursement_parameters"
+    other_parameters = "other_parameters"
+    expenses_certain = "expenses_certain"
+    expenses_uncertain = "expenses_uncertain"
     existing_loans = "existing_loans"
     opening_balances = "opening_balances"
 
@@ -78,6 +79,9 @@ class IntermediateFiles(str, Enum):
     )
     short_term_borrowings_capital_repayments_df = (
         "short_term_borrowings_capital_repayments_df"
+    )
+    existing_loans_schedules_outstanding_balances_df = (
+        "existing_loans_schedules_outstanding_balances_df"
     )
 
 

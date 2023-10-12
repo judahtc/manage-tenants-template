@@ -4,9 +4,7 @@ import pandas as pd
 from application.modeling import helper
 
 
-def generate_statement_of_cashflow_template(
-    valuation_date: str, months_to_forecast: int
-):
+def generate_statement_of_cashflow_template(start_date: str, months_to_forecast: int):
     return pd.DataFrame(
         index=pd.Index(
             [
@@ -42,7 +40,7 @@ def generate_statement_of_cashflow_template(
             ],
             name="STATEMENT_OF_CASHFLOWS",
         ),
-        columns=helper.generate_columns(valuation_date, months_to_forecast),
+        columns=helper.generate_columns(start_date, months_to_forecast),
     )
 
 

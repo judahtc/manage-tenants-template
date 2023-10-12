@@ -1,19 +1,15 @@
+import os
 from enum import Enum
 from functools import reduce
 from io import BytesIO
 from typing import Union
 
 import awswrangler as wr
+import boto3
 from boto3.session import Session
 from botocore.exceptions import BotoCoreError, ClientError
 from decouple import config
-from fastapi import HTTPException,  status
-
-
-import os
-
-import boto3
-from decouple import config
+from fastapi import HTTPException, status
 
 AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
@@ -47,10 +43,10 @@ SES_CLIENT = boto3.client(
 
 
 def make_bucket(tenant_name: str, s3_client: Session):
-    if not "-paa" in tenant_name:
+    if not "-budgeting" in tenant_name:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="tenant name shoud end with -paa",
+            detail="tenant name shoud end with -budgeting",
         )
     response = {}
     all_buckets_info = s3_client.list_buckets()
@@ -62,13 +58,10 @@ def make_bucket(tenant_name: str, s3_client: Session):
             )
     location = {"LocationConstraint": "af-south-1"}
     try:
-        s3_client.create_bucket(
-            Bucket=tenant_name, CreateBucketConfiguration=location)
+        s3_client.create_bucket(Bucket=tenant_name, CreateBucketConfiguration=location)
         response["message"] = f"{tenant_name} has been registered successifully"
         return response
     except ClientError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))

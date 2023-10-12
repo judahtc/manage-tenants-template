@@ -1,21 +1,20 @@
+import base64
 from datetime import datetime
 
-import boto3
-from decouple import config
-from fastapi import HTTPException, status
-
-from passlib.context import CryptContext
-from sqlalchemy.orm import Session
-# import emails_helper
-import main
-from application.utils import models
-from application.utils import schemas
-from application.utils import google_auth
-from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
 # from modeling import helper
 from io import BytesIO
-import base64
+
+import boto3
 import qrcode
+from decouple import config
+from fastapi import HTTPException, status
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+
+# import emails_helper
+import main as main
+from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
+from application.utils import models, schemas, utils
 
 
 def verify_password(plain_password, hashed_password):
@@ -28,20 +27,19 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def check_user(db: Session, user: schemas.UserLoginSchema):
-    fbc_user = db.query(models.Users).filter(
-        models.Users.email == user.email).first()
+def check_user(db: Session, user: schemas.UserLogin):
+    db_user = db.query(models.Users).filter(models.Users.email == user.email).first()
 
-    if fbc_user is None:
+    if db_user is None:
         return False
 
-    if not verify_password(user.password, fbc_user.hashed_password):
+    if not verify_password(user.password, db_user.hashed_password):
         return False
 
-    response = signJWT0(fbc_user.user_id, user.email)
-    response['email'] = fbc_user.email
-    response['first_name'] = fbc_user.first_name
-    response['lastlast_name'] = fbc_user.last_name
-    response['is_active'] = fbc_user.is_active
+    response = signJWT0(db_user.user_id, user.email)
+    response["email"] = db_user.email
+    response["first_name"] = db_user.first_name
+    response["last_name"] = db_user.last_name
+    response["is_active"] = db_user.is_active
 
     return response

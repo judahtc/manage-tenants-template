@@ -1,23 +1,22 @@
+import base64
 from datetime import datetime
 
+# from modeling import helper
+from io import BytesIO
+
 import boto3
+import qrcode
 from decouple import config
 from fastapi import HTTPException, status
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-# import emails_helper
-import main
-from application.utils import models
-from application.utils  import schemas
-from application.utils  import google_auth
-from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
-# from modeling import helper
-from io import BytesIO
-import base64
-import qrcode
 
+# import emails_helper
+import main as main
+from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
 from application.aws_helper import helper
+from application.utils import models, schemas, utils
 
 s3_client = boto3.client(
     "s3",
@@ -33,91 +32,59 @@ ses_client = boto3.client(
 )
 
 
-def create_tenant(db: Session, tenant: schemas.TenantBaseResponse, password: str, secret_key: str):
+def create_tenant(
+    db: Session, tenant: schemas.TenantBaseResponse, password: str, secret_key: str
+):
     user = (
-        db.query(models.Users).filter(
-            models.Users.email == tenant.admin_email).first()
+        db.query(models.Users).filter(models.Users.email == tenant.admin_email).first()
     )
 
     if user is not None:
-        # return "user exist"
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=f"User already exist"
         )
 
-    response = helper.make_bucket(
-        tenant_name=tenant.company_name, s3_client=s3_client)
+    response = helper.make_bucket(tenant_name=tenant.company_name, s3_client=s3_client)
+
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    my_hashed_password = pwd_context.hash(password)
-    fake_hashed_password = my_hashed_password
+
+    hashed_password = pwd_context.hash(password)
+
     db_tenant = models.Tenant(
         admin_email=tenant.admin_email,
-        password=fake_hashed_password,
         first_name=tenant.first_name,
         last_name=tenant.last_name,
         company_name=tenant.company_name,
         physical_address=tenant.physical_address,
         phone_number=tenant.phone_number,
-
     )
     db.add(db_tenant)
     db.commit()
-
     db.refresh(db_tenant)
-    try:
-        result = main.engine.execute(
-            "SELECT MAX(tenant_id) FROM tenants").fetchall()
-        tenants_count = result[0].max
-        # tenants_count=db.query(models.Tenant).count()
-        db_user = models.Users(
-            email=tenant.admin_email,
-            hashed_password=my_hashed_password,
-            first_name=tenant.first_name,
-            last_name=tenant.last_name,
-            tenant_id=tenants_count,
-            is_admin=True,
-            is_active=False,
-            phone_number=tenant.phone_number,
-            work_address=tenant.physical_address,
-            secret_key=secret_key
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        return {"s3": response}
 
-    except:
-        tenants_count = 1
-        db_user = models.Users(
-            email=tenant.admin_email,
-            hashed_password=my_hashed_password,
-            first_name=tenant.first_name,
-            last_name=tenant.last_name,
-            tenant_id=tenants_count,
-            is_admin=True,
-            is_active=False,
-            phone_number=tenant.phone_number,
-            work_address=tenant.physical_address,
-            secret_key=secret_key
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        status_code = 200
-        return status_code
+    db_user = models.Users(
+        tenant_id=db_tenant.tenant_id,
+        email=tenant.admin_email,
+        hashed_password=hashed_password,
+        first_name=tenant.first_name,
+        last_name=tenant.last_name,
+        phone_number=tenant.phone_number,
+        secret_key=secret_key,
+        role=schemas.UserRole.ADMIN,
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    return response
 
 
 def create_base64_qrcode_image(uri: str):
-
     qrcode_image = qrcode.make(uri)
-
     buffer = BytesIO()
-
     qrcode_image.save(buffer)
-
     image_bytes = buffer.getvalue()
-
-    qrcode_image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+    qrcode_image_base64 = base64.b64encode(image_bytes).decode("utf-8")
 
     return qrcode_image_base64
 
@@ -128,32 +95,22 @@ def get_tenants(db: Session):
 
 
 def get_tenant_by_tenant_name(tenant_name: str, db: Session):
-    try:
-        tenant = (
-            db.query(models.Tenant).filter(
-                models.Tenant.company_name == tenant_name).first()
-        )
-
-        if tenant is not None:
-            return tenant
-        else:
-            return {"response": "tenant does not exist"}
-
-    except:
-        return {"response": "tenant does not exist"}
+    return (
+        db.query(models.Tenant)
+        .filter(models.Tenant.company_name == tenant_name)
+        .first()
+    )
 
 
-def delete_tenant(db: Session, tenant_name: str):
-    try:
-        tenant = get_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
-        if tenant is not None:
-            db.delete(tenant)
-            db.commit()
-            return {"response": "tenant successfully deleted "}
-        else:
-            return {"response": "tenant does not exist "}
-    except:
-        return {"response": "tenant does not exist "}
+def get_tenant_by_id(db: Session, tenant_id: int):
+    return db.query(models.Tenant).get(tenant_id)
+
+
+def delete_tenant_by_tenant_name(db: Session, tenant_name: str):
+    tenant = get_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
+    db.delete(tenant)
+    db.commit()
+    return tenant
 
 
 def update_Tenant(tenant_name: str, edit_tenant: schemas.TenantUpdate, db: Session):
