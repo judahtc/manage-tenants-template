@@ -63,11 +63,13 @@ async def create_user(
         )
 
     random_password = utils.generate_random_password()
+
     secret_key = pyotp.random_base32()
 
     uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
         name="Claxon", issuer_name="CBS Budgetting"
     )
+
     qrcode_image = crud.create_base64_qrcode_image(uri)
 
     created_user = crud.create_user(
@@ -78,16 +80,12 @@ async def create_user(
         admin=current_user,
     )
 
-    # if response["response"] == "user successfully added":
-    #     return emails.send_email(
-    #         recipient=user.email,
-    #         qrcode_image=qrcode_image,
-    #         password=random_password,
-    #     )
-    # else:
-    #     return response
+    emails.send_email(
+        recipient=user.email,
+        qrcode_image=qrcode_image,
+        password=random_password,
+    )
 
-    # comment the next statement when you activate emails by uncommenting the above commented code
     return created_user
 
 

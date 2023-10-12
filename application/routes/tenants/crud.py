@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 # import emails_helper
 import main as main
+from application.auth import security
 from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
 from application.aws_helper import helper
 from application.utils import models, schemas, utils
@@ -24,6 +25,7 @@ s3_client = boto3.client(
     aws_secret_access_key=config("AWS_SECRET_ACCESS_KEY"),
     region_name="af-south-1",
 )
+
 ses_client = boto3.client(
     "ses",
     aws_access_key_id=config("AWS_ACCESS_KEY_ID"),
@@ -46,9 +48,7 @@ def create_tenant(
 
     response = helper.make_bucket(tenant_name=tenant.company_name, s3_client=s3_client)
 
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-    hashed_password = pwd_context.hash(password)
+    hashed_password = security.get_password_hash(password=password)
 
     db_tenant = models.Tenant(
         admin_email=tenant.admin_email,
@@ -58,6 +58,7 @@ def create_tenant(
         physical_address=tenant.physical_address,
         phone_number=tenant.phone_number,
     )
+
     db.add(db_tenant)
     db.commit()
     db.refresh(db_tenant)
@@ -72,6 +73,7 @@ def create_tenant(
         secret_key=secret_key,
         role=schemas.UserRole.ADMIN,
     )
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

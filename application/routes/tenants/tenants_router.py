@@ -42,6 +42,7 @@ from application.auth.jwt_bearer import JwtBearer
 from application.auth.jwt_handler import decodeJWT, signJWT
 from application.auth.security import get_current_active_user
 from application.routes.tenants import crud
+from application.routes.users import emails
 from application.utils import models, schemas, utils
 from application.utils.database import SessionLocal, engine, get_db
 
@@ -62,26 +63,26 @@ def generate_login_creds():
 async def create_tenant(
     tenant: schemas.TenantBaseCreate, db: Session = Depends(get_db)
 ):
-    random_password = utils.generate_random_password()
+    default_password = "password123"
     secret_key = pyotp.random_base32()
 
     uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
         name="Claxon", issuer_name="CBS Budgetting"
     )
 
-    print(random_password)
-
     qrcode_image = crud.create_base64_qrcode_image(uri)
-    # try:
 
     crud.create_tenant(
-        db=db, tenant=tenant, password=random_password, secret_key=secret_key
+        db=db, tenant=tenant, password=default_password, secret_key=secret_key
     )
 
-    # return await crud.activate_admin_sendgrid(body, password=encryption_key, url=url, qrcode_image=qrcode_image)
+    emails.send_email(
+        recipient=tenant.admin_email,
+        qrcode_image=qrcode_image,
+        password=default_password,
+    )
+
     return "tenant successfully created"
-    # except:
-    #     return {"response":"tenant not created"}
 
 
 @router.get("/tenant/{tenant_name}")
@@ -90,8 +91,7 @@ def get_tenant(
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ) -> Union[schemas.TenantBaseResponse, dict, None]:
-    # tenant_id=1
-    return crud.get_tenant_by_tenant_name(tenant_name=tenant_name, db=db)
+   return crud.get_tenant_by_tenant_name(tenant_name=tenant_name, db=db)
 
 
 @router.get("/tenants/", response_model=List[schemas.TenantBaseResponse])
