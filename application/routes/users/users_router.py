@@ -99,13 +99,12 @@ def get_users_by_tenant_id(
     return users
 
 
-@router.get("/users/{email}", response_model=schemas.UserResponse)
-async def get_user_by_email(
-    email: str,
+@router.get("/users/{user_id}", response_model=schemas.UserResponse)
+async def get_user_by_id(
+    user_id: int,
     db: Session = Depends(get_db),
 ):
-    user = crud.get_user_by_email(db=db, email=email)
-
+    user = crud.get_user_by_id(db=db, user_id=user_id)
     if user is None:
         raise HTTPException(
             detail="User does not exist", status_code=status.HTTP_404_NOT_FOUND
@@ -114,9 +113,9 @@ async def get_user_by_email(
     return user
 
 
-@router.patch("users/{email}/toggle-active")
+@router.patch("/users/{user_id}/toggle-active")
 def toggle_users_active(
-    email: str,
+    user_id: int,
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
@@ -126,18 +125,18 @@ def toggle_users_active(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
-    user = crud.get_user_by_email(db=db, email=email)
+    user = crud.get_user_by_id(db=db, user_id=user_id)
     user.is_active = not user.is_active
 
-    db.commit(user)
-    db.refresh()
+    db.commit()
+    db.refresh(user)
 
     return user
 
 
-@router.delete("/users/{email}")
-async def delete_user_by_email(
-    email: str,
+@router.delete("/users/{user_id}")
+async def delete_user_by_id(
+    user_id: int,
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
@@ -147,14 +146,15 @@ async def delete_user_by_email(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
-    user = crud.get_user_by_email(db=db, email=email)
+    user = crud.get_user_by_id(db=db, user_id=user_id)
 
     if user is None:
         raise HTTPException(
             detail="User does not exist", status_code=status.HTTP_404_NOT_FOUND
         )
 
-    crud.delete_by_email(db=db, email=email)
+    user = crud.get_user_by_id(db=db, user_id=user_id)
+    crud.delete_by_email(db=db, email=user.email)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
