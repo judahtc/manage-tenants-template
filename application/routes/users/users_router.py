@@ -124,6 +124,11 @@ def toggle_users_active(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
+    if current_user.user_id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You can't deactive yourself"
+        )
+
     user = crud.get_user_by_id(db=db, user_id=user_id)
     user = crud.get_user_by_id(db=db, user_id=user_id)
     user.is_active = not user.is_active
