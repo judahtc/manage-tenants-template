@@ -112,7 +112,7 @@ def create_user(
         last_name=user.last_name,
         tenant_id=admin.tenant_id,
         phone_number=user.phone_number,
-        role=schemas.UserRole.USER,
+        role=user.role,
         is_active=True,
         secret_key=secret_key,
     )

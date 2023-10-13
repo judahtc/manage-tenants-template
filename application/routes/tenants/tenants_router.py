@@ -149,6 +149,12 @@ def toggle_tenant_active(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
+    if current_user.tenant.company_name == tenant_name:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can't delete your own delete",
+        )
+
     tenant = crud.get_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
     tenant.is_active = not tenant.is_active
 

@@ -56,14 +56,25 @@ async def create_user(
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    if current_user.role != schemas.UserRole.ADMIN:
+    if (
+        current_user.role != schemas.UserRole.ADMIN
+        or current_user.role != schemas.UserRole.SUPERADMIN
+    ):
+        raise HTTPException(
+            detail="You're not authorized to perform this action",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    if (
+        current_user.role != schemas.UserRole.ADMIN
+        and user.role == schemas.UserRole.SUPERADMIN
+    ):
         raise HTTPException(
             detail="You're not authorized to perform this action",
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
     random_password = utils.generate_random_password()
-
     secret_key = pyotp.random_base32()
 
     uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
@@ -149,6 +160,11 @@ async def delete_user_by_id(
         raise HTTPException(
             detail="You're not authorized to perform this action",
             status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    if current_user.user_id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You can't delete yourself"
         )
 
     user = crud.get_user_by_id(db=db, user_id=user_id)

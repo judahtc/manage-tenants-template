@@ -187,6 +187,7 @@ class TenantUpdate(BaseModel):
 
 class UsersBaseCreate(BaseModel):
     email: str
+    role: str
     first_name: str
     last_name: str
     phone_number: str
