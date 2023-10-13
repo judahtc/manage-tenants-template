@@ -56,14 +56,11 @@ async def create_user(
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
- 
-
     if current_user.role not in [schemas.UserRole.ADMIN, schemas.UserRole.SUPERADMIN]:
         raise HTTPException(
             detail="You're not authorized to perform this action",
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
-    
 
     if (
         current_user.role == schemas.UserRole.ADMIN
@@ -129,7 +126,7 @@ def toggle_users_active(
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    if current_user.role != schemas.UserRole.ADMIN:
+    if current_user.role not in [schemas.UserRole.ADMIN, schemas.UserRole.SUPERADMIN]:
         raise HTTPException(
             detail="You're not authorized to perform this action",
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -156,7 +153,7 @@ async def delete_user_by_id(
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    if current_user.role != schemas.UserRole.ADMIN:
+    if current_user.role not in [schemas.UserRole.ADMIN, schemas.UserRole.SUPERADMIN]:
         raise HTTPException(
             detail="You're not authorized to perform this action",
             status_code=status.HTTP_401_UNAUTHORIZED,
