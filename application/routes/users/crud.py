@@ -50,7 +50,6 @@ def update_by_email(email: str, edit_user: schemas.UserUpdate, db: Session):
     user.first_name = edit_user.first_name
     user.last_name = edit_user.last_name
     user.phone_number = edit_user.phone_number
-    user.work_address = edit_user.work_address
     db.commit()
     context = {"response": "successfully updated", "status_code": status.HTTP_200_OK}
     return context
