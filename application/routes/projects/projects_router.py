@@ -106,6 +106,9 @@ def download_raw_file(
         file_name=file_name,
     )
 
+    if file_name == constants.RawFiles.existing_loans:
+        df = df.head(50)
+
     stream = io.StringIO()
     df.to_csv(stream, index=True)
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
