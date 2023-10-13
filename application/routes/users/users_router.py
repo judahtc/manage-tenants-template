@@ -95,13 +95,9 @@ def get_users_by_tenant_id(
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
     users = crud.get_users(db, tenant_id=current_user.tenant_id)
-
     return users
 
 
-@router.get("/users/{user_id}", response_model=schemas.UserResponse)
-async def get_user_by_id(
-    user_id: int,
 @router.get("/users/{user_id}", response_model=schemas.UserResponse)
 async def get_user_by_id(
     user_id: int,
@@ -118,7 +114,6 @@ async def get_user_by_id(
 
 @router.patch("/users/{user_id}/toggle-active")
 def toggle_users_active(
-    user_id: int,
     user_id: int,
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
