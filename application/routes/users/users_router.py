@@ -66,7 +66,7 @@ async def create_user(
         )
 
     if (
-        current_user.role != schemas.UserRole.ADMIN
+        current_user.role == schemas.UserRole.ADMIN
         and user.role == schemas.UserRole.SUPERADMIN
     ):
         raise HTTPException(
