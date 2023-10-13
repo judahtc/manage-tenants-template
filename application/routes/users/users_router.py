@@ -102,6 +102,9 @@ def get_users_by_tenant_id(
 @router.get("/users/{user_id}", response_model=schemas.UserResponse)
 async def get_user_by_id(
     user_id: int,
+@router.get("/users/{user_id}", response_model=schemas.UserResponse)
+async def get_user_by_id(
+    user_id: int,
     db: Session = Depends(get_db),
 ):
     user = crud.get_user_by_id(db=db, user_id=user_id)
@@ -116,6 +119,7 @@ async def get_user_by_id(
 @router.patch("/users/{user_id}/toggle-active")
 def toggle_users_active(
     user_id: int,
+    user_id: int,
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
@@ -125,6 +129,7 @@ def toggle_users_active(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
+    user = crud.get_user_by_id(db=db, user_id=user_id)
     user = crud.get_user_by_id(db=db, user_id=user_id)
     user.is_active = not user.is_active
 
@@ -147,6 +152,7 @@ async def delete_user_by_id(
         )
 
     user = crud.get_user_by_id(db=db, user_id=user_id)
+    user = crud.get_user_by_id(db=db, user_id=user_id)
 
     if user is None:
         raise HTTPException(
@@ -159,11 +165,12 @@ async def delete_user_by_id(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put("/users/{email}")
-def update_user_by_email(
-    email: str,
+@router.put("/users/{user_id}")
+def update_user_by_id(
+    user_id: int,
     edit_user: schemas.UserUpdate,
     db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    return crud.update_by_email(email, edit_user=edit_user, db=db)
+    user = crud.get_user_by_id(db=db, user_id=user_id)
+    return crud.update_by_email(user.email, edit_user=edit_user, db=db)
