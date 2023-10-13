@@ -65,14 +65,14 @@ async def create_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
-    if (
-        current_user.role == schemas.UserRole.ADMIN
-        and user.role == schemas.UserRole.SUPERADMIN
-    ):
-        raise HTTPException(
-            detail="You're not authorized to perform this action",
-            status_code=status.HTTP_401_UNAUTHORIZED,
-        )
+    # if (
+    #     current_user.role == schemas.UserRole.ADMIN
+    #     and user.role == schemas.UserRole.SUPERADMIN
+    # ):
+    #     raise HTTPException(
+    #         detail="You're not authorized to perform this action",
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #     )
 
     random_password = utils.generate_random_password()
     secret_key = pyotp.random_base32()
