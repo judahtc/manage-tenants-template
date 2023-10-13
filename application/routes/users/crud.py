@@ -32,6 +32,10 @@ def get_user_by_email(db: Session, email: str) -> models.Users:
     return db.query(models.Users).filter(models.Users.email == email).first()
 
 
+def get_user_by_id(db: Session, user_id: int) -> models.Users:
+    return db.query(models.Users).get(user_id)
+
+
 def delete_by_email(db: Session, email: str) -> models.Users:
     user = get_user_by_email(db=db, email=email)
     db.delete(user)
