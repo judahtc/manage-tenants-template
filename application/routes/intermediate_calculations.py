@@ -51,7 +51,7 @@ def calculate_new_disbursements(
     start_date = project.start_date
     tenant_name = current_user.tenant.company_name
 
-    disbursement_parameters = helper.read_disbursement_parameters_file(
+    disbursement_parameters = helper.read_disburotsement_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
