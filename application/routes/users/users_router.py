@@ -165,12 +165,16 @@ async def delete_user_by_id(
         )
 
     user = crud.get_user_by_id(db=db, user_id=user_id)
-    user = crud.get_user_by_id(db=db, user_id=user_id)
 
     if user is None:
         raise HTTPException(
             detail="User does not exist", status_code=status.HTTP_404_NOT_FOUND
         )
+    
+    if user.role in [schemas.UserRole.ADMIN, schemas.UserRole.SUPERADMIN]
+      raise HTTPException(
+          detail = "Cannot delete an admin user"
+      )
 
     user = crud.get_user_by_id(db=db, user_id=user_id)
     crud.delete_by_email(db=db, email=user.email)
