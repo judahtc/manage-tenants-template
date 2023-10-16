@@ -38,7 +38,6 @@ def calculate_reducing_balance_depreciation(
     details_of_assets: pd.DataFrame,
     start_date: str,
     months_to_forecast: int,
-    new_assets: bool = False,
 ):
     if details_of_assets.empty:
         return {"nbvs": pd.DataFrame(), "depreciations": pd.DataFrame()}
@@ -77,7 +76,6 @@ def calculate_reducing_balance_depreciation(
             details_of_assets=details_of_assets,
             remaining_useful_life=remaining_useful_life,
             asset_id=asset_id,
-            # new_assets=new_assets,
             start_date=start_date,
         )
 
@@ -181,6 +179,8 @@ def calculate_depreciations_and_nbvs(
     start_date: str,
     months_to_forecast: int,
 ):
+    start_date = pd.Timestamp(start_date)
+
     details_of_assets_reducing_balance = details_of_assets.loc[
         details_of_assets.method == "reducing_balance"
     ]
