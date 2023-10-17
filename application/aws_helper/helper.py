@@ -6,6 +6,7 @@ from typing import Union
 
 import awswrangler as wr
 import boto3
+import pandas as pd
 from boto3.session import Session
 from botocore.exceptions import BotoCoreError, ClientError
 from decouple import config
@@ -65,3 +66,6 @@ def make_bucket(tenant_name: str, s3_client: Session):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
+

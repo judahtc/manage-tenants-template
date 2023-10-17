@@ -323,3 +323,33 @@ def make_bucket(tenant_name: str, s3_client):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
+def match_months_to_forecast_with_df(
+    df: pd.DataFrame, months_to_forecast: int, start_date: str
+):
+    number_of_months_in_df = df.columns.shape[0]
+
+    if number_of_months_in_df == months_to_forecast:
+        df.columns = pd.period_range(
+            start=start_date, periods=months_to_forecast, freq="M"
+        )
+        return df
+
+    number_of_months_to_add = months_to_forecast - number_of_months_in_df
+
+    repeated_last_column = df[df.columns[-1]].repeat(number_of_months_to_add)
+
+    reshaped_repated_last_column_df = pd.DataFrame(
+        repeated_last_column.values.reshape(-1, number_of_months_to_add), index=df.index
+    )
+
+    new_df = pd.concat(
+        [df, reshaped_repated_last_column_df],
+        axis=1,
+    )
+
+    new_df.columns = pd.period_range(
+        start=start_date, periods=months_to_forecast, freq="M"
+    )
+    return new_df

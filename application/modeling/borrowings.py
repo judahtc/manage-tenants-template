@@ -54,6 +54,7 @@ def calculate_straight_line_payments(
                     effective_date,
                     periods=number_of_payments[i],
                     freq=freq_key[frequency],
+                
                 )
             ).strftime("%b-%Y")
 

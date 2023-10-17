@@ -284,9 +284,9 @@ def calculate_other_income_existing_loans(
         loan_identifiers=existing_loans["loan_number"],
     )
 
-    admin_fee_existing_loans = admin_fee_existing_loans.sum().loc[
-        helper.generate_columns(start_date, months_to_forecast)
-    ]
+    admin_fee_existing_loans = (
+        admin_fee_existing_loans.sum()
+    )  # .loc[       helper.generate_columns(start_date, months_to_forecast)]
 
     credit_insurance_fee_existing_loans = borrowings.calculate_straight_line_payments(
         effective_dates=existing_loans["disbursement_date"],
@@ -300,9 +300,9 @@ def calculate_other_income_existing_loans(
         loan_identifiers=existing_loans["loan_number"],
     )
 
-    credit_insurance_fee_existing_loans = credit_insurance_fee_existing_loans.sum().loc[
-        helper.generate_columns(start_date, months_to_forecast)
-    ]
+    credit_insurance_fee_existing_loans = (
+        credit_insurance_fee_existing_loans.sum()
+    )  # .loc[helper.generate_columns(start_date, months_to_forecast)]
 
     other_income_existing_loans = helper.add_series(
         [credit_insurance_fee_existing_loans, admin_fee_existing_loans]

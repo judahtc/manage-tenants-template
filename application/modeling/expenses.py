@@ -297,15 +297,6 @@ def calculate_salaries_and_pension_and_statutory_contributions(
         ],
     )
 
-    # total_salaries = calculate_total_salaries(
-    #     agent_commission=agent_commission,
-    #     credit_officer_commission=credit_officer_commission,
-    #     credit_officer_salaries=credit_officer_salaries,
-    #     other_staff_salary=parameters.loc["OTHER_STAFF_SALARY"],
-    #     months_to_forecast=months_to_forecast,
-    #     start_date=start_date,
-    # )
-
     total_salaries = (
         agent_commission
         + credit_officer_salaries
@@ -314,10 +305,6 @@ def calculate_salaries_and_pension_and_statutory_contributions(
     )
 
     total_salaries = helper.change_period_index_to_strftime(total_salaries)
-
-    pensions_and_statutory_contributions_percentage.index = helper.generate_columns(
-        start_date, months_to_forecast
-    )
 
     pensions_and_statutory_contributions = (
         credit_officer_salaries + other_staff_salary
