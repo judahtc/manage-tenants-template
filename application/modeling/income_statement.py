@@ -130,8 +130,11 @@ def insert_expenses(
     expenses_certain: pd.DataFrame,
     uncertain_expenses: pd.DataFrame,
 ):
-    income_statement.loc[expenses_certain.index] = expenses_certain
-    income_statement.loc[uncertain_expenses.index] = uncertain_expenses
+    try:
+        income_statement.loc[expenses_certain.index] = expenses_certain
+        income_statement.loc[uncertain_expenses.index] = uncertain_expenses
+    except:
+        pass
     return income_statement
 
 

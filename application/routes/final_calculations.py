@@ -35,20 +35,25 @@ def read_files_for_generating_income(
     tenant_name: str,
     project_id: int,
     start_date: str,
+    months_to_forecast: int,
     boto3_session,
 ):
-    expenses_certain = helper.read_raw_file(
+    expenses_certain = helper.read_expenses_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
         file_name=constants.RawFiles.expenses_certain,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
-    expenses_uncertain = helper.read_raw_file(
+    expenses_uncertain = helper.read_expenses_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
         file_name=constants.RawFiles.expenses_uncertain,
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     other_parameters = helper.read_other_parameters_file(
@@ -56,6 +61,7 @@ def read_files_for_generating_income(
         project_id=project_id,
         boto3_session=boto3_session,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
@@ -63,6 +69,7 @@ def read_files_for_generating_income(
         project_id=project_id,
         boto3_session=boto3_session,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     opening_balances = helper.read_raw_file(
@@ -257,6 +264,7 @@ def generate_income_statement(
         tenant_name=tenant_name,
         project_id=project_id,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
         boto3_session=constants.MY_SESSION,
     )
 
@@ -350,12 +358,14 @@ def read_files_for_generating_direct_cashflow(
     project_id: int,
     boto3_session,
     start_date: str,
+    months_to_forecast: int,
 ):
     other_parameters = helper.read_other_parameters_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=boto3_session,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     interest_income_new_disbursement_df = helper.read_intermediate_file(
@@ -505,6 +515,7 @@ def generate_direct_cashflow(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     ## From Parameters
@@ -815,6 +826,7 @@ def generate_balance_sheet(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     net_book_values_df = helper.read_intermediate_file(
@@ -1202,6 +1214,7 @@ def generate_statement_of_cashflows(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     opening_balances = helper.read_raw_file(

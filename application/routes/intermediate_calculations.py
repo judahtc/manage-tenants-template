@@ -49,6 +49,7 @@ def calculate_new_disbursements(
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
     tenant_name = current_user.tenant.company_name
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
@@ -56,6 +57,7 @@ def calculate_new_disbursements(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     new_disbursements_df = disbursements.calculate_new_disbursements(
@@ -92,6 +94,7 @@ def calculate_loan_schedules_new_disbursements(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
@@ -244,6 +247,7 @@ def calculate_other_income(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
@@ -407,6 +411,7 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
@@ -414,6 +419,7 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     new_disbursements_df = helper.read_intermediate_file(
@@ -453,6 +459,7 @@ def calculate_provisions(
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
+    months_to_forecast = project.months_to_forecast
     tenant_name = current_user.tenant.company_name
 
     disbursement_parameters = helper.read_disbursement_parameters_file(
@@ -460,6 +467,7 @@ def calculate_provisions(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         start_date=start_date,
+        months_to_forecast=months_to_forecast,
     )
 
     new_disbursements_df = helper.read_intermediate_file(

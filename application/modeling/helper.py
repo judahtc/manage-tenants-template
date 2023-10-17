@@ -82,6 +82,35 @@ def upload_file(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
+def read_expenses_file(
+    tenant_name: str,
+    project_id: int,
+    months_to_forecast: int,
+    start_date: str,
+    boto3_session,
+    file_name: Enum,
+):
+    try:
+        df = wr.s3.read_parquet(
+            f"s3://{tenant_name}/project_{project_id}/raw/{file_name.value}.parquet",
+            boto3_session=boto3_session,
+        )
+
+        df = df.set_index(df.columns[0])
+        df.index.name = ""
+        df = match_months_to_forecast_with_df(
+            df=df,
+            months_to_forecast=months_to_forecast,
+            start_date=start_date,
+        )
+
+        return df
+    except ClientError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
 def read_raw_file(
     tenant_name: str,
     project_id: int,
@@ -105,7 +134,11 @@ def read_raw_file(
 
 
 def read_disbursement_parameters_file(
-    tenant_name: str, project_id: int, boto3_session, start_date: str
+    tenant_name: str,
+    project_id: int,
+    boto3_session,
+    start_date: str,
+    months_to_forecast: int,
 ):
     try:
         df = wr.s3.read_parquet(
@@ -115,7 +148,11 @@ def read_disbursement_parameters_file(
 
         df = df.set_index(df.columns[0])
         df.index.name = ""
-        df.columns = pd.period_range(start_date, periods=int(df.columns[-1]), freq="M")
+        df = match_months_to_forecast_with_df(
+            df=df,
+            months_to_forecast=months_to_forecast,
+            start_date=start_date,
+        )
 
         df.columns = list(map(str, df.columns))
 
@@ -127,7 +164,11 @@ def read_disbursement_parameters_file(
 
 
 def read_other_parameters_file(
-    tenant_name: str, project_id: int, boto3_session, start_date: str
+    tenant_name: str,
+    project_id: int,
+    boto3_session,
+    start_date: str,
+    months_to_forecast: int,
 ):
     try:
         df = wr.s3.read_parquet(
@@ -137,7 +178,12 @@ def read_other_parameters_file(
 
         df = df.set_index(df.columns[0])
         df.index.name = ""
-        df.columns = pd.period_range(start_date, periods=int(df.columns[-1]), freq="M")
+
+        df = match_months_to_forecast_with_df(
+            df=df,
+            months_to_forecast=months_to_forecast,
+            start_date=start_date,
+        )
 
         df.columns = list(map(str, df.columns))
 
@@ -353,3 +399,16 @@ def match_months_to_forecast_with_df(
         start=start_date, periods=months_to_forecast, freq="M"
     )
     return new_df
+
+
+def group_next_year_on_wards(df: pd.DataFrame):
+    df_copy = df.copy()
+    df_copy.columns = pd.to_datetime(df_copy.columns, format="%b-%Y")
+    df_yearly = df_copy.groupby(df_copy.columns.year, axis=1).sum()
+    df_yearly.columns = df_yearly.columns.astype(str)
+
+    current_year = str(pd.to_datetime(df.columns[0]).year)
+
+    df_current_year_in_months = df.T.loc[df.columns.str.endswith(current_year)].T
+
+    return pd.concat([df_current_year_in_months, df_yearly], axis=1)

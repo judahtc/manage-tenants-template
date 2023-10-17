@@ -68,7 +68,7 @@ def calculate_uncertain_expenses(
     inflation_rates = (other_parameters.loc["INFLATION_RATE"] + 1).cumprod()
     inflation_rates.index = helper.generate_columns(start_date, months_to_forecast)
     mean_expenses = pd.DataFrame(
-        np.repeat(expenses_uncertain.T.mean(), 12).values.reshape(
+        np.repeat(expenses_uncertain.T.mean(), months_to_forecast).values.reshape(
             expenses_uncertain.index.shape[0], months_to_forecast
         ),
         index=expenses_uncertain.index,
@@ -317,7 +317,7 @@ def calculate_salaries_and_pension_and_statutory_contributions(
             "credit_officer_commission": credit_officer_commission.values,
             "other_staff_salaries": other_staff_salary.values,
             "total": total_salaries.values,
-            "pensions_and_statutory_contributions": pensions_and_statutory_contributions,
+            "pensions_and_statutory_contributions": pensions_and_statutory_contributions.values,
         },
         index=total_salaries.index,
     )
