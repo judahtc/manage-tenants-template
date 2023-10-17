@@ -231,7 +231,7 @@ def calculate_final_balances(balance_sheet_df: pd.DataFrame):
 def calculate_short_term_loans_schedules(
     long_and_short_term_borrowing_df: pd.DataFrame,
     capital_repayment_on_borrowings_df: pd.Series,
-    opening_balances: pd.DataFrame,
+    opening_balance_on_short_term_loans: float,
     start_date: str,
     months_to_forecast: int,
 ):
@@ -247,7 +247,7 @@ def calculate_short_term_loans_schedules(
 
     short_term_loans_schedule.loc[
         "Opening Balance", short_term_loans_schedule.columns[0]
-    ] = opening_balances["SHORT_TERM_LOANS"].iat[0]
+    ] = opening_balance_on_short_term_loans
 
     short_term_loans_schedule.loc["Borrowings"] = long_and_short_term_borrowing_df[
         "short_term_borrowing"
@@ -267,7 +267,7 @@ def calculate_short_term_loans_schedules(
 def calculate_long_term_loans_schedules(
     long_and_short_term_borrowing_df: pd.DataFrame,
     capital_repayment_on_borrowings_df: pd.Series,
-    opening_balances: pd.DataFrame,
+    opening_balance_on_long_term_loans: float,
     start_date: str,
     months_to_forecast: int,
 ):
@@ -283,7 +283,7 @@ def calculate_long_term_loans_schedules(
 
     long_term_loans_schedule.loc[
         "Opening Balance", long_term_loans_schedule.columns[0]
-    ] = opening_balances["LONG_TERM_LOANS"].iat[0]
+    ] = opening_balance_on_long_term_loans
 
     long_term_loans_schedule.loc["Borrowings"] = long_and_short_term_borrowing_df[
         "long_term_borrowing"

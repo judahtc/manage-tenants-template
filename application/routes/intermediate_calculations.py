@@ -570,12 +570,33 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
 
     finance_costs_df.loc["total"] = finance_costs_df.sum()
 
+    long_term_borrowings_schedules_outstanding_balances_df = long_term_borrowings_schedules['outstanding_balance_at_start']
+    short_term_borrowings_schedules_outstanding_balances_df = short_term_borrowings_schedules['outstanding_balance_at_start']
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file=finance_costs_df,
         file_name=constants.IntermediateFiles.finance_costs_df,
+        file_stage=constants.FileStage.intermediate,
+    )
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=short_term_borrowings_schedules_outstanding_balances_df,
+        file_name=constants.IntermediateFiles.short_term_borrowings_schedules_outstanding_balances_df,
+        file_stage=constants.FileStage.intermediate,
+    )
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=long_term_borrowings_schedules_outstanding_balances_df,
+        file_name=constants.IntermediateFiles.long_term_borrowings_schedules_outstanding_balances_df,
         file_stage=constants.FileStage.intermediate,
     )
 

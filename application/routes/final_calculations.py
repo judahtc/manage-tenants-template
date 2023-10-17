@@ -748,6 +748,13 @@ def generate_loan_book(
         file_name=constants.IntermediateFiles.new_disbursements_df,
     )
 
+    existing_loans_schedules_outstanding_balances_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.existing_loans_schedules_outstanding_balances_df,
+    )
+
     interest_income_new_disbursement_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -788,7 +795,9 @@ def generate_loan_book(
 
     loan_book_df = loan_book.insert_loan_book_items(
         loan_book=loan_book_df,
-        opening_balance_on_loan_book=float(opening_balances["LOAN_BOOK"].iat[0]),
+        opening_balance_on_loan_book=existing_loans_schedules_outstanding_balances_df.sum()[
+            pd.Timestamp(start_date).strftime("%b-%Y")
+        ],
         total_interest_income=total_interest_income,
         total_capital_repayments=total_capital_repayments,
         disbursements=helper.change_period_index_to_strftime(
@@ -897,6 +906,20 @@ def generate_balance_sheet(
         set_index=False,
     )
 
+    short_term_borrowings_schedules_outstanding_balances_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.short_term_borrowings_schedules_outstanding_balances_df,
+    )
+
+    long_term_borrowings_schedules_outstanding_balances_df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=constants.IntermediateFiles.long_term_borrowings_schedules_outstanding_balances_df,
+    )
+
     provision_for_credit_loss_for_all_new_disbursements_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -927,7 +950,9 @@ def generate_balance_sheet(
         capital_repayment_on_borrowings_df=short_term_borrowings_capital_repayments_df.loc[
             "total"
         ],
-        opening_balances=opening_balances,
+        opening_balance_on_short_term_loans=short_term_borrowings_schedules_outstanding_balances_df.sum()[
+            pd.Timestamp(start_date).strftime("%b-%Y")
+        ],
         start_date=start_date,
         months_to_forecast=months_to_forecast,
     )
@@ -937,7 +962,9 @@ def generate_balance_sheet(
         capital_repayment_on_borrowings_df=long_term_borrowings_capital_repayments_df.loc[
             "total"
         ],
-        opening_balances=opening_balances,
+        opening_balance_on_long_term_loans=long_term_borrowings_schedules_outstanding_balances_df.sum()[
+            pd.Timestamp(start_date).strftime("%b-%Y")
+        ],
         start_date=start_date,
         months_to_forecast=months_to_forecast,
     )

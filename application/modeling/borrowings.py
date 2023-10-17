@@ -11,6 +11,36 @@ def reindex_output(df: pd.DataFrame):
     ).T
 
 
+def calculate_outstanding_on_straight_line_borrowings(
+    effective_dates: pd.Series,
+    tenures: pd.Series,
+    amounts: pd.Series,
+    loan_identifiers: pd.Series,
+):
+    array_of_series = []
+    for i, _ in effective_dates.items():
+        effective_date = effective_dates[i]
+        tenure = tenures[i]
+        amount = amounts[i]
+        loan_identifier = loan_identifiers[i]
+
+        array_of_series.append(
+            pd.Series(
+                data=amount,
+                index=pd.period_range(
+                    start=effective_date,
+                    periods=tenure,
+                    freq="M",
+                ),
+                name=loan_identifier,
+            )
+        )
+
+    df = pd.concat(array_of_series, axis=1).T.fillna(0)
+    df.columns = df.columns.strftime("%b-%Y")
+    return df
+
+
 def calculate_straight_line_payments(
     effective_dates: pd.Series,
     tenures: pd.Series,
@@ -54,7 +84,6 @@ def calculate_straight_line_payments(
                     effective_date,
                     periods=number_of_payments[i],
                     freq=freq_key[frequency],
-                
                 )
             ).strftime("%b-%Y")
 
@@ -107,9 +136,19 @@ def calculate_straight_line_loans_schedules(
         loan_identifiers=loan_identifiers,
     )
 
+    outstanding_balance =  calculate_outstanding_on_straight_line_borrowings(
+        effective_dates=effective_dates,
+        tenures=tenures,
+        amounts=amounts,
+        loan_identifiers=loan_identifiers,
+    )
+    
+
+
     return {
         "interest_payments": reindex_output(interest_payments),
         "capital_repayments": reindex_output(capital_repayments),
+        "outstanding_balance_at_start": reindex_output(outstanding_balance),
     }
 
 
@@ -239,6 +278,14 @@ def calculate_borrowings_schedules(borrowings: pd.DataFrame):
                 [
                     straight_line_loans_schedules["capital_repayments"],
                     reducing_balance_loans_schedules["capital_repayments"],
+                ]
+            ).fillna(0)
+        ),
+        "outstanding_balance_at_start": reindex_output(
+            pd.concat(
+                [
+                    straight_line_loans_schedules["outstanding_balance_at_start"],
+                    reducing_balance_loans_schedules["outstanding_balance_at_start"],
                 ]
             ).fillna(0)
         ),
