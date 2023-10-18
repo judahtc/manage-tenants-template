@@ -962,7 +962,7 @@ def generate_balance_sheet(
             "total"
         ],
         opening_balance_on_short_term_loans=short_term_borrowings_schedules_outstanding_balances_df.sum()[
-            pd.Timestamp(start_date).strftime("%b-%Y")
+            (pd.Timestamp(start_date) - pd.DateOffset(months=1)).strftime("%b-%Y")
         ],
         start_date=start_date,
         months_to_forecast=months_to_forecast,
