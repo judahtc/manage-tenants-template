@@ -62,42 +62,44 @@ def calculate_straight_line_payments(
         loan_identifier = loan_identifiers[i]
 
         if frequency == 0:
-            index = (
-                pd.date_range(
-                    effective_date + pd.DateOffset(months=tenure),
-                    periods=1,
-                    freq="A",
-                )
+            index = pd.date_range(
+                start=(effective_date + pd.DateOffset(months=tenure)),
+                periods=1,
+                freq="D",
             ).strftime("%b-%Y")
+            if loan_identifier == "DANDEMUTANDE":
+                pd.Series(amount, index=index, name=loan_identifier)
+
+            amounts_results.append(pd.Series(amount, index=index, name=loan_identifier))
 
         elif frequency == 2:
-            index = (
-                pd.date_range(
-                    effective_date + pd.DateOffset(months=6),
-                    periods=number_of_payments[i],
-                    freq=freq_key[frequency],
-                )
-            ).strftime("%b-%Y")
-        else:
-            index = (
-                pd.date_range(
-                    effective_date,
-                    periods=number_of_payments[i],
-                    freq=freq_key[frequency],
-                )
+            index = pd.date_range(
+                effective_date + pd.DateOffset(months=6),
+                periods=number_of_payments[i],
+                freq=freq_key[frequency],
             ).strftime("%b-%Y")
 
-        amounts_results.append(pd.Series(amount, index=index, name=loan_identifier))
+            amounts_results.append(pd.Series(amount, index=index, name=loan_identifier))
+        else:
+            index = pd.date_range(
+                effective_date,
+                periods=number_of_payments[i],
+                freq=freq_key[frequency],
+            ).strftime("%b-%Y")
+
+            amounts_results.append(pd.Series(amount, index=index, name=loan_identifier))
 
     return pd.concat(amounts_results, axis=1).T.fillna(0)
 
 
-def calculate_interest(frequencies: pd.Series, annual_interest: pd.Series):
+def calculate_interest(
+    frequencies: pd.Series, annual_interest: pd.Series, tenures: pd.Series
+):
     interest = pd.Series([], dtype=float)
 
     for i, v in frequencies.items():
         if frequencies[i] == 0:
-            interest[i] = 0
+            interest[i] = annual_interest[i] * tenures[i] / 12
         else:
             interest[i] = annual_interest[i] / frequencies[i]
 
@@ -117,7 +119,7 @@ def calculate_straight_line_loans_schedules(
     annual_interest = amounts * interest_rates
 
     interest = calculate_interest(
-        frequencies=frequencies, annual_interest=annual_interest
+        frequencies=frequencies, annual_interest=annual_interest, tenures=tenures
     )
 
     interest_payments = calculate_straight_line_payments(
@@ -136,14 +138,12 @@ def calculate_straight_line_loans_schedules(
         loan_identifiers=loan_identifiers,
     )
 
-    outstanding_balance =  calculate_outstanding_on_straight_line_borrowings(
+    outstanding_balance = calculate_outstanding_on_straight_line_borrowings(
         effective_dates=effective_dates,
         tenures=tenures,
         amounts=amounts,
         loan_identifiers=loan_identifiers,
     )
-    
-
 
     return {
         "interest_payments": reindex_output(interest_payments),
