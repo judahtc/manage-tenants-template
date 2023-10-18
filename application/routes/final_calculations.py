@@ -670,6 +670,8 @@ def generate_direct_cashflow(
         income_statement_df
     )
 
+    income_statement_yearly_df = helper.group_next_year_on_wards(df=income_statement_df)
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -677,6 +679,15 @@ def generate_direct_cashflow(
         file=tax_schedule_df,
         file_name=constants.IntermediateFiles.tax_schedule_df,
         file_stage=constants.FileStage.intermediate,
+    )
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=income_statement_df,
+        file_name=constants.FinalFiles.income_statement_yearly_df,
+        file_stage=constants.FileStage.final,
     )
 
     helper.upload_file(

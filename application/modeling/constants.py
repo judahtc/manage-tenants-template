@@ -93,6 +93,7 @@ class IntermediateFiles(str, Enum):
 
 class FinalFiles(str, Enum):
     income_statement_df = "income_statement_df"
+    income_statement_yearly_df = "income_statement_yearly_df"
     direct_cashflow_df = "direct_cashflow_df"
     loan_book_df = "loan_book_df"
     balance_sheet_df = "balance_sheet_df"
