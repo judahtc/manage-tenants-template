@@ -32,7 +32,9 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def authenticate_user(db: Session, username: str, password: str):
+def authenticate_user(
+    db: Session, username: str, password: str, expires_delta: timedelta | None = None
+):
     user = users_crud.get_user_by_email(db, username)
     if not user:
         return False
@@ -40,7 +42,7 @@ def authenticate_user(db: Session, username: str, password: str):
         return False
 
     access_token = create_access_token(
-        data={"email": user.email},
+        data={"email": user.email}, expires_delta=expires_delta
     )
 
     user.access_token = access_token
@@ -55,7 +57,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(hours=24)
+        expire = datetime.utcnow() + timedelta(minutes=5)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
