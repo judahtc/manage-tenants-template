@@ -103,13 +103,12 @@ def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     return user
 
 
-@app.get("/login_verification")
+@app.get("/login_verification", response_model=schemas.UserLoginResponse)
 async def login_verification(
     otp_code: int,
-    db: Session = Depends(get_db),
     current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
 ):
-    otp_verification = pyotp.TOTP(current_user.pyotp_key).verify(otp_code)
+    otp_verification = pyotp.TOTP(current_user.secret_key).verify(otp_code)
 
     if not otp_verification:
         raise HTTPException(
@@ -117,19 +116,15 @@ async def login_verification(
             detail="Incorrect otp token",
         )
 
-    user = security.authenticate_user(
-        db=db,
-        username=user.username,
-        password=user.password,
+    access_token = security.create_access_token(
+        data={"email": current_user.email},
         expires_delta=timedelta(hours=24),
     )
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
-    return user
+    current_user.access_token = access_token
+    current_user.token_type = "bearer"
+
+    return current_user
 
 
 app.include_router(tenants_router.router)
