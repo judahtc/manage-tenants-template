@@ -1,29 +1,13 @@
-from typing import List, Union
-
 import awswrangler as wr
 import pandas as pd
-from fastapi import (
-    APIRouter,
-    Depends,
-    FastAPI,
-    File,
-    Form,
-    Header,
-    HTTPException,
-    Request,
-    UploadFile,
-    status,
-)
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from application.auth.jwt_bearer import JwtBearer
 from application.auth.security import get_current_active_user
-from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
 from application.modeling import (
     borrowings,
     constants,
     depreciation,
-    direct_cashflow,
     disbursements,
     expenses,
     helper,
@@ -31,9 +15,7 @@ from application.modeling import (
     other_income,
 )
 from application.routes.projects import crud as project_crud
-from application.routes.tenants import crud as tenants_crud
-from application.routes.users import crud as users_crud
-from application.utils import schemas
+from application.utils import models
 from application.utils.database import SessionLocal, get_db
 
 router = APIRouter(
@@ -45,7 +27,7 @@ router = APIRouter(
 def calculate_new_disbursements(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -82,7 +64,7 @@ def calculate_new_disbursements(
 def calculate_loan_schedules_new_disbursements(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -165,7 +147,7 @@ def calculate_loan_schedules_new_disbursements(
 )
 def calculate_loan_schedules_existing_loans(
     project_id: str,
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     tenant_name = current_user.tenant.company_name
     existing_loans = helper.read_raw_file(
@@ -235,7 +217,7 @@ def calculate_loan_schedules_existing_loans(
 def calculate_other_income(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -346,7 +328,7 @@ def calculate_other_income(
 def calculate_depreciation(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -399,7 +381,7 @@ def calculate_depreciation(
 def calculate_salaries_and_pensions_and_statutory_contributions(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -455,7 +437,7 @@ def calculate_salaries_and_pensions_and_statutory_contributions(
 def calculate_provisions(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -501,7 +483,7 @@ def calculate_provisions(
 )
 def calculate_finance_costs_and_capital_repayment_on_borrowings(
     project_id: str,
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     tenant_name = current_user.tenant.company_name
 
@@ -570,8 +552,12 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
 
     finance_costs_df.loc["total"] = finance_costs_df.sum()
 
-    long_term_borrowings_schedules_outstanding_balances_df = long_term_borrowings_schedules['outstanding_balance_at_start']
-    short_term_borrowings_schedules_outstanding_balances_df = short_term_borrowings_schedules['outstanding_balance_at_start']
+    long_term_borrowings_schedules_outstanding_balances_df = (
+        long_term_borrowings_schedules["outstanding_balance_at_start"]
+    )
+    short_term_borrowings_schedules_outstanding_balances_df = (
+        short_term_borrowings_schedules["outstanding_balance_at_start"]
+    )
 
     helper.upload_file(
         tenant_name=tenant_name,
@@ -633,7 +619,7 @@ def calculate_finance_costs_and_capital_repayment_on_borrowings(
 @router.get("/projects/{project_id}/results/intermediate/filenames")
 def get_intermediate_filenames(
     project_id: str,
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     tenant_name = current_user.tenant.company_name
 

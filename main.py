@@ -106,7 +106,7 @@ def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 @app.get("/login_verification", response_model=schemas.UserLoginResponse)
 async def login_verification(
     otp_code: int,
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     otp_verification = pyotp.TOTP(current_user.secret_key).verify(otp_code)
 
@@ -125,6 +125,18 @@ async def login_verification(
     current_user.token_type = "bearer"
 
     return current_user
+
+
+@app.post("/reset_password")
+def reset_password(
+    payload: schemas.ResetPassword,
+    current_user: models.Users = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    hashed_password = security.get_password_hash(payload.new_password)
+    current_user.hashed_password = hashed_password
+    db.commit()
+    return {"detail": f"Password for {current_user.email} changed successfully "}
 
 
 app.include_router(tenants_router.router)

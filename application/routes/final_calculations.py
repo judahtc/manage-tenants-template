@@ -1,15 +1,12 @@
 import io
 
 import awswrangler as wr
-import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
 
-from application.auth.jwt_bearer import JwtBearer
 from application.auth.security import get_current_active_user
-from application.aws_helper.helper import S3_CLIENT
 from application.modeling import (
     balance_sheet,
     constants,
@@ -22,7 +19,6 @@ from application.modeling import (
     statement_of_cashflows,
 )
 from application.routes.projects import crud as project_crud
-from application.routes.users import crud as users_crud
 from application.utils import models, schemas
 from application.utils.database import get_db
 
@@ -239,7 +235,7 @@ def calculate_variable_expenses_and_change_in_provision_for_credit_loss_and_busi
 def generate_income_statement(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -483,7 +479,7 @@ def read_files_for_generating_direct_cashflow(
 def generate_direct_cashflow(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -724,7 +720,7 @@ def generate_direct_cashflow(
 def generate_loan_book(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -834,7 +830,7 @@ def generate_loan_book(
 def generate_balance_sheet(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -1240,7 +1236,7 @@ def generate_balance_sheet(
 def generate_statement_of_cashflows(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     project = project_crud.get_project_by_id(db=db, project_id=project_id)
     start_date = project.start_date
@@ -1505,7 +1501,7 @@ def generate_statement_of_cashflows(
 def download_final_file(
     project_id: str,
     file_name: constants.FinalFiles,
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     tenant_name = current_user.tenant.company_name
 
@@ -1533,7 +1529,7 @@ def download_final_file(
 def download_intermediate_file(
     project_id: int,
     file_name: constants.IntermediateFiles,
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     tenant_name = current_user.tenant.company_name
 
@@ -1556,7 +1552,7 @@ def download_intermediate_file(
 @router.get("/projects/{project_id}/results/filenames")
 def get_final_filenames(
     project_id: int,
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     tenant_name = current_user.tenant.company_name
 

@@ -1,5 +1,5 @@
 def activate_user_html(password: str, url: str, qrcode_image):
-    html_body = f'''<!DOCTYPE html>
+    html_body = f"""<!DOCTYPE html>
             <html lang="en-US">
 
             <head>
@@ -79,12 +79,12 @@ def activate_user_html(password: str, url: str, qrcode_image):
                 </table>
             </body>
 
-            </html>'''
+            </html>"""
     return html_body
 
 
 def email_to_change_password(token: str, url: str):
-    html_message = f'''<!doctype html>
+    html_message = f"""<!doctype html>
         <html lang="en-US">
 
         <head>
@@ -156,6 +156,6 @@ def email_to_change_password(token: str, url: str):
             </table>
         </body>
 
-        </html>'''
+        </html>"""
 
     return html_message

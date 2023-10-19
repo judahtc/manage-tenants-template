@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from application.routes.users import crud as users_crud
-from application.utils import schemas
+from application.utils import models, schemas
 from application.utils.database import get_db
 
 SECRET_KEY = os.getenv("secret")
@@ -87,7 +87,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: schemas.UserResponse = Depends(get_current_user),
+    current_user: models.Users = Depends(get_current_user),
 ) -> schemas.UserLoginResponse:
     if not current_user.tenant.is_active:
         raise HTTPException(

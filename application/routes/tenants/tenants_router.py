@@ -1,50 +1,12 @@
-import datetime
-import io
-import json
-import os
-import random
-import string
-import urllib
-from datetime import datetime, timedelta
-from typing import List, Union
-
-import awswrangler as wr
-import boto3
-import pandas as pd
 import pyotp
-import qrcode
-from botocore.exceptions import ClientError
-from decouple import config
-from fastapi import (
-    APIRouter,
-    Depends,
-    FastAPI,
-    File,
-    Form,
-    Header,
-    HTTPException,
-    Request,
-    Response,
-    UploadFile,
-    status,
-)
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
-from passlib.context import CryptContext
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, sessionmaker
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
 
-import main as main
-from application.auth.jwt_bearer import JwtBearer
-from application.auth.jwt_handler import decodeJWT, signJWT
 from application.auth.security import get_current_active_user
 from application.routes.tenants import crud
 from application.routes.users import emails
 from application.utils import models, schemas, utils
-from application.utils.database import SessionLocal, engine, get_db
+from application.utils.database import get_db
 
 router = APIRouter(tags=["TENANTS MANAGEMENT"])
 
@@ -89,15 +51,15 @@ async def create_tenant(
 def get_tenant(
     tenant_name: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
-) -> Union[schemas.TenantBaseResponse, dict, None]:
+    current_user: models.Users = Depends(get_current_active_user),
+):
     return crud.get_tenant_by_tenant_name(tenant_name=tenant_name, db=db)
 
 
-@router.get("/tenants/", response_model=List[schemas.TenantBaseResponse])
+@router.get("/tenants/", response_model=list[schemas.TenantBaseResponse])
 def get_tenants(
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     tenants = crud.get_tenants(db)
     return tenants
@@ -107,7 +69,7 @@ def get_tenants(
 async def delete_tenant(
     tenant_name: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     if current_user.role != schemas.UserRole.SUPERADMIN:
         raise HTTPException(
@@ -123,7 +85,6 @@ async def delete_tenant(
         )
 
     crud.delete_tenant_by_tenant_name(db=db, tenant_name=tenant_name)
-
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -132,7 +93,7 @@ def update_tenant(
     tenant_name: str,
     edit_tenant: schemas.TenantUpdate,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     return crud.update_Tenant(tenant_name=tenant_name, edit_tenant=edit_tenant, db=db)
 
@@ -141,7 +102,7 @@ def update_tenant(
 def toggle_tenant_active(
     tenant_name: str,
     db: Session = Depends(get_db),
-    current_user: schemas.UserLoginResponse = Depends(get_current_active_user),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     if current_user.role != schemas.UserRole.SUPERADMIN:
         raise HTTPException(

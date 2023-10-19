@@ -113,6 +113,13 @@ class UserLoginResponse(BaseModel):
         orm_mode = True
 
 
+class ResetPassword(BaseModel):
+    new_password: str
+
+    class Config:
+        orm_mode = True
+
+
 # -------------------------------------------------------  FROM PARDON -----------------------------------
 
 
