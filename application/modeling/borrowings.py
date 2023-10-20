@@ -5,10 +5,9 @@ from application.modeling import helper
 
 
 def reindex_output(df: pd.DataFrame):
-    return df.T.reindex(
-        pd.PeriodIndex(df.columns, freq="M").sort_values().strftime("%b-%Y"),
-        fill_value=0,
-    ).T
+    columns = pd.DatetimeIndex(df.columns)
+    index = pd.date_range(columns.min(), columns.max(), freq="M").strftime("%b-%Y")
+    return df.T.reindex(index=index).T
 
 
 def calculate_outstanding_on_straight_line_borrowings(
@@ -49,9 +48,9 @@ def calculate_straight_line_payments(
     loan_identifiers: pd.Series,
 ):
     amounts_results = []
-    freq_key = {1: "12BM", 2: "6BM", 3: "4BM", 4: "3BM", 6: "2BM", 12: "BM"}
+    freq_key = {1: "12M", 2: "6M", 3: "4M", 4: "3M", 6: "2M", 12: "M"}
 
-    years = tenures / 12
+    years = tenures // 12
     number_of_payments = years * frequencies
 
     for i, _ in effective_dates.items():
@@ -60,6 +59,7 @@ def calculate_straight_line_payments(
         frequency = frequencies[i]
         amount = amounts[i]
         loan_identifier = loan_identifiers[i]
+        periods = number_of_payments[i]
 
         if frequency == 0:
             index = pd.date_range(
@@ -70,8 +70,8 @@ def calculate_straight_line_payments(
 
         else:
             index = pd.date_range(
-                effective_date + pd.DateOffset(months=frequency // 12),
-                periods=number_of_payments[i],
+                effective_date + pd.DateOffset(months=12 // frequency),
+                periods=periods,
                 freq=freq_key[frequency],
             ).strftime("%b-%Y")
 
@@ -134,9 +134,9 @@ def calculate_straight_line_loans_schedules(
     )
 
     return {
-        "interest_payments": reindex_output(interest_payments),
-        "capital_repayments": reindex_output(capital_repayments),
-        "outstanding_balance_at_start": reindex_output(outstanding_balance),
+        "interest_payments": interest_payments,
+        "capital_repayments": capital_repayments,
+        "outstanding_balance_at_start": outstanding_balance,
     }
 
 
@@ -155,78 +155,81 @@ def calculate_reducing_balance_loans_schedules(
 
     effective_dates = helper.convert_to_datetime(effective_dates)
 
-    freq_key = {1: "BA", 4: "BQ", 12: "BM"}
+    freq_key = {1: "12M", 2: "6M", 3: "4M", 4: "3M", 6: "2M", 12: "M"}
 
     years = tenures / 12
     number_of_payments = years * frequencies
 
     if is_interest_rate_annual:
-        effective_interest_rate = np.power(1 + interest_rates, 1 / frequencies) - 1
+        effective_interest_rates = np.power(1 + interest_rates, 1 / frequencies) - 1
     else:
-        effective_interest_rate = interest_rates
+        effective_interest_rates = interest_rates
 
     annuity_factor = (
-        1 - (1 + effective_interest_rate) ** (-number_of_payments)
-    ) / effective_interest_rate
+        1 - (1 + effective_interest_rates) ** (-number_of_payments)
+    ) / effective_interest_rates
 
-    repayment = amounts / annuity_factor
+    repayments = amounts / annuity_factor
 
-    for index, _ in interest_rates.items():
-        series_index = pd.date_range(
-            effective_dates[index] + pd.DateOffset(months=frequencies[index] // 12),
-            periods=number_of_payments[index],
-            freq=freq_key[frequencies[index]],
+    for i, _ in interest_rates.items():
+        effective_date = effective_dates[i]
+        frequency = frequencies[i]
+        periods = number_of_payments[i]
+        effective_interest_rate = effective_interest_rates[i]
+        repayment = repayments[i]
+        loan_identifier = loan_identifiers[i]
+
+        index = pd.date_range(
+            effective_date + pd.DateOffset(months=12 // frequency),
+            periods=periods,
+            freq=freq_key[frequency],
         ).strftime("%b-%Y")
 
         annuity_factors = (
             1
             - np.power(
-                1 + effective_interest_rate[index],
-                -np.arange(number_of_payments[index], 0, -1),
+                1 + effective_interest_rate,
+                -np.arange(periods, 0, -1),
             )
-        ) / effective_interest_rate[index]
+        ) / effective_interest_rate
 
-        outstanding_balances = annuity_factors * repayment[index]
+        outstanding_balances = annuity_factors * repayment
 
         outstanding_balances_results.append(
             pd.Series(
                 outstanding_balances,
-                index=series_index,
-                name=loan_identifiers[index],
+                index=index,
+                name=loan_identifier,
             )
         )
 
-        interest_payments = outstanding_balances * effective_interest_rate[index]
+        interest_payments = outstanding_balances * effective_interest_rate
 
         interest_payments_results.append(
             pd.Series(
                 interest_payments,
-                index=series_index,
-                name=loan_identifiers[index],
+                index=index,
+                name=loan_identifier,
             )
         )
 
         capital_repayments_results.append(
             pd.Series(
-                repayment[index] - interest_payments,
-                index=series_index,
-                name=loan_identifiers[index],
+                repayment - interest_payments,
+                index=index,
+                name=loan_identifier,
             )
         )
 
-    repayment.index = loan_identifiers
+    repayments.index = loan_identifiers
 
     return {
-        "outstanding_balance_at_start": reindex_output(
-            pd.concat(outstanding_balances_results, axis=1).T.fillna(0)
-        ),
-        "capital_repayments": reindex_output(
-            pd.concat(capital_repayments_results, axis=1).T.fillna(0)
-        ),
-        "interest_payments": reindex_output(
-            pd.concat(interest_payments_results, axis=1).T.fillna(0)
-        ),
-        "repayments": repayment,
+        "outstanding_balance_at_start": pd.concat(
+            outstanding_balances_results, axis=1
+        ).T.fillna(0),
+        "capital_repayments": pd.concat(capital_repayments_results, axis=1).T.fillna(0),
+        "interest_payments": pd.concat(interest_payments_results, axis=1).T.fillna(0),
+        "repayments": repayments,
     }
 
 
