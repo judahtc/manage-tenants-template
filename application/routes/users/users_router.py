@@ -11,9 +11,7 @@ from application.routes.users import crud, emails
 from application.utils import models, schemas, utils
 from application.utils.database import get_db
 
-router = APIRouter(
-    tags=["USER MANAGEMENT"], dependencies=[Depends(get_current_active_user)]
-)
+router = APIRouter(tags=["USER MANAGEMENT"])
 
 
 @router.post("/users/", response_model=schemas.UserResponse)
@@ -100,6 +98,7 @@ def get_users_by_tenant_id(
 async def get_user_by_id(
     user_id: int,
     db: Session = Depends(get_db),
+    current_user: models.Users = Depends(get_current_active_user),
 ):
     user = crud.get_user_by_id(db=db, user_id=user_id)
     if user is None:
