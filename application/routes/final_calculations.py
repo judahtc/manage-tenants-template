@@ -658,6 +658,11 @@ def generate_direct_cashflow(
         )
     )
 
+    direct_cashflow_yearly_df = direct_cashflow.calculate_direct_cashflow_yearly(
+    direct_cashflow_df = direct_cashflow_df, opening_balances = opening_balances
+)
+
+
     income_statement_df.loc["2% Taxation"] = (
         direct_cashflow_df.loc["Total Cash Outflows"] * imtt
     )
@@ -681,8 +686,17 @@ def generate_direct_cashflow(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        file=income_statement_df,
+        file=income_statement_yearly_df,
         file_name=constants.FinalFiles.income_statement_yearly_df,
+        file_stage=constants.FileStage.final,
+    )
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=direct_cashflow_yearly_df,
+        file_name=constants.FinalFiles.direct_cashflow_yearly_df,
         file_stage=constants.FileStage.final,
     )
 
@@ -814,12 +828,23 @@ def generate_loan_book(
 
     loan_book_df = helper.calculate_opening_and_closing_balances(loan_book_df)
 
+    loan_book_yearly_df = loan_book.calculate_loan_book_yearly(loan_book=loan_book_df)
+
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file=loan_book_df,
         file_name=constants.FinalFiles.loan_book_df,
+        file_stage=constants.FileStage.final,
+    )
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=loan_book_yearly_df,
+        file_name=constants.FinalFiles.loan_book_yearly_df,
         file_stage=constants.FileStage.final,
     )
 
@@ -1157,6 +1182,10 @@ def generate_balance_sheet(
         balance_sheet_df=balance_sheet_df
     )
 
+    balance_sheet_yearly_df = balance_sheet.calculate_balance_sheet_yearly(
+    balance_sheet_df=balance_sheet_df
+)
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -1217,6 +1246,14 @@ def generate_balance_sheet(
         boto3_session=constants.MY_SESSION,
         file=balance_sheet_df,
         file_name=constants.FinalFiles.balance_sheet_df,
+        file_stage=constants.FileStage.final,
+    )
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=balance_sheet_yearly_df,
+        file_name=constants.FinalFiles.balance_sheet_yearly_df,
         file_stage=constants.FileStage.final,
     )
 
@@ -1483,12 +1520,27 @@ def generate_statement_of_cashflows(
         )
     )
 
+    statement_of_cashflow_yearly_df = (
+    statement_of_cashflows.calculate_statement_of_cashflow_yearly_df(
+        statement_of_cashflow_df=statement_of_cashflow_df,
+        opening_balances=opening_balances,
+    )
+)
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file=statement_of_cashflow_df,
         file_name=constants.FinalFiles.statement_of_cashflow_df,
+        file_stage=constants.FileStage.final,
+    )
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=statement_of_cashflow_yearly_df,
+        file_name=constants.FinalFiles.statement_of_cashflow_yearly_df,
         file_stage=constants.FileStage.final,
     )
     project_crud.update_project_status(

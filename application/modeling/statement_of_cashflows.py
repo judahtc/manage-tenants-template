@@ -49,7 +49,7 @@ def calculate_cash_at_end_and_beginning_of_period(
 ):
     statement_of_cashflow_df.loc[
         "Cash At Beginning Of Period", statement_of_cashflow_df.columns[0]
-    ] = opening_balances["CASH_ON_HAND"].iat[0]
+    ] = float(opening_balances["CASH_ON_HAND"].iat[0])
 
     cash_at_end_of_period_loc = statement_of_cashflow_df.index.get_loc(
         "Cash At End Of Period"
@@ -73,3 +73,17 @@ def calculate_cash_at_end_and_beginning_of_period(
         ] = statement_of_cashflow_df.iloc[cash_at_end_of_period_loc, index]
 
     return statement_of_cashflow_df
+
+
+def calculate_statement_of_cashflow_yearly_df(
+    statement_of_cashflow_df: pd.DataFrame, opening_balances: pd.DataFrame
+):
+    statement_of_cashflow_yearly_df = statement_of_cashflow_df.groupby(
+        pd.DatetimeIndex(statement_of_cashflow_df.columns).year, axis=1
+    ).sum()
+    statement_of_cashflow_yearly_df
+
+    return calculate_cash_at_end_and_beginning_of_period(
+        statement_of_cashflow_df=statement_of_cashflow_yearly_df,
+        opening_balances=opening_balances,
+    )

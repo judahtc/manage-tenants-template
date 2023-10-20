@@ -407,8 +407,7 @@ def group_next_year_on_wards(df: pd.DataFrame):
     df_yearly = df_copy.groupby(df_copy.columns.year, axis=1).sum()
     df_yearly.columns = df_yearly.columns.astype(str)
 
-    current_year = str(pd.to_datetime(df.columns[0]).year)
+    # current_year = str(pd.to_datetime(df.columns[0]).year)
+    # df_current_year_in_months = df.T.loc[df.columns.str.endswith(current_year)].T
 
-    df_current_year_in_months = df.T.loc[df.columns.str.endswith(current_year)].T
-
-    return pd.concat([df_current_year_in_months, df_yearly], axis=1)
+    return df_yearly

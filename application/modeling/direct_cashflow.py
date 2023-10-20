@@ -231,13 +231,20 @@ def calculate_direct_cashflow_capital_repayment_on_borrowings(
 
 
 def calculate_opening_and_closing_balances_for_direct_cashflows(
-    direct_cashflow: pd.DataFrame, cash_on_hand_opening_balance: float
+    direct_cashflow: pd.DataFrame,
+    cash_on_hand_opening_balance: float,
+    yearly: bool = False,
 ):
     direct_cashflow.loc[
         "Opening Balance", direct_cashflow.columns[0]
     ] = cash_on_hand_opening_balance
 
-    direct_cashflow.columns = pd.PeriodIndex(direct_cashflow.columns, freq="M")
+    initial_columns = direct_cashflow.columns
+
+    if yearly:
+        direct_cashflow.columns = pd.PeriodIndex(direct_cashflow.columns, freq="Y")
+    else:
+        direct_cashflow.columns = pd.PeriodIndex(direct_cashflow.columns, freq="M")
 
     for period in direct_cashflow.columns:
         direct_cashflow.loc["Closing Balance", period] = direct_cashflow.loc[
@@ -248,7 +255,8 @@ def calculate_opening_and_closing_balances_for_direct_cashflows(
         direct_cashflow.loc["Opening Balance", period + 1] = direct_cashflow.loc[
             "Closing Balance", period
         ]
-    direct_cashflow.columns = map(str, direct_cashflow.columns.strftime("%b-%Y"))
+
+    direct_cashflow.columns = initial_columns
 
     return direct_cashflow
 
@@ -418,4 +426,18 @@ def calculate_long_and_short_term_borrowing_for_direct_cashflow(
             "short_term_borrowing": short_term_borrowing,
             "total": short_term_borrowing + long_term_borrowing,
         }
+    )
+
+
+def calculate_direct_cashflow_yearly(
+    direct_cashflow_df: pd.DataFrame, opening_balances: pd.DataFrame
+):
+    direct_cashflow_yearly_df = direct_cashflow_df.groupby(
+        pd.DatetimeIndex(direct_cashflow_df.columns).year, axis=1
+    ).sum()
+
+    return calculate_opening_and_closing_balances_for_direct_cashflows(
+        direct_cashflow=direct_cashflow_yearly_df,
+        cash_on_hand_opening_balance=opening_balances["CASH_ON_HAND"].iat[0],
+        yearly=True,
     )

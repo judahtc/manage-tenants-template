@@ -47,3 +47,10 @@ def insert_loan_book_items(
     loan_book.loc["Interest Income"] = total_interest_income
 
     return loan_book
+
+
+def calculate_loan_book_yearly(loan_book: pd.DataFrame):
+    loan_book_yearly = loan_book.groupby(
+        pd.DatetimeIndex(loan_book.columns).year, axis=1
+    ).sum()
+    return helper.calculate_opening_and_closing_balances(loan_book_yearly)

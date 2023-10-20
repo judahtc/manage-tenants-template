@@ -295,3 +295,14 @@ def calculate_long_term_loans_schedules(
         long_term_loans_schedule
     )
     return long_term_loans_schedule
+
+
+def calculate_balance_sheet_yearly(balance_sheet_df: pd.DataFrame):
+    balance_sheet_yearly_df = balance_sheet_df.loc[
+        :, [i for i in balance_sheet_df.columns if i.startswith("Dec")]
+    ]
+    balance_sheet_yearly_df.columns = balance_sheet_yearly_df.columns.str.split(
+        "-"
+    ).str.get(1)
+    balance_sheet_yearly_df
+    return balance_sheet_yearly_df
