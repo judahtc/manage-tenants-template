@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pyotp
 from fastapi import Depends, FastAPI, File, HTTPException, status
@@ -131,6 +131,45 @@ def reset_password(
     current_user.hashed_password = hashed_password
     db.commit()
     return {"detail": f"Password for {current_user.email} changed successfully "}
+
+
+@app.post("/add_audit_trail")
+def add_audit_trail(
+    audit_trail: schemas.AuditTrailBase,
+    current_user: models.Users = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    audit_trail_entry = models.AuditTrail(
+        email_address=current_user.email,
+        action=audit_trail.action,
+        details=audit_trail.details,
+        tenant_id=current_user.tenant_id,
+    )
+
+    db.add(audit_trail_entry)
+    db.commit()
+    db.refresh(audit_trail_entry)
+    return audit_trail_entry
+
+
+@app.post("/extract_audit_trail")
+def extract_audit_trail(
+    extract_audit_trail: schemas.ExtractAuditTrail,
+    current_user: models.Users = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    type(extract_audit_trail.start_date)
+    audit_trail_entries = (
+        db.query(models.AuditTrail)
+        .filter(
+            (models.AuditTrail.timestamp >= extract_audit_trail.start_date)
+            & (models.AuditTrail.timestamp <= extract_audit_trail.end_date)
+            & (models.AuditTrail.tenant_id == current_user.tenant_id)
+        )
+        .all()
+    )
+
+    return audit_trail_entries
 
 
 app.include_router(tenants_router.router)

@@ -38,7 +38,7 @@ async def create_tenant(
         db=db, tenant=tenant, password=random_password, secret_key=secret_key
     )
 
-    emails.send_email(
+    emails.send_email_to_activate_user(
         recipient=tenant.admin_email,
         qrcode_image=qrcode_image,
         password=random_password,

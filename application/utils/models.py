@@ -114,7 +114,7 @@ class AuditTrail(Base):
     email_address = Column(String)
     action = Column(String)
     details = Column(String, nullable=True)
-    tenant_id = Column(String)
+    tenant_id = Column(Integer)
 
 
 # class Assumptions(Base):

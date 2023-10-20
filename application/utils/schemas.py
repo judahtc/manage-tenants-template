@@ -203,22 +203,6 @@ class UsersBaseCreate(BaseModel):
         orm_mode = True
 
 
-# ---------------------------Security Schemas-----------------------------
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class UseToken(BaseModel):
-    token: str
-
-
-class TokenData(BaseModel):
-    username: Union[str, None] = None
-
-
 class UserLogin(BaseModel):
     email: str
     password: str
@@ -238,55 +222,19 @@ class ProjectStatusUpdate(BaseModel):
     project_status: object
 
 
-class AuditTrailAL(BaseModel):
-    id: int
-    timestamp: datetime = datetime.now()
-    token: str
-    action: str
-
-    details: Optional[str] = None
-
-
-class ExtractAuditTrail(BaseModel):
-    start_date: str
-    end_date: str
-    token: str
-
-
-class AuditTrail(BaseModel):
-    id: int
-    timestamp: datetime = datetime.now()
-    email_address: str
+class AuditTrailBase(BaseModel):
     action: str
     details: Optional[str] = None
 
 
-class Assumptions(BaseModel):
-    interest_calculation_method: str
-    depreciation_method: str
-    average_loan_term: float
-    inflation_rate: float
-    number_of_months_to_focast: float
-    administration_fee: float
-
-
-class AssumptionsRead(Assumptions):
-    isActive: str
-
-
-class AssumptionsfilesBaseCreate(BaseModel):
-    project_id: str
-    input_object_key: str
-    input_filename: str
-
-
-class AssumptionsfilesRead(AssumptionsfilesBaseCreate):
+class AuditTrailResponse(AuditTrailBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
-    output_object_key: str
-    isActive: bool
-    output_filename: str
+    timestamp: datetime
 
     class Config:
         orm_mode = True
+
+
+class ExtractAuditTrail(BaseModel):
+    start_date: datetime
+    end_date: datetime
