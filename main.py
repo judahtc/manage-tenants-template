@@ -1,26 +1,20 @@
-import io
 from datetime import timedelta
-from typing import List, Union
 
-import awswrangler as wr
 import pyotp
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi import Depends, FastAPI, File, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from mangum import Mangum
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from application.auth import security
-from application.auth.jwt_bearer import JwtBearer
 from application.auth.security import get_current_active_user
-from application.aws_helper.helper import MY_SESSION, S3_CLIENT, SNS_CLIENT
-from application.modeling import constants, helper
 from application.routes import final_calculations, intermediate_calculations
-from application.routes.projects import assumptions, projects_router
+from application.routes.projects import projects_router
 from application.routes.tenants import tenants_router
 from application.routes.users import users_router
-from application.utils import crud, database, models, schemas
+from application.utils import database, models, schemas
 from application.utils.database import engine, get_db
 
 app = FastAPI()

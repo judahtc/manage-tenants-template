@@ -21,7 +21,7 @@ def render_template(template_name: str, **kwargs) -> str:
     return template.render(**kwargs)
 
 
-def send_email(recipient: str, qrcode_image: str, password: str):
+def send_email_to_activate_user(recipient: str, qrcode_image: str, password: str):
     # Create a new SES resource
     ses = SES_CLIENT
     sender = "admin@claxonbusinesssolutions.com"
@@ -41,6 +41,37 @@ def send_email(recipient: str, qrcode_image: str, password: str):
                     "Html": {
                         "Data": emails_helper.activate_user_html(
                             password, "http://budgeting.claxonfintech.com", qrcode_image
+                        )
+                    }
+                },
+            },
+        )
+    except ClientError as e:
+        raise e
+    else:
+        return response
+
+
+def send_email_to_reset_password(recipient: str, token: str):
+    # Create a new SES resource
+    ses = SES_CLIENT
+    sender = "admin@claxonbusinesssolutions.com"
+
+    # Try to send the email
+    try:
+        response = ses.send_email(
+            Source=sender,
+            Destination={
+                "ToAddresses": [
+                    recipient,
+                ],
+            },
+            Message={
+                "Subject": {"Data": "REGISTRATION CONFIRMATION"},
+                "Body": {
+                    "Html": {
+                        "Data": emails_helper.email_to_change_password(
+                            token=token, url="http://budgeting.claxonfintech.com"
                         )
                     }
                 },

@@ -1,7 +1,11 @@
+from datetime import timedelta
+
 import pyotp
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
+from application.auth import security
 from application.auth.security import get_current_active_user
 from application.routes.users import crud, emails
 from application.utils import models, schemas, utils
@@ -10,6 +14,7 @@ from application.utils.database import get_db
 router = APIRouter(
     tags=["USER MANAGEMENT"], dependencies=[Depends(get_current_active_user)]
 )
+
 
 @router.post("/users/", response_model=schemas.UserResponse)
 async def create_user(
@@ -49,13 +54,37 @@ async def create_user(
         admin=current_user,
     )
 
-    emails.send_email(
+    emails.send_email_to_activate_user(
         recipient=user.email,
         qrcode_image=qrcode_image,
         password=random_password,
     )
 
     return created_user
+
+
+@router.post("/users/forgot_password")
+async def send_password_reset_email(email: EmailStr, db: Session = Depends(get_db)):
+    user = crud.get_user_by_email(db, email)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Email not registered in the system, Please contact your admin",
+        )
+
+    expires_delta = timedelta(minutes=15)
+
+    access_token = security.create_access_token(
+        data={"email": user.email}, expires_delta=expires_delta
+    )
+
+    emails.send_email_to_reset_password(
+        recipient=user.email,
+        token=access_token,
+    )
+
+    return {"detail": f"Reset Email successfully sent to {email} "}
 
 
 @router.get("/users/", response_model=list[schemas.UserResponse])
