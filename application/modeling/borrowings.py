@@ -49,7 +49,7 @@ def calculate_straight_line_payments(
     loan_identifiers: pd.Series,
 ):
     amounts_results = []
-    freq_key = {1: "BA", 2: "2BQ", 4: "BQ", 12: "BM"}
+    freq_key = {1: "12BM", 2: "6BM", 3: "4BM", 4: "3BM", 6: "2BM", 12: "BM"}
 
     years = tenures / 12
     number_of_payments = years * frequencies
@@ -67,27 +67,15 @@ def calculate_straight_line_payments(
                 periods=1,
                 freq="D",
             ).strftime("%b-%Y")
-            if loan_identifier == "DANDEMUTANDE":
-                pd.Series(amount, index=index, name=loan_identifier)
 
-            amounts_results.append(pd.Series(amount, index=index, name=loan_identifier))
-
-        elif frequency == 2:
-            index = pd.date_range(
-                effective_date + pd.DateOffset(months=6),
-                periods=number_of_payments[i],
-                freq=freq_key[frequency],
-            ).strftime("%b-%Y")
-
-            amounts_results.append(pd.Series(amount, index=index, name=loan_identifier))
         else:
             index = pd.date_range(
-                effective_date,
+                effective_date + pd.DateOffset(months=frequency // 12),
                 periods=number_of_payments[i],
                 freq=freq_key[frequency],
             ).strftime("%b-%Y")
 
-            amounts_results.append(pd.Series(amount, index=index, name=loan_identifier))
+        amounts_results.append(pd.Series(amount, index=index, name=loan_identifier))
 
     return pd.concat(amounts_results, axis=1).T.fillna(0)
 
@@ -185,8 +173,8 @@ def calculate_reducing_balance_loans_schedules(
 
     for index, _ in interest_rates.items():
         series_index = pd.date_range(
-            effective_dates[index],
-            periods=number_of_payments[index],
+            effective_dates[index] + pd.DateOffset(months=frequencies[index] // 12),
+            periods=number_of_payments[i],
             freq=freq_key[frequencies[index]],
         ).strftime("%b-%Y")
 
