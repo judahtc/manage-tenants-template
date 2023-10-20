@@ -174,7 +174,7 @@ def calculate_reducing_balance_loans_schedules(
     for index, _ in interest_rates.items():
         series_index = pd.date_range(
             effective_dates[index] + pd.DateOffset(months=frequencies[index] // 12),
-            periods=number_of_payments[i],
+            periods=number_of_payments[index],
             freq=freq_key[frequencies[index]],
         ).strftime("%b-%Y")
 

@@ -250,12 +250,16 @@ def calculate_credit_insurance_fee_for_all_new_disbursements(
 def calculate_other_income_existing_loans(
     existing_loans: pd.DataFrame, start_date: str, months_to_forecast: int
 ):
+    existing_loans["disbursement_date"] = helper.convert_to_datetime(
+        existing_loans["disbursement_date"]
+    )
+
     existing_loans = existing_loans.assign(
         remaining_term_months=existing_loans.apply(
             lambda row: np.maximum(
                 0,
                 (
-                    helper.convert_to_datetime(row["disbursement_date"])
+                    row["disbursement_date"]
                     + np.timedelta64(row["loan_term"], "M")
                     - np.datetime64(start_date)
                 )
@@ -264,15 +268,6 @@ def calculate_other_income_existing_loans(
             axis=1,
         )
     )
-
-    # admin_fee_existing_loans = calculate_admin_fee_existing_loans(
-    #     loan_amount=existing_loans["loan_amount"],
-    #     admin_fee_percentage=existing_loans["admin_fee"],
-    #     loan_term_months=existing_loans["loan_term"],
-    #     remaining_term_months=existing_loans["remaining_term_months"],
-    #     start_date=start_date,
-    #     months_to_forecast=months_to_forecast,
-    # )
 
     admin_fee_existing_loans = borrowings.calculate_straight_line_payments(
         effective_dates=existing_loans["disbursement_date"],
@@ -284,9 +279,7 @@ def calculate_other_income_existing_loans(
         loan_identifiers=existing_loans["loan_number"],
     )
 
-    admin_fee_existing_loans = (
-        admin_fee_existing_loans.sum()
-    )  # .loc[       helper.generate_columns(start_date, months_to_forecast)]
+    admin_fee_existing_loans = admin_fee_existing_loans.sum()
 
     credit_insurance_fee_existing_loans = borrowings.calculate_straight_line_payments(
         effective_dates=existing_loans["disbursement_date"],
@@ -300,10 +293,7 @@ def calculate_other_income_existing_loans(
         loan_identifiers=existing_loans["loan_number"],
     )
 
-    credit_insurance_fee_existing_loans = (
-        credit_insurance_fee_existing_loans.sum()
-    )  # .loc[helper.generate_columns(start_date, months_to_forecast)]
-
+    credit_insurance_fee_existing_loans = credit_insurance_fee_existing_loans.sum()
     other_income_existing_loans = helper.add_series(
         [credit_insurance_fee_existing_loans, admin_fee_existing_loans]
     )
