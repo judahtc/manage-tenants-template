@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -63,7 +64,10 @@ def send_email_to_reset_password(recipient: str, token: str):
     sender = "admin@claxonbusinesssolutions.com"
 
     # Try to send the email
-    access_token = security.create_access_token(data={"email": recipient})
+    access_token = security.create_access_token(
+        data={"email": recipient}, expires_delta=timedelta(hours=48)
+    )
+
     try:
         response = ses.send_email(
             Source=sender,
