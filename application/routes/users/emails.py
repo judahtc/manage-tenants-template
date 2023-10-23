@@ -8,6 +8,7 @@ from aiohttp import ClientError
 from dotenv import load_dotenv
 from fastapi.templating import Jinja2Templates
 
+from application.auth import security
 from application.aws_helper.helper import SES_CLIENT
 from application.routes.users import emails_helper
 
@@ -27,6 +28,8 @@ def send_email_to_activate_user(recipient: str, qrcode_image: str, password: str
     sender = "admin@claxonbusinesssolutions.com"
 
     # Try to send the email
+    access_token = security.create_access_token(data={"email": recipient})
+
     try:
         response = ses.send_email(
             Source=sender,
@@ -40,7 +43,9 @@ def send_email_to_activate_user(recipient: str, qrcode_image: str, password: str
                 "Body": {
                     "Html": {
                         "Data": emails_helper.activate_user_html(
-                            password, "http://budgeting.claxonfintech.com", qrcode_image
+                            password,
+                            f"http://budgeting.claxonfintech.com/reset-password?access-token={access_token}",
+                            qrcode_image,
                         )
                     }
                 },
@@ -58,6 +63,7 @@ def send_email_to_reset_password(recipient: str, token: str):
     sender = "admin@claxonbusinesssolutions.com"
 
     # Try to send the email
+    access_token = security.create_access_token(data={"email": recipient})
     try:
         response = ses.send_email(
             Source=sender,
@@ -71,7 +77,8 @@ def send_email_to_reset_password(recipient: str, token: str):
                 "Body": {
                     "Html": {
                         "Data": emails_helper.email_to_change_password(
-                            token=token, url="http://budgeting.claxonfintech.com"
+                            token=token,
+                            url=f"http://budgeting.claxonfintech.com/reset-password?access-token={access_token}",
                         )
                     }
                 },
