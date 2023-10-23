@@ -51,7 +51,7 @@ def activate_user_html(password: str, url: str, qrcode_image):
                                                     </p>
                                                   
                                                     <b><a href="{url}"
-                                                            style="background:#20e277;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Login</a></b>
+                                                            style="background:#e9b37a;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Login</a></b>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -131,7 +131,7 @@ def email_to_change_password(token: str, url: str):
 
                                                 </p>
                                                 <a href="https://{url}/resetpassword/___{token}"
-                                                    style="background:#20e277;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Reset
+                                                    style="background:#e9b37a;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Reset
                                                     Password</a>
                                             </td>
                                         </tr>
