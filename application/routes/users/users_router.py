@@ -62,7 +62,9 @@ async def create_user(
 
 
 @router.post("/users/forgot_password")
-async def send_password_reset_email(email: EmailStr, db: Session = Depends(get_db)):
+async def send_password_reset_email(
+    email: schemas.ForgotPassword, db: Session = Depends(get_db)
+):
     user = crud.get_user_by_email(db, email)
 
     if user is None:
