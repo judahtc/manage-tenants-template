@@ -1,0 +1,685 @@
+commit 278dfa781a8c97e0fb759f32b42e44d2730374cc
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 20 17:47:15 2023 +0200
+
+    fix: correct issue with dissappearing interest payment figure in calculating reducing balance loan schedules
+
+commit ffd2c26779de1b21491037a56f40b5465fda6140
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 20 15:08:25 2023 +0200
+
+    fix: add date conversion function in admin fee calculation function
+
+commit 48917f134ed757f008de9bbf4a89db2ad8bc8f58
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 20 14:50:31 2023 +0200
+
+    feat: add frequency for all months in calculating borrowings
+
+commit b006eccba03e54fab252f235d2dc9ca5a17ddf22
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 20 14:28:52 2023 +0200
+
+    adds audit trail endpoint
+
+commit 8cda4402f991d21e2c2badc41ef5020ecc269d93
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 20 12:54:55 2023 +0200
+
+    chore: remove loan_book_df.csv file
+
+commit 7f457ff1a5b5de881f539a26b697988673f274a8
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 20 12:53:54 2023 +0200
+
+    feat: add financials aggregated annually
+
+commit cf9f2745444e396e5aaafd76eaf310fa4cd41bf3
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 20 09:41:02 2023 +0200
+
+    fix: remove user authentication on password reset email
+
+commit b6179c68703eeaa1bdb35a858727601dcabace10
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 20 08:52:55 2023 +0200
+
+    feat: add endpoint to send_password_reset_email
+
+commit cb72c1a9ca834bce01cd412d03c0f0040028ae83
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 19 14:42:32 2023 +0200
+
+    feat: add reset password endpoint
+
+commit be3d5a7564e179585e634274b0cb72e90e746629
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 19 11:56:07 2023 +0200
+
+    fix: correct login verification endpoint
+
+commit 7977f55eab57e1fbe2c6bc537da58a682dd349b4
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 19 11:34:45 2023 +0200
+
+    feat: add multifactor authentication
+
+commit f5bbff21f9960ce1bdd42934721aaee78fbdd358
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 18 12:12:57 2023 +0200
+
+    fix: moved the opening_balance_on_short_term_loans to the previous month
+
+commit fb81e01adf5de062048c329a2466ed94dd29b78c
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 18 11:40:55 2023 +0200
+
+    feat: add calculation for income statement yearly in final results
+
+commit 5fe134c037030d6ccb753441b03c2a482a6da4cc
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 18 11:16:22 2023 +0200
+
+    chore: delete git commits txt
+
+commit 4adae2da7729c449bfb7a4f731c142855e81a05c
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 18 10:15:58 2023 +0200
+
+    fix: correct error in misplacing capital and interest payments on bullet loans
+
+commit 55d20b76706031d8bee6e5666d2a0f31b8e6d5c9
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 17 22:02:37 2023 +0200
+
+    feat: add opening balance for loan book, short and long term loans from data
+
+commit 776e1d264b45ada1a9c740dc055c6262eb6467d1
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 17 17:11:19 2023 +0200
+
+    fix: change the calculations to allow for data with fewer columns that expected
+
+commit fc4d4ee6249333d191679077e29332ea795ee1fb
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 17 10:14:01 2023 +0200
+
+    fix: making initial changes to calculation to meet new data
+
+commit 30d0b0ae2a1e9344a3856a3fa8aa099cf2d3e116
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 16 15:53:17 2023 +0200
+
+    fix: correct error with calculate_new_disbursement
+
+commit a2d9e85e2850f57d9d38c601c68d7e8583572e59
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 16 14:11:44 2023 +0200
+
+    fix: insert missing colon in delete user
+
+commit 690e7c86b763d7d504c3561529d9db38a03e40f1
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 16 14:10:21 2023 +0200
+
+    feat: make it impossible to delete admin users
+
+commit 408fc6e47deb1d8c1c3f472fc496aac6b41af329
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 16:49:24 2023 +0200
+
+    fix: return 50 rows for existing loans
+
+commit b669612dbf67a684a890e1865546d5cd7e6aa41a
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 15:10:30 2023 +0200
+
+    fix: corrects incorrect logic in the users router
+
+commit edc040407a0b45a44e1a00d8cbbbe4f867e875db
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 15:03:38 2023 +0200
+
+    fix: change logic in create_user endpoint to allow an admin or superadmin to create a user
+
+commit a554c60072c03471609e8d579875b70dfdacaac1
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 14:30:34 2023 +0200
+
+    fix: comment out code to prevent normal user from creating superadmins
+
+commit 9c8f3570aa455994fb456637c3f7156d089fdd99
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 14:24:24 2023 +0200
+
+    fix: correct logic in create users endpoint
+
+commit e3b62841e0efdc5e74ea0582680f96586324aa3b
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 12:55:08 2023 +0200
+
+    feat: admin can't create a super admin
+
+commit 03a57200d693e3cfb9567e52008c1c0dd68df9ea
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 12:37:47 2023 +0200
+
+    feat: user can't deactive themselves
+
+commit e06878370e996a5983a94c18e0b644219467a912
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 12:36:03 2023 +0200
+
+    fix: inactive user can't log in
+
+commit 20cbe4a732ff0b6a6d9566f1985145914dd6d883
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 12:16:45 2023 +0200
+
+    fix: issues affect by merge
+
+commit e6024a4fd21565b0a75a0618132b057b01006c21
+Merge: 89f15e2 b0c3365
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 12:15:12 2023 +0200
+
+    Merge branch 'dev'
+
+commit b0c336529a104a86a7d5dcecc46be1b26a487aeb
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 12:13:01 2023 +0200
+
+    fix: replace email path with id in user router to make testing easier
+
+commit 89f15e296590ef172aba4c74a9aebbd88f8a4d2b
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 12:00:51 2023 +0200
+
+    chore: modified data
+
+commit d373a59aaa1594f66e997343b8841b085bc6c2db
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 13 09:43:22 2023 +0200
+
+    fix: change user/email endpoints to accept user/user_id due to issues with path parameters
+
+commit 94593fc95fd4d6e75306b5210d13a4fac98b35c6
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 12 16:37:25 2023 +0200
+
+    fix: remove tenant name from get_intermediate_filenames endpoint
+
+commit b992de6d7da38e0b04b59ccd800cf468faac4a01
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 12 16:33:14 2023 +0200
+
+    fix: issue with upload project
+
+commit 4619b0daddda0b37635ac56c7f35db9b6f759f33
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 12 16:29:07 2023 +0200
+
+    fix: fix bug with get project by id
+
+commit e829b07e48600d75c854bab6c9a4d516ec8171fd
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 12 16:18:30 2023 +0200
+
+    fix: changes the time till token expiry
+
+commit 719b74170bf87d180ecfb2d8bcf2fd7902289e94
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 12 15:24:35 2023 +0200
+
+    fix: uncommented emails
+
+commit 7fad8274a525612d4575ddce5f007ce9a5e275da
+Merge: 80d82f5 d1cfbd6
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 12 14:13:36 2023 +0200
+
+    Merge branch 'main' of https://github.com/judahtc/manage-tenants-template
+
+commit 80d82f5e38e31b1e3ce52f8f0b1aedc585a93f28
+Merge: b928488 1cc7f63
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 12 14:13:16 2023 +0200
+
+    fix: resolve issues with merge
+
+commit 1cc7f63a675f02486adc5ecd60ec6ccfacec4220
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 12 08:42:37 2023 +0200
+
+    chore: update requirements file
+
+commit c95d84741f90ba95093caafcee9b14e728d58e04
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 22:29:10 2023 +0200
+
+    fix: add PENDING as the default for created project
+
+commit 7c7142b0b7aadae0b06705246d8197fee6bad643
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 17:24:37 2023 +0200
+
+    fix: correct issue that appeared during testing
+
+commit d1cfbd62882c0524e29bab6d444fecaa18a541d3
+Merge: b037dd3 b928488
+Author: judahtc <jaycea247@gmail.com>
+Date:   Wed Oct 11 17:13:09 2023 +0200
+
+    Merge branch 'main' of https://github.com/judahtc/manage-tenants-template
+
+commit b037dd3122e70a4beaf4881975561942447ffcf7
+Author: judahtc <jaycea247@gmail.com>
+Date:   Wed Oct 11 17:13:03 2023 +0200
+
+    add scheduled actions to terminate the instances at 1800
+
+commit daf16a38041a28d4a9395b38f27fe6501506cc00
+Author: judahtc <jaycea247@gmail.com>
+Date:   Wed Oct 11 17:11:12 2023 +0200
+
+    add scheduled actions to terminate the instances at 1800
+
+commit b045aa5b568f110f9b3307353211f40b8ad935a4
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 17:09:18 2023 +0200
+
+    feat: add ability to activate and deactive users or tenants
+
+commit e7a3de6c946002269701f12375cd56dddb342c24
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 16:47:53 2023 +0200
+
+    chore: change names of the endpoint to make them more meaningful
+
+commit b671a2bbcae536ebdc65c9742bfb707dc25ca76c
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 14:32:42 2023 +0200
+
+    fix: change all instances of MONTHS_TO_FORECAST to months_to_forecast
+
+commit 5b87e63075617302ed0f4e82be89e5c4a2188d0b
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 14:31:47 2023 +0200
+
+    fix: changed all instances of valuation_date to start_date
+
+commit b92848829392cf83dc9a5c0522b41a7dcfa6ac27
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 14:29:15 2023 +0200
+
+    fix: corrected the incorrectly named download-raw-files
+
+commit 7a59fa8ffb95b870d8251785a9cfaa1a730a61b4
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 14:21:39 2023 +0200
+
+    feat: started working on databases
+
+commit cddbb0a24b958f2024a94f224c1d467c1dad885a
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 11:24:52 2023 +0200
+
+    fix: adjust issues with users router and crud
+
+commit 6cca4c1aff597e6f9b620d0455732167bbb78db4
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 10:16:24 2023 +0200
+
+    fix: correct verification issue with jwt
+    
+    the jwt.encode function was using a key in .env file whilst the jwt.decode was using one in the python script
+
+commit b072b042a247106c2a2a8ed1917babca8464f542
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 09:08:55 2023 +0200
+
+    fix: correct schema and bucket creating on create tenant endpoint
+
+commit 42511a9aa372680ad7cedd278f916bb258c5ea7a
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 11 09:06:30 2023 +0200
+
+    feat: creates updated tables
+
+commit a5a5e54b2a0a06bc11840e47ded08fee0c4815f7
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 17:37:38 2023 +0200
+
+    fix: correct timezone issue with databases
+
+commit b15e51d505bc62e96e811fe1f3811733bcf46087
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 17:05:07 2023 +0200
+
+    fix: changes input files and refactors associated files
+
+commit e921715b88ed963bf0bc1e9c131a30692701f7e9
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 15:21:19 2023 +0200
+
+    chore: return main to the route folder and changes .ebextension path to main:app
+
+commit 32f47d59504be736a17ce9097cec1d180253adb6
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 15:04:58 2023 +0200
+
+    chore: change directory for tests
+
+commit f4ea60efb434ca94fe6f8002ebeff6b4c86493e4
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 14:53:07 2023 +0200
+
+    chore: moves the main file to the application folder and changes the .ebextensions
+
+commit e24c78695c5d258b5e82356bea57c233a849500e
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 14:51:11 2023 +0200
+
+    fix: correct calculation of admin fee and credit insurance fee for existing loans
+
+commit 3a236d2b95588430385cde780ddcc504f542edae
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 11:38:10 2023 +0200
+
+    feat: ability to download raw files:
+
+commit 92e6f9418daade34f55b427b08f3ad9b62783f98
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 11:34:00 2023 +0200
+
+    fix: corrected some files
+
+commit dfbd7e602180de64ca097c4e687fcae2294693fd
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 11:10:01 2023 +0200
+
+    fix: correct variable input file
+
+commit c9a2049a261bccb140e1cab644108b4772f28046
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 10:49:22 2023 +0200
+
+    fix: adjust the calculate_reducing_balance_loans_schedules function to allow for non-annual interest input and corrected existing loans to account for that
+
+commit 8d93198e76ae58f333c695bde125eb35bf7bb6e6
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 10 09:09:25 2023 +0200
+
+    fix: splits input for borrowings to short and long term as requested by the client and updates affected calculations
+
+commit 0b85883333c4758217910686dea5245650baa0f4
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 17:41:09 2023 +0200
+
+    fix: correct projects table
+
+commit 35c1e0094802d2b47262906b4a37a9efbe7379e3
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 17:35:54 2023 +0200
+
+    fix: add is_active column to users table
+
+commit 39f332ea8ae481da6caa53c5938cf6e405fa16de
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 17:30:34 2023 +0200
+
+    fix: refactor tenant tables
+
+commit 7105231ae96f58e2f87f863e7495f772e8705467
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 16:20:11 2023 +0200
+
+    feat: integrates alembic
+
+commit a4d08585cedc47526270e1cd69ce15968d43a8af
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 14:37:20 2023 +0200
+
+    fix: remove unnecessary fields  on create-tenant schema
+
+commit 2687ef57cf8c6d0f86ca89da6f6527f8143a25db
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 11:39:59 2023 +0200
+
+    fix: adds new files
+
+commit e640e2d430c0eb2a9a3c5a12f509370aaf81a675
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 11:38:40 2023 +0200
+
+    fix: refactor code in get finalnames for final and intermediate files
+
+commit 47d60c6163f911bd3be85641be2860d540d949fc
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 11:23:33 2023 +0200
+
+    fix: updated modeling to allow for merged inputs
+
+commit c5b5b54713a21fd37a2f016e6d5065bced2cb2e3
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 09:00:57 2023 +0200
+
+    fix: correct issues affected by merge conflict
+
+commit 1b5cfef134cacbb86b61fc1446117aa569edd34a
+Merge: 4282597 dd737f7
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 08:41:52 2023 +0200
+
+    Merge branch 'main' of https://github.com/judahtc/manage-tenants-template
+
+commit 4282597c3ed2b626cd8e9e9742f8802a2778e24e
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Mon Oct 9 08:29:49 2023 +0200
+
+    fix: confirms that everything is up-to-date
+
+commit 01eb1dd40b95eddd059cdcf7ee999d0e58786266
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 6 23:26:21 2023 +0200
+
+    fix: update final calculations endpoint to take into account updates to modeling
+
+commit 9547abbe294cfd1b9330dc1acbe6109d6c054f25
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 6 19:04:56 2023 +0200
+
+    fix: update intermediate calculations endpoint to take into account changes to models
+
+commit 6d4dff0f83550c7c67f96afc72850c2efb2af1a0
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 6 17:33:17 2023 +0200
+
+    fix: correct data templates to match clients data
+
+commit aadb0840a0064605de43a3bf180f388f04d930bf
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Oct 6 14:40:29 2023 +0200
+
+    feat: add function to calculate borrowings on reducing balance and refactors straight line method calculation
+
+commit dd737f74fbb575bad84cd13c3ea25a6a1211d584
+Author: judahtc <jaycea247@gmail.com>
+Date:   Fri Oct 6 11:53:24 2023 +0200
+
+    added email, firstname and lastname to the login response
+
+commit 148fd0356d635d7d751fcc1dd6fbda30f6969888
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 5 11:26:47 2023 +0200
+
+    fix: update indirect cashflow endpoint to account for changes to calculations
+
+commit 5b140ab099ba0784a0743461150ca396854d70ab
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Thu Oct 5 11:01:35 2023 +0200
+
+    fix: update the cashflow statement calculation
+    
+    These updates pertain to Working Capital Movements
+
+commit 1697ec2c714f61964636940f54843f2ea7519a92
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 4 17:27:28 2023 +0200
+
+    feat: calculates balance sheet items using opening balances and parameters'
+
+commit 451323c02d5a3bd65407fbb6b66d4533454f804b
+Author: judahtc <jaycea247@gmail.com>
+Date:   Wed Oct 4 16:34:28 2023 +0200
+
+    fix the project status, inprogress and completed now working
+
+commit c7c13991814c50f4d209723f5e2e42508ad6c39c
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 4 16:12:08 2023 +0200
+
+    feat: add new line items for calculation of direct cashflow
+    
+    these are for receivables, payables and other assets
+
+commit 7e67a45a0bbb1df7c6b05572dd8818531ad2e185
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 4 15:43:17 2023 +0200
+
+    feat: add calculation of schedules for payables, receivables and inventories
+
+commit d276c3b1172a8c9c3e9455d7e27ba0d5dbe8f67e
+Author: judahtc <jaycea247@gmail.com>
+Date:   Wed Oct 4 14:17:21 2023 +0200
+
+    put default password
+
+commit a3ae6a2def72f42fc6ab6c474ef55c9404ba0835
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 4 11:55:36 2023 +0200
+
+    fix: remove agent salaries and splits the avaiable salary to show commission as a seperate line item
+
+commit 683fd0cd3d10ae644c85d66dfc7e12666ca5dc28
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 4 11:41:50 2023 +0200
+
+    feat: add calculation for straight line depreciation
+
+commit 323a4aa71566b702b84ee0a11ee879b18f1b325f
+Author: judahtc <jaycea247@gmail.com>
+Date:   Wed Oct 4 10:04:24 2023 +0200
+
+    added email confirmation per user registration
+
+commit d8c3bb11c7a8a558363758c89f7119515d6ff4f5
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 4 09:52:55 2023 +0200
+
+    fix: update the loan_book endpoint to account for changes on loan book
+
+commit 4cd8e4979a909c13eaea57407a5391bc2f990309
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 4 09:18:43 2023 +0200
+
+    chore: create modeling file for loan_book
+
+commit cfba1e4167dceffd4f26e02efe5b80b74be2d836
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Wed Oct 4 09:12:28 2023 +0200
+
+    feat: add repayments and interest income on the loan book as required by the client
+
+commit b13f947522d80e7eb729abcfe422ee79be04c196
+Merge: 5eebf6e ce796e5
+Author: judahtc <jaycea247@gmail.com>
+Date:   Tue Oct 3 12:02:47 2023 +0200
+
+    Merge branch 'main' of https://github.com/judahtc/manage-tenants-template
+
+commit 5eebf6ec7c0699b4fd863e8055a49764bb5c2658
+Author: judahtc <jaycea247@gmail.com>
+Date:   Tue Oct 3 12:02:24 2023 +0200
+
+    fixed create users endpoint
+
+commit ce796e520f00a2bbc98080a5041bb951693b5fb7
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 3 10:26:25 2023 +0200
+
+    fix: correct issue with filename Enum on python 11
+
+commit 19083e010801b458b6fa99be62af55636e7cf03e
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 3 09:59:51 2023 +0200
+
+    fix: add endpoint to get filename that had been removed by the merge
+
+commit b85c93ea4bd621852cd3cd70d582fcd74d171281
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 3 09:25:17 2023 +0200
+
+    fix: add new files mades from external repo
+
+commit dae71dd392bc13ae35d434d005a5d0b58961b64f
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 3 09:21:50 2023 +0200
+
+    fix: adds notebooks from external repo
+
+commit 6f5a5e4878c89e757d4813451731c7eccb574705
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Tue Oct 3 09:08:54 2023 +0200
+
+    feat: add new calculations and data updates from external repo
+
+commit ba5873a2829485f502439372f9b442aacab925d9
+Author: judahtc <jaycea247@gmail.com>
+Date:   Mon Oct 2 09:01:12 2023 +0200
+
+    added the get filenames from s3
+
+commit 8de46190d2d82c9d247f7696662000b7a29fbcbb
+Author: judahtc <jaycea247@gmail.com>
+Date:   Fri Sep 29 17:26:44 2023 +0200
+
+    secured the upload endpoint
+
+commit 770f8f10a164dd257227f900f4ed54df45298192
+Author: Carlos Tizirai <81642896+karlzw@users.noreply.github.com>
+Date:   Fri Sep 29 12:57:52 2023 +0200
+
+    fix: add .value to Enums in s3 bucket
+    
+    this fixes incompatibility issues with different version of python
+
+commit 1ee4f077dedc06a7ab4e2139752efc2c46d3ef38
+Author: judahtc <jaycea247@gmail.com>
+Date:   Fri Sep 29 12:21:55 2023 +0200
+
+    fixed database connection and replaced constants.my_session with my_session
+
+commit 29a1d5717546df68385530af67a5114ba11b7b6d
+Author: judahtc <jaycea247@gmail.com>
+Date:   Fri Sep 29 10:30:30 2023 +0200
+
+    fixed the read function
+
+commit 111ba9f0cdf6f54e2b94ed9e11db6f76c864d24e
+Author: judahtc <jaycea247@gmail.com>
+Date:   Fri Sep 29 10:24:13 2023 +0200
+
+    added beanstalk configuration
+
+commit 2cde32fe2c3a5453933519fee847b5a286b66d9e
+Author: judahtc <jaycea247@gmail.com>
+Date:   Fri Sep 29 10:02:15 2023 +0200
+
+    added beanstalk configuration
+
+commit 8830e0bb904c3543fdc1615bec0a95c2755f10f3
+Author: judahtc <jaycea247@gmail.com>
+Date:   Fri Sep 29 09:45:05 2023 +0200
+
+    merged with calculations

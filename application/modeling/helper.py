@@ -376,18 +376,26 @@ def match_months_to_forecast_with_df(
 ):
     number_of_months_in_df = df.columns.shape[0]
 
+    new_columns = pd.period_range(
+        start=start_date, periods=months_to_forecast, freq="M"
+    ).strftime("%b-%Y")
+
     if number_of_months_in_df == months_to_forecast:
-        df.columns = pd.period_range(
-            start=start_date, periods=months_to_forecast, freq="M"
-        )
+        df.columns = new_columns
         return df
 
+    if number_of_months_in_df > months_to_forecast:
+        df.columns = pd.date_range(
+            start=start_date, periods=int(df.columns[-1]), freq="M"
+        ).strftime("%b-%Y")
+
+        return df.loc[:, new_columns]
+
     number_of_months_to_add = months_to_forecast - number_of_months_in_df
-
     repeated_last_column = df[df.columns[-1]].repeat(number_of_months_to_add)
-
     reshaped_repated_last_column_df = pd.DataFrame(
-        repeated_last_column.values.reshape(-1, number_of_months_to_add), index=df.index
+        repeated_last_column.values.reshape(-1, number_of_months_to_add),
+        index=df.index,
     )
 
     new_df = pd.concat(
@@ -395,9 +403,8 @@ def match_months_to_forecast_with_df(
         axis=1,
     )
 
-    new_df.columns = pd.period_range(
-        start=start_date, periods=months_to_forecast, freq="M"
-    )
+    new_df.columns = new_columns
+
     return new_df
 
 
