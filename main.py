@@ -97,7 +97,7 @@ def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     return user
 
 
-@app.get("/login_verification", response_model=schemas.UserLoginResponse)
+@app.get("/login-verification", response_model=schemas.UserLoginResponse)
 async def login_verification(
     otp_code: int,
     current_user: models.Users = Depends(get_current_active_user),
@@ -121,7 +121,7 @@ async def login_verification(
     return current_user
 
 
-@app.post("/reset_password")
+@app.post("/reset-password")
 def reset_password(
     payload: schemas.ResetPassword,
     current_user: models.Users = Depends(get_current_active_user),
@@ -133,7 +133,7 @@ def reset_password(
     return {"detail": f"Password for {current_user.email} changed successfully "}
 
 
-@app.post("/add_audit_trail")
+@app.post("/add-audit-trail")
 def add_audit_trail(
     audit_trail: schemas.AuditTrailBase,
     current_user: models.Users = Depends(get_current_active_user),
@@ -152,7 +152,7 @@ def add_audit_trail(
     return audit_trail_entry
 
 
-@app.post("/extract_audit_trail")
+@app.post("/extract-audit-trail")
 def extract_audit_trail(
     extract_audit_trail: schemas.ExtractAuditTrail,
     current_user: models.Users = Depends(get_current_active_user),
