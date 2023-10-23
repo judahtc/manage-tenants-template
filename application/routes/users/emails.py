@@ -29,7 +29,9 @@ def send_email_to_activate_user(recipient: str, qrcode_image: str, password: str
     sender = "admin@claxonbusinesssolutions.com"
 
     # Try to send the email
-    access_token = security.create_access_token(data={"email": recipient})
+    access_token = security.create_access_token(
+        data={"email": recipient}, expires_delta=timedelta(hours=48)
+    )
 
     try:
         response = ses.send_email(
