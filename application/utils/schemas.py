@@ -116,15 +116,15 @@ class UserLoginResponse(BaseModel):
 class ResetPassword(BaseModel):
     new_password: str
 
-    class Config:
-        orm_mode = True
 
 class ForgotPassword(BaseModel):
     email: str
 
+    class Config:
+        orm_mode = True
+
 
 # -------------------------------------------------------  FROM PARDON -----------------------------------
-
 
 
 class TenantBaseResponse(BaseModel):
