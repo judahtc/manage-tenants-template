@@ -46,6 +46,8 @@ def send_email_to_activate_user(
                             f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
                             qrcode_image,
                         )
+
+
                     }
                 },
             },
