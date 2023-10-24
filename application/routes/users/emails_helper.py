@@ -48,11 +48,9 @@ def activate_user_html(url: str, qrcode_image):
                                                         account. Contact info@claxonactuaries.com for further information<br><br>
                                                   
                                                     </p>
-                                                  
-                                                    <b>
 
-
-                                                            <table border="0" cellpadding="0" cellspacing="0">
+                                                       <table border="0" cellpadding="0" cellspacing="0"      align="center"
+                        style="margin-top: 8px">
                         <tr tyle="padding: 0; ">
                           <td
                             style="
@@ -89,6 +87,11 @@ def activate_user_html(url: str, qrcode_image):
                           </td>
                         </tr>
                       </table>
+                                                  
+                                                    <b>
+
+
+                 
                                                 </td>
                                             </tr>
                                             <tr>
@@ -169,7 +172,8 @@ def email_to_change_password(url: str):
                                                 </p>
                                            
 
-                     <table border="0" cellpadding="0" cellspacing="0">
+                     <table border="0" cellpadding="0" cellspacing="0"      align="center"
+                        style="margin-top: 8px">
                         <tr tyle="padding: 0; ">
                           <td
                             style="
