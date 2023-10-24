@@ -30,6 +30,17 @@ def send_email_to_activate_user(
     ses = SES_CLIENT
     sender = "admin@claxonbusinesssolutions.com"
 
+    account_activation_email = render_template(
+        "activate_user.html",
+        url=f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
+        qrcode_image=qrcode_image,
+    )
+
+    # account_activation_email =  emails_helper.activate_user_html(
+    #                         f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
+    #                         qrcode_image,
+    #                     )
+
     try:
         response = ses.send_email(
             Source=sender,
@@ -40,16 +51,7 @@ def send_email_to_activate_user(
             },
             Message={
                 "Subject": {"Data": "REGISTRATION CONFIRMATION"},
-                "Body": {
-                    "Html": {
-                        "Data": emails_helper.activate_user_html(
-                            f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
-                            qrcode_image,
-                        )
-
-
-                    }
-                },
+                "Body": {"Html": {"Data": account_activation_email}},
             },
         )
     except ClientError as e:
@@ -65,6 +67,15 @@ def send_email_to_reset_password(recipient: str, token: str):
 
     # Try to send the email
 
+    reset_password_email = render_template(
+        "reset_password.html",
+        url=f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
+    )
+
+    # reset_password_email = emails_helper.email_to_change_password(
+    #                         url=f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
+    #                     )
+
     try:
         response = ses.send_email(
             Source=sender,
@@ -75,13 +86,7 @@ def send_email_to_reset_password(recipient: str, token: str):
             },
             Message={
                 "Subject": {"Data": "REGISTRATION CONFIRMATION"},
-                "Body": {
-                    "Html": {
-                        "Data": emails_helper.email_to_change_password(
-                            url=f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
-                        )
-                    }
-                },
+                "Body": {"Html": {"Data": reset_password_email}},
             },
         )
     except ClientError as e:
