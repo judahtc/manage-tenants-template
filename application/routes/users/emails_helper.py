@@ -50,9 +50,45 @@ def activate_user_html(url: str, qrcode_image):
                                                     </p>
                                                   
                                                     <b>
-                                                    <td>
-                                                    <a href="{url}"
-                                                            style="background:#e9b37a;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Login</a></b></td>
+
+
+                                                            <table border="0" cellpadding="0" cellspacing="0">
+                        <tr tyle="padding: 0; ">
+                          <td
+                            style="
+                              padding: 8px;
+                              background-color: #cba06c;
+                              cursor: pointer;
+                              border-radius: 4px;
+                              color: #1e1e2d;
+                              text-decoration: none;
+                              font-size: 12px;
+                              font-weight: bold;
+                              text-transform: capitalize;
+                              line-height: 1;
+                              text-align: center;
+                            "
+                          >
+                            <a
+                              href="{url}"
+                              target="_blank"
+                              style="
+                                display: inline-block;
+                                color: #1e1e2d;
+                                text-decoration: none;
+                                font-size: 14px;
+                                font-weight: bold;
+                                text-transform: capitalize;
+                              "
+                              title="Reset Password"
+                            >
+                              RESET PASSWORD
+                            </a>
+
+                            
+                          </td>
+                        </tr>
+                      </table>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -131,9 +167,45 @@ def email_to_change_password(url: str):
 
 
                                                 </p>
-                                                <a href="{url}"
-                                                    style="background:#e9b37a;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Reset
-                                                    Password</a>
+                                           
+
+                     <table border="0" cellpadding="0" cellspacing="0">
+                        <tr tyle="padding: 0; ">
+                          <td
+                            style="
+                              padding: 8px;
+                              background-color: #cba06c;
+                              cursor: pointer;
+                              border-radius: 4px;
+                              color: #1e1e2d;
+                              text-decoration: none;
+                              font-size: 12px;
+                              font-weight: bold;
+                              text-transform: capitalize;
+                              line-height: 1;
+                              text-align: center;
+                            "
+                          >
+                            <a
+                              href="{url}"
+                              target="_blank"
+                              style="
+                                display: inline-block;
+                                color: #1e1e2d;
+                                text-decoration: none;
+                                font-size: 14px;
+                                font-weight: bold;
+                                text-transform: capitalize;
+                              "
+                              title="Reset Password"
+                            >
+                              RESET PASSWORD
+                            </a>
+
+                            
+                          </td>
+                        </tr>
+                      </table>
                                             </td>
                                         </tr>
                                         <tr>
