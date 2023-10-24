@@ -82,9 +82,10 @@ def calculate_statement_of_cashflow_yearly_df(
         pd.DatetimeIndex(statement_of_cashflow_df.columns).year, axis=1
     ).sum()
 
-
-
-    return calculate_cash_at_end_and_beginning_of_period(
+    statement_of_cashflow_df = calculate_cash_at_end_and_beginning_of_period(
         statement_of_cashflow_df=statement_of_cashflow_yearly_df,
         opening_balances=opening_balances,
     )
+    statement_of_cashflow_df.columns = statement_of_cashflow_df.columns.astype(str)
+
+    return statement_of_cashflow_df
