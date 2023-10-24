@@ -52,7 +52,7 @@ async def create_user(
         admin=current_user,
     )
 
-    expires_delta = timedelta(minutes=15)
+    expires_delta = timedelta(hours=48)
 
     access_token = security.create_access_token(
         data={"email": user.email}, expires_delta=expires_delta
