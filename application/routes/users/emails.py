@@ -43,7 +43,6 @@ def send_email_to_activate_user(
                 "Body": {
                     "Html": {
                         "Data": emails_helper.activate_user_html(
-                            password,
                             f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
                             qrcode_image,
                         )

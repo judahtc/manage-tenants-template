@@ -514,6 +514,8 @@ def generate_direct_cashflow(
         months_to_forecast=months_to_forecast,
     )
 
+    print("reading files done")
+
     ## From Parameters
     direct_cashflow_df.loc[
         "Receipts From Receivables"
@@ -546,6 +548,8 @@ def generate_direct_cashflow(
         other_parameters.loc["DIVIDEND_PAID"]
     )
 
+
+
     ## From Calculations/Income Statement
 
     direct_cashflow_df.loc["Interest Income"] = income_statement_df.loc[
@@ -559,11 +563,13 @@ def generate_direct_cashflow(
         new_disbursements_df["total"]
     )
 
+
     ## Equity and Intercompany Loans
 
     direct_cashflow_df = direct_cashflow.add_equity_and_intercompany_loans(
         other_parameters=other_parameters, direct_cashflow_df=direct_cashflow_df
     )
+
 
     ## Other Assets
 
@@ -582,6 +588,8 @@ def generate_direct_cashflow(
         months_to_forecast=months_to_forecast,
     )
 
+
+
     direct_cashflow_df.loc["Tax Paid"] = tax_schedule_df.loc["Tax Paid"]
 
     operating_expenses = direct_cashflow.calculate_operating_expenses(
@@ -589,6 +597,7 @@ def generate_direct_cashflow(
     )
 
     direct_cashflow_df.loc["Operating Expenses"] = -operating_expenses
+
 
     details_of_assets = helper.columns_to_snake_case(details_of_assets)
 
@@ -599,6 +608,7 @@ def generate_direct_cashflow(
     )
 
     direct_cashflow_df.loc["Capital Expenses"] = -capital_expenses
+
 
     details_of_long_term_borrowing = helper.columns_to_snake_case(
         details_of_long_term_borrowing
@@ -623,6 +633,7 @@ def generate_direct_cashflow(
         "long_term_borrowing"
     ]
 
+
     capital_repayment = helper.add_series(
         [
             existing_loans_schedules_capital_repayments_df.sum(),
@@ -636,20 +647,28 @@ def generate_direct_cashflow(
         "Capital Repayment On Borrowings"
     ] = -capital_repayment_borrowings_df.loc["total"]
 
+
+
     direct_cashflow_df.loc["Total Cash Inflows"] = direct_cashflow_df.iloc[
         direct_cashflow_df.index.get_loc("CASH INFLOWS")
         + 1 : direct_cashflow_df.index.get_loc("Total Cash Inflows")
     ].sum()
+
+
 
     direct_cashflow_df.loc["Total Cash Outflows"] = direct_cashflow_df.iloc[
         direct_cashflow_df.index.get_loc("CASH OUTFLOWS")
         + 1 : direct_cashflow_df.index.get_loc("Total Cash Outflows")
     ].sum()
 
+
+
     direct_cashflow_df.loc["Net Increase/Decrease In Cash"] = (
         direct_cashflow_df.loc["Total Cash Inflows"]
         + direct_cashflow_df.loc["Total Cash Outflows"]
     )
+
+    
 
     direct_cashflow_df = (
         direct_cashflow.calculate_opening_and_closing_balances_for_direct_cashflows(
@@ -658,20 +677,27 @@ def generate_direct_cashflow(
         )
     )
 
+
     direct_cashflow_yearly_df = direct_cashflow.calculate_direct_cashflow_yearly(
-    direct_cashflow_df = direct_cashflow_df, opening_balances = opening_balances
-)
+        direct_cashflow_df=direct_cashflow_df, opening_balances=opening_balances
+    )
+
 
 
     income_statement_df.loc["2% Taxation"] = (
         direct_cashflow_df.loc["Total Cash Outflows"] * imtt
     )
 
+
+
     income_statement_df = income_statement.calculate_profit_or_loss_for_period(
         income_statement_df
     )
 
+
     income_statement_yearly_df = helper.group_next_year_on_wards(df=income_statement_df)
+
+
 
     helper.upload_file(
         tenant_name=tenant_name,
@@ -682,6 +708,8 @@ def generate_direct_cashflow(
         file_stage=constants.FileStage.intermediate,
     )
 
+
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -691,6 +719,10 @@ def generate_direct_cashflow(
         file_stage=constants.FileStage.final,
     )
 
+
+
+
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -699,6 +731,7 @@ def generate_direct_cashflow(
         file_name=constants.FinalFiles.direct_cashflow_yearly_df,
         file_stage=constants.FileStage.final,
     )
+
 
     helper.upload_file(
         tenant_name=tenant_name,
@@ -718,6 +751,8 @@ def generate_direct_cashflow(
         file_stage=constants.FileStage.intermediate,
     )
 
+  
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -726,6 +761,8 @@ def generate_direct_cashflow(
         file_name=constants.FinalFiles.direct_cashflow_df,
         file_stage=constants.FileStage.final,
     )
+
+    print("Upload Direct Cashflow")
 
     return {"message": "done"}
 
@@ -830,7 +867,6 @@ def generate_loan_book(
 
     loan_book_yearly_df = loan_book.calculate_loan_book_yearly(loan_book=loan_book_df)
 
-
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -890,6 +926,7 @@ def generate_balance_sheet(
         boto3_session=constants.MY_SESSION,
         file_name=constants.IntermediateFiles.tax_schedule_df,
     )
+
     long_term_borrowings_capital_repayments_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -1183,8 +1220,8 @@ def generate_balance_sheet(
     )
 
     balance_sheet_yearly_df = balance_sheet.calculate_balance_sheet_yearly(
-    balance_sheet_df=balance_sheet_df
-)
+        balance_sheet_df=balance_sheet_df
+    )
 
     helper.upload_file(
         tenant_name=tenant_name,
@@ -1521,11 +1558,11 @@ def generate_statement_of_cashflows(
     )
 
     statement_of_cashflow_yearly_df = (
-    statement_of_cashflows.calculate_statement_of_cashflow_yearly_df(
-        statement_of_cashflow_df=statement_of_cashflow_df,
-        opening_balances=opening_balances,
+        statement_of_cashflows.calculate_statement_of_cashflow_yearly_df(
+            statement_of_cashflow_df=statement_of_cashflow_df,
+            opening_balances=opening_balances,
+        )
     )
-)
 
     helper.upload_file(
         tenant_name=tenant_name,

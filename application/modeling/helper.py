@@ -74,11 +74,13 @@ def upload_file(
             boto3_session=boto3_session,
             index=True,
         )
-        return {"message": "Files uploaded successfully"}
 
+        print(
+            f"s3://{tenant_name}/project_{project_id}/{file_stage.value}/{file_name.value}.parquet"
+        )
+
+        return {"message": "Files uploaded successfully"}
     except ClientError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except Exception as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 

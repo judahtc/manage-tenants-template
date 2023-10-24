@@ -19,6 +19,7 @@ from application.utils.database import engine, get_db
 
 app = FastAPI()
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -158,7 +159,6 @@ def extract_audit_trail(
     current_user: models.Users = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    type(extract_audit_trail.start_date)
     audit_trail_entries = (
         db.query(models.AuditTrail)
         .filter(

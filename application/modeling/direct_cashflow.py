@@ -436,6 +436,8 @@ def calculate_direct_cashflow_yearly(
         pd.DatetimeIndex(direct_cashflow_df.columns).year, axis=1
     ).sum()
 
+    direct_cashflow_yearly_df.columns = direct_cashflow_yearly_df.columns.astype(str)
+
     return calculate_opening_and_closing_balances_for_direct_cashflows(
         direct_cashflow=direct_cashflow_yearly_df,
         cash_on_hand_opening_balance=opening_balances["CASH_ON_HAND"].iat[0],

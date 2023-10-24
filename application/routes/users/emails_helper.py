@@ -1,4 +1,4 @@
-def activate_user_html(password: str, url: str, qrcode_image):
+def activate_user_html(url: str, qrcode_image):
     html_body = f"""<!DOCTYPE html>
             <html lang="en-US">
 
@@ -44,14 +44,15 @@ def activate_user_html(password: str, url: str, qrcode_image):
                                                         style="display:inline-block; vertical-align:middle; margin:29px 0 26px; border-bottom:1px solid #cecece; width:100px;"></span>
                                                     <p style="color:#455056; font-size:15px;line-height:24px; margin:0;">
                                                         A Claxon Business Solution Budgeting system account have been created for
-                                                        you. Please use the password and link below to activate and sign into your
+                                                        you. Please click the link below to activate and sign into your
                                                         account. Contact info@claxonactuaries.com for further information<br><br>
-                                                        <b>password: <span
-                                                                style="padding:3px;background-color:aquamarine">{password}</span></b>
+                                                  
                                                     </p>
                                                   
-                                                    <b><a href="{url}"
-                                                            style="background:#e9b37a;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Login</a></b>
+                                                    <b>
+                                                    <td>
+                                                    <a href="{url}"
+                                                            style="background:#e9b37a;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Login</a></b></td>
                                                 </td>
                                             </tr>
                                             <tr>
