@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import pyotp
-from fastapi import Depends, FastAPI, File, HTTPException, status
+from fastapi import Depends, FastAPI, File, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from mangum import Mangum
@@ -52,6 +52,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def audit_middleware(request: Request, call_next):
+    start_time = datetime.now()
+    response = await call_next(request)
+    end_time = datetime.now()
+    process_time = (end_time - start_time).total_seconds()
+
+    # print(request)
+    # print(response)
+
+    # print([i for i in dir(response) if not i.startswith("_")])
+    print([i for i in dir(request) if not i.startswith("_")])
+    print([i for i in dir(request.url) if not i.startswith("_")])
+    print(request.url.path)
+
+    # Capture audit log based on the request, response, and user information
+
+    # Save the audit_log to the database or log file
+    return response
 
 
 @app.get("/")
