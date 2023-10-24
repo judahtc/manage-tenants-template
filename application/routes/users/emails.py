@@ -23,15 +23,12 @@ def render_template(template_name: str, **kwargs) -> str:
     return template.render(**kwargs)
 
 
-def send_email_to_activate_user(recipient: str, qrcode_image: str, password: str):
+def send_email_to_activate_user(
+    recipient: str, qrcode_image: str, password: str, token: str
+):
     # Create a new SES resource
     ses = SES_CLIENT
     sender = "admin@claxonbusinesssolutions.com"
-
-    # Try to send the email
-    access_token = security.create_access_token(
-        data={"email": recipient}, expires_delta=timedelta(hours=48)
-    )
 
     try:
         response = ses.send_email(
@@ -47,7 +44,7 @@ def send_email_to_activate_user(recipient: str, qrcode_image: str, password: str
                     "Html": {
                         "Data": emails_helper.activate_user_html(
                             password,
-                            f"http://budgeting.claxonfintech.com/reset-password?access-token={access_token}",
+                            f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
                             qrcode_image,
                         )
                     }
@@ -66,9 +63,6 @@ def send_email_to_reset_password(recipient: str, token: str):
     sender = "admin@claxonbusinesssolutions.com"
 
     # Try to send the email
-    access_token = security.create_access_token(
-        data={"email": recipient}, expires_delta=timedelta(hours=48)
-    )
 
     try:
         response = ses.send_email(
@@ -83,8 +77,7 @@ def send_email_to_reset_password(recipient: str, token: str):
                 "Body": {
                     "Html": {
                         "Data": emails_helper.email_to_change_password(
-                            token=token,
-                            url=f"http://budgeting.claxonfintech.com/reset-password?access-token={access_token}",
+                            url=f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
                         )
                     }
                 },

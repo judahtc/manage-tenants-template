@@ -83,7 +83,7 @@ def activate_user_html(password: str, url: str, qrcode_image):
     return html_body
 
 
-def email_to_change_password(token: str, url: str):
+def email_to_change_password(url: str):
     html_message = f"""<!doctype html>
         <html lang="en-US">
 
@@ -130,7 +130,7 @@ def email_to_change_password(token: str, url: str):
 
 
                                                 </p>
-                                                <a href="{url}/resetpassword/___{token}"
+                                                <a href="{url}"
                                                     style="background:#e9b37a;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Reset
                                                     Password</a>
                                             </td>

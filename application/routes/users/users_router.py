@@ -52,10 +52,17 @@ async def create_user(
         admin=current_user,
     )
 
+    expires_delta = timedelta(minutes=15)
+
+    access_token = security.create_access_token(
+        data={"email": user.email}, expires_delta=expires_delta
+    )
+
     emails.send_email_to_activate_user(
         recipient=user.email,
         qrcode_image=qrcode_image,
         password=random_password,
+        token=access_token,
     )
 
     return created_user
