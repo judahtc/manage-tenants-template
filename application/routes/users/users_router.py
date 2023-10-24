@@ -38,6 +38,12 @@ async def create_user(
     random_password = utils.generate_random_password()
     secret_key = pyotp.random_base32()
 
+    uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
+        name=f"{user.first_name} {user.last_name}", issuer_name="Claxon Budgeting"
+    )
+
+    qrcode_image = crud.create_base64_qrcode_image(uri)
+
     created_user = crud.create_user(
         db=db,
         user=user,
@@ -45,12 +51,6 @@ async def create_user(
         secret_key=secret_key,
         admin=current_user,
     )
-
-    uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
-        name=f"{user.first_name} {user.last_name}", issuer_name="Claxon Budgeting"
-    )
-
-    qrcode_image = crud.create_base64_qrcode_image(uri)
 
     expires_delta = timedelta(minutes=15)
 
