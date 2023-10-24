@@ -304,5 +304,7 @@ def calculate_balance_sheet_yearly(balance_sheet_df: pd.DataFrame):
     balance_sheet_yearly_df.columns = balance_sheet_yearly_df.columns.str.split(
         "-"
     ).str.get(1)
+
+    balance_sheet_yearly_df.columns = balance_sheet_yearly_df.columns.astype(str)
     balance_sheet_yearly_df
     return balance_sheet_yearly_df

@@ -81,7 +81,8 @@ def calculate_statement_of_cashflow_yearly_df(
     statement_of_cashflow_yearly_df = statement_of_cashflow_df.groupby(
         pd.DatetimeIndex(statement_of_cashflow_df.columns).year, axis=1
     ).sum()
-    statement_of_cashflow_yearly_df
+
+
 
     return calculate_cash_at_end_and_beginning_of_period(
         statement_of_cashflow_df=statement_of_cashflow_yearly_df,
