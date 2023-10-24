@@ -1580,6 +1580,31 @@ def download_final_file(
     return response
 
 
+@router.get("/projects/{project_id}/results/download")
+def download_only_final_file(
+    project_id: str,
+    file_name: constants.FinalFiles,
+    current_user: models.Users = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+
+    df = helper.read_final_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=file_name,
+    )
+
+    return Response(
+        content=df.to_csv(index=True),
+        headers={
+            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
+            "Content-Type": "application/octet-stream",
+        },
+    )
+
+
+
 @router.get("/projects/{project_id}/results/intermediate")
 def download_intermediate_file(
     project_id: int,
@@ -1595,7 +1620,61 @@ def download_intermediate_file(
         file_name=file_name,
     )
 
+    if file_name in [
+        constants.IntermediateFiles.existing_loans_schedules_capital_repayments_df,
+        constants.IntermediateFiles.existing_loans_schedules_interest_incomes_df,
+        constants.IntermediateFiles.existing_loans_schedules_outstanding_balances_df,
+    ]:
+        df = df.head(100)
+
     stream = io.StringIO()
+
+    df.to_csv(stream, index=True)
+    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    response.headers[
+        "Content-Disposition"
+    ] = f"attachment; file_name={file_name.value}.csv"
+    return response
+
+
+@router.get("/projects/{project_id}/results/intermediate/download")
+def download_intermediate_file_only(
+    project_id: int,
+    file_name: constants.IntermediateFiles,
+    current_user: models.Users = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+
+    df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=file_name,
+    )
+
+    return Response(
+        content=df.to_csv(index=True),
+        headers={
+            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
+            "Content-Type": "application/octet-stream",
+        },
+    )
+
+
+@router.get("/projects/{project_id}/results/intermediate/view")
+def view_intermediate_file(
+    project_id: int,
+    file_name: constants.IntermediateFiles,
+    current_user: models.Users = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+
+    df = helper.read_intermediate_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=file_name,
+    )
 
     if file_name in [
         constants.IntermediateFiles.existing_loans_schedules_capital_repayments_df,
@@ -1604,12 +1683,37 @@ def download_intermediate_file(
     ]:
         df = df.head(100)
 
-    df.to_csv(stream, index=True)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers[
-        "Content-Disposition"
-    ] = f"attachment; file_name={file_name.value}.csv"
-    return response
+    return Response(
+        content=df.to_csv(index=True),
+        headers={
+            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
+            "Content-Type": "text/csv",
+        },
+    )
+
+
+@router.get("/projects/{project_id}/results/view")
+def view_final_file(
+    project_id: str,
+    file_name: constants.FinalFiles,
+    current_user: models.Users = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+
+    df = helper.read_final_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=file_name,
+    )
+
+    return Response(
+        content=df.to_csv(index=True),
+        headers={
+            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
+            "Content-Type": "text/csv",
+        },
+    )
 
 
 @router.get("/projects/{project_id}/results/filenames")
