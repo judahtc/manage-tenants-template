@@ -2,7 +2,15 @@ import io
 from typing import List
 
 import awswrangler as wr
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -83,6 +91,56 @@ def download_raw_file(
         "Content-Disposition"
     ] = f"attachment; file_name={file_name.value}.csv"
     return response
+
+
+@router.get("/projects/{project_id}/raw/data/view")
+def view_raw_file(
+    project_id: str,
+    file_name: constants.RawFiles,
+    current_user: models.Users = Depends(get_current_active_user),
+):
+    df = helper.read_raw_file(
+        tenant_name=current_user.tenant.company_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=file_name,
+    )
+
+    if file_name == constants.RawFiles.existing_loans:
+        df = df.head(50)
+
+    return Response(
+        content=df.to_csv(index=True),
+        headers={
+            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
+            "Content-Type": "text/csv",
+        },
+    )
+
+
+@router.get("/projects/{project_id}/raw/data/download")
+def download_only_raw_file(
+    project_id: str,
+    file_name: constants.RawFiles,
+    current_user: models.Users = Depends(get_current_active_user),
+):
+    df = helper.read_raw_file(
+        tenant_name=current_user.tenant.company_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file_name=file_name,
+    )
+
+    if file_name == constants.RawFiles.existing_loans:
+        df = df.head(50)
+
+    return Response(
+        content=df.to_csv(index=True),
+        headers={
+            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
+            "Content-Type": "application/octet-stream",
+        },
+    )
 
 
 @router.get("/projects/{project_id}/raw/filenames")
