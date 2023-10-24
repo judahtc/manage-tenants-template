@@ -53,4 +53,5 @@ def calculate_loan_book_yearly(loan_book: pd.DataFrame):
     loan_book_yearly = loan_book.groupby(
         pd.DatetimeIndex(loan_book.columns).year, axis=1
     ).sum()
+    loan_book_yearly.columns = loan_book_yearly.columns.astype(str)
     return helper.calculate_opening_and_closing_balances(loan_book_yearly)
