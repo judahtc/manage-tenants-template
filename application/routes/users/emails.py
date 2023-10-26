@@ -85,7 +85,7 @@ def send_email_to_reset_password(recipient: str, token: str):
                 ],
             },
             Message={
-                "Subject": {"Data": "REGISTRATION CONFIRMATION"},
+                "Subject": {"Data": "RESET PASSWORD"},
                 "Body": {"Html": {"Data": reset_password_email}},
             },
         )

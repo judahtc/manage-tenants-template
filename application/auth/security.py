@@ -99,3 +99,14 @@ async def get_current_active_user(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user"
         )
     return current_user
+
+
+def _decode_token(token: str, db: Session):
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    username: str = payload.get("email")
+    if username is None:
+        pass
+
+    token_data = TokenData(username=username)
+
+    return users_crud.get_user_by_email(db=db, email=token_data.username)

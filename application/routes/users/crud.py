@@ -10,7 +10,6 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-import main as main
 from application.auth import security
 from application.auth.jwt_handler import decodeJWT, signJWT, signJWT0
 from application.aws_helper import helper

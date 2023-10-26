@@ -9,13 +9,13 @@ from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from application.auth import security
-from application.auth.security import get_current_active_user
+from application.auth.security import _decode_token, get_current_active_user
 from application.routes import final_calculations, intermediate_calculations
 from application.routes.projects import projects_router
 from application.routes.tenants import tenants_router
 from application.routes.users import users_router
 from application.utils import database, models, schemas
-from application.utils.database import engine, get_db
+from application.utils.database import SessionLocal, engine, get_db
 
 app = FastAPI()
 
@@ -56,22 +56,27 @@ app.add_middleware(
 
 @app.middleware("http")
 async def audit_middleware(request: Request, call_next):
-    start_time = datetime.now()
     response = await call_next(request)
-    end_time = datetime.now()
-    process_time = (end_time - start_time).total_seconds()
 
-    # print(request)
-    # print(response)
+    try:
+        auth = request.headers["Authorization"]
+        _, token = auth.split()
+        db = SessionLocal()
+        user = _decode_token(token=token, db=db)
 
-    # print([i for i in dir(response) if not i.startswith("_")])
-    print([i for i in dir(request) if not i.startswith("_")])
-    print([i for i in dir(request.url) if not i.startswith("_")])
-    print(request.url.path)
+        audit_trail_entry = models.AuditTrail(
+            email_address=user.email,
+            action=request.url.path,
+            details=request.url.path,
+            tenant_id=user.tenant_id,
+        )
 
-    # Capture audit log based on the request, response, and user information
+        db.add(audit_trail_entry)
+        db.commit()
+        db.refresh(audit_trail_entry)
+    except:
+        pass
 
-    # Save the audit_log to the database or log file
     return response
 
 
@@ -180,6 +185,7 @@ def extract_audit_trail(
     current_user: models.Users = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
+    print(extract_audit_trail.start_date)
     audit_trail_entries = (
         db.query(models.AuditTrail)
         .filter(
