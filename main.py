@@ -14,7 +14,7 @@ from application.routes import final_calculations, intermediate_calculations
 from application.routes.projects import projects_router
 from application.routes.tenants import tenants_router
 from application.routes.users import users_router
-from application.utils import database, models, schemas
+from application.utils import database, models, schemas, utils
 from application.utils.database import SessionLocal, engine, get_db
 
 app = FastAPI()
@@ -64,10 +64,16 @@ async def audit_middleware(request: Request, call_next):
         db = SessionLocal()
         user = _decode_token(token=token, db=db)
 
+        variable = utils.safe_dict_lookup(
+            key1="user_id", key2="project_id", my_dict=request.path_params
+        )
+
+        endpoint_details = utils.get_endpoint_details(variable=variable)
+
         audit_trail_entry = models.AuditTrail(
             email_address=user.email,
             action=request.url.path,
-            details=request.url.path,
+            details=endpoint_details.get(request.url.path),
             tenant_id=user.tenant_id,
         )
 
