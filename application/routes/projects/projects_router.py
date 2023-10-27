@@ -110,10 +110,10 @@ def view_raw_file(
         df = df.head(50)
 
     return Response(
-        content=df.to_csv(index=True),
+        content=df.to_json(orient="table"),
         headers={
-            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
-            "Content-Type": "text/csv",
+            "Content-Disposition": f'attachment; filename="{file_name.value}.json"',
+            "Content-Type": "application/json",
         },
     )
 

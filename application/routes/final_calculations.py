@@ -1604,7 +1604,6 @@ def download_only_final_file(
     )
 
 
-
 @router.get("/projects/{project_id}/results/intermediate")
 def download_intermediate_file(
     project_id: int,
@@ -1684,10 +1683,10 @@ def view_intermediate_file(
         df = df.head(100)
 
     return Response(
-        content=df.to_csv(index=True),
+        content=df.to_json(orient="table"),
         headers={
-            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
-            "Content-Type": "text/csv",
+            "Content-Disposition": f'attachment; filename="{file_name.value}.json"',
+            "Content-Type": "application/json",
         },
     )
 
@@ -1708,10 +1707,10 @@ def view_final_file(
     )
 
     return Response(
-        content=df.to_csv(index=True),
+        content=df.to_json(orient="table"),
         headers={
-            "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
-            "Content-Type": "text/csv",
+            "Content-Disposition": f'attachment; filename="{file_name.value}.json"',
+            "Content-Type": "application/json",
         },
     )
 
