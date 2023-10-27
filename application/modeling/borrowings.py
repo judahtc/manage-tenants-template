@@ -162,8 +162,10 @@ def calculate_reducing_balance_loans_schedules(
 
     if is_interest_rate_annual:
         effective_interest_rates = np.power(1 + interest_rates, 1 / frequencies) - 1
+        print("interests divided")
     else:
         effective_interest_rates = interest_rates
+        print("interest rates not divided")
 
     annuity_factor = (
         1 - (1 + effective_interest_rates) ** (-number_of_payments)

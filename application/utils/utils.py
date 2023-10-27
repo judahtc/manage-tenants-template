@@ -59,7 +59,7 @@ def get_endpoint_details(variable: int):
         f"/users/{variable}/toggle-active": f"Changed The Active State For A User {variable}",
         "/projects/": "Created A Project",
         f"/projects/{variable}/upload-files": f"Uploaded File(s) For Project {variable}",
-        f"/project/{variable}/raw/data": f"Downloaded Raw Data File(s) For Project {variable}",
+        f"/projects/{variable}/raw/data": f"Downloaded Raw Data File(s) For Project {variable}",
         f"/projects/{variable}/raw/data/view": f"Viewed Raw Data File(s) For Project {variable} ",
         f"/projects/{variable}/raw/filenames": f"Retrieved Raw Data Filenames For Project {variable}",
         "/projects": "Retrieved All Projects",
