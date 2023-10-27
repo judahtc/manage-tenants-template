@@ -199,6 +199,7 @@ def extract_audit_trail(
             & (models.AuditTrail.timestamp <= extract_audit_trail.end_date)
             & (models.AuditTrail.tenant_id == current_user.tenant_id)
         )
+        .order_by(models.AuditTrail.timestamp.desc())
         .all()
     )
 
