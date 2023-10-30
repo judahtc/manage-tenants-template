@@ -1683,7 +1683,7 @@ def view_intermediate_file(
         df = df.head(100)
 
     return Response(
-        content=df.to_json(orient="table"),
+        content=df.T.to_json(orient="table"),
         headers={
             "Content-Disposition": f'attachment; filename="{file_name.value}.json"',
             "Content-Type": "application/json",
@@ -1707,7 +1707,7 @@ def view_final_file(
     )
 
     return Response(
-        content=df.to_json(orient="table"),
+        content=df.T.to_json(orient="table"),
         headers={
             "Content-Disposition": f'attachment; filename="{file_name.value}.json"',
             "Content-Type": "application/json",
