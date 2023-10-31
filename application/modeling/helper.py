@@ -130,7 +130,8 @@ def read_raw_file(
             df = df.set_index(df.columns[0])
             df.index.name = ""
         else:
-            df.rename({"Unnamed:_0": ""}, axis=1, inplace=True)
+            # df.rename({"Unnamed:_0": ""}, axis=1, inplace=True)
+            df = df.set_index(df.columns[0])
 
         return df
     except ClientError as e:
