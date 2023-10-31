@@ -126,9 +126,11 @@ def read_raw_file(
             boto3_session=boto3_session,
         )
 
-        # df = df.set_index(df.columns[0])
-        # df.index.name = ""
-        df.rename({"Unnamed:_0": ""}, axis=1, inplace=True)
+        if set_index:
+            df = df.set_index(df.columns[0])
+            df.index.name = ""
+        else:
+            df.rename({"Unnamed:_0": ""}, axis=1, inplace=True)
 
         return df
     except ClientError as e:
