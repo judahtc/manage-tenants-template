@@ -118,7 +118,7 @@ def read_raw_file(
     project_id: int,
     boto3_session,
     file_name: Enum,
-    set_index: bool = True,
+    set_index: bool = False,
 ):
     try:
         df = wr.s3.read_parquet(
@@ -127,12 +127,11 @@ def read_raw_file(
         )
 
         if set_index:
-            df.rename({"Unnamed:_0": ""}, axis=1, inplace=True)
-            df = df.set_index(df.columns[0])
-
-        else:
             df = df.set_index(df.columns[0])
             df.index.name = ""
+        else:
+            df.rename({"Unnamed:_0": ""}, axis=1, inplace=True)
+            df = df.set_index(df.columns[0])
 
         return df
     except ClientError as e:

@@ -155,7 +155,7 @@ def calculate_loan_schedules_existing_loans(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=constants.RawFiles.existing_loans,
-        set_index=False,
+        set_index=True,
     )
 
     existing_loans = helper.columns_to_snake_case(existing_loans)
