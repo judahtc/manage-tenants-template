@@ -215,30 +215,6 @@ def read_intermediate_file(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
-def read_raw_file(
-    tenant_name: str,
-    project_id: int,
-    boto3_session,
-    file_name: Enum,
-    set_index: bool = True,
-):
-    try:
-        df = wr.s3.read_parquet(
-            f"s3://{tenant_name}/project_{project_id}/raw/{file_name.value}.parquet",
-            boto3_session=boto3_session,
-        )
-
-        if set_index:
-            df = df.set_index(df.columns[0])
-            df.index.name = ""
-
-        return df
-    except ClientError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-
-
 def read_final_file(
     tenant_name: str,
     project_id: int,

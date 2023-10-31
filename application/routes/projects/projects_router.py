@@ -86,7 +86,7 @@ def download_raw_file(
         df = df.head(50)
 
     stream = io.StringIO()
-    df.to_csv(stream, index=True)
+    df.to_csv(stream)
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
     response.headers[
         "Content-Disposition"
@@ -136,7 +136,7 @@ def download_only_raw_file(
         df = df.head(50)
 
     return Response(
-        content=df.to_csv(index=True),
+        content=df.to_csv(),
         headers={
             "Content-Disposition": f'attachment; filename="{file_name.value}.csv"',
             "Content-Type": "application/octet-stream",
