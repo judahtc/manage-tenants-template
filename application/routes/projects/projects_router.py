@@ -130,7 +130,6 @@ def download_only_raw_file(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=file_name,
-        set_index=False,
     )
 
     if file_name == constants.RawFiles.existing_loans:

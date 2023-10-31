@@ -125,8 +125,8 @@ def read_raw_file(
             boto3_session=boto3_session,
         )
 
-        df = df.set_index(df.columns[0])
-        df.index.name = ""
+        # df = df.set_index(df.columns[0])
+        # df.index.name = ""
 
         return df
     except ClientError as e:
