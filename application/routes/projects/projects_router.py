@@ -130,6 +130,7 @@ def download_only_raw_file(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=file_name,
+        set_index=False,
     )
 
     if file_name == constants.RawFiles.existing_loans:
@@ -230,8 +231,6 @@ def add_new_funding(
     current_user: models.Users = Depends(get_current_active_user),
 ):
     tenant_name = current_user.tenant.company_name
-
-    print(new_funding.dict())
 
     if funding_term == constants.FundingTerm.long_term:
         details_of_long_term_borrowing = helper.read_raw_file(
