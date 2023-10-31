@@ -80,6 +80,7 @@ def download_raw_file(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=file_name,
+        for_output=True,
     )
 
     if file_name == constants.RawFiles.existing_loans:
@@ -105,6 +106,7 @@ def view_raw_file(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=file_name,
+        for_output=True,
     )
 
     if file_name == constants.RawFiles.existing_loans:
@@ -130,6 +132,7 @@ def download_only_raw_file(
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
         file_name=file_name,
+        for_output=True,
     )
 
     if file_name == constants.RawFiles.existing_loans:
