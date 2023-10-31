@@ -216,10 +216,11 @@ class UserLogin(BaseModel):
 
 
 class ProjectUpdate(BaseModel):
-    project_name: str
+    project_name: str 
     description: str
     start_date: date
     imtt: float
+    months_to_forecast: int
 
 
 class ProjectStatusUpdate(BaseModel):

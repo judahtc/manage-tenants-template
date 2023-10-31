@@ -80,6 +80,8 @@ def update_project_by_id(
     project.description = edit_project.description
     project.start_date = edit_project.start_date
     project.imtt = edit_project.imtt
+    project.months_to_forecast = edit_project.months_to_forecast
+    project.project_status = schemas.ProjectStatus.PENDING
     db.commit()
     return project
 
