@@ -159,7 +159,7 @@ def calculate_loan_schedules_existing_loans(
     )
 
     existing_loans = helper.columns_to_snake_case(existing_loans)
-    existing_loans = existing_loans.loc[existing_loans["closing_balance"] > 0]
+    # existing_loans = existing_loans.loc[existing_loans["closing_balance"] > 0]
 
     existing_loans_schedules = borrowings.calculate_reducing_balance_loans_schedules(
         interest_rates=existing_loans["interest_rate"],
@@ -282,7 +282,7 @@ def calculate_other_income(
     )
 
     existing_loans = helper.columns_to_snake_case(existing_loans)
-    existing_loans = existing_loans.loc[existing_loans["closing_balance"] > 0]
+    # existing_loans = existing_loans.loc[existing_loans["closing_balance"] > 0]
 
     other_income_existing_loans_df = other_income.calculate_other_income_existing_loans(
         existing_loans=existing_loans,
