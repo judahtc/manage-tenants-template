@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from enum import Enum
 
 import pyotp
 from fastapi import Depends, FastAPI, File, HTTPException, Request, status
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from application.auth import security
 from application.auth.security import _decode_token, get_current_active_user
+from application.modeling import helper
 from application.routes import final_calculations, intermediate_calculations
 from application.routes.projects import projects_router
 from application.routes.tenants import tenants_router
@@ -191,7 +193,6 @@ def extract_audit_trail(
     current_user: models.Users = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    print(extract_audit_trail.start_date)
     audit_trail_entries = (
         db.query(models.AuditTrail)
         .filter(
@@ -204,6 +205,9 @@ def extract_audit_trail(
     )
 
     return audit_trail_entries
+
+
+
 
 
 app.include_router(tenants_router.router)

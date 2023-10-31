@@ -2,6 +2,7 @@ import io
 from typing import List
 
 import awswrangler as wr
+import pandas as pd
 from fastapi import (
     APIRouter,
     Depends,
@@ -219,3 +220,77 @@ async def delete_project_by_id(
         )
 
     return crud.delete_project_by_id(db=db, project_id=project_id)
+
+
+@router.post("/projects/{project_id}/add-new-funding")
+def add_new_funding(
+    new_funding: schemas.NewFunding,
+    funding_term: constants.FundingTerm,
+    project_id: int,
+    current_user: models.Users = Depends(get_current_active_user),
+):
+    tenant_name = current_user.tenant.company_name
+
+    print(new_funding.dict())
+
+    if funding_term == constants.FundingTerm.long_term:
+        details_of_long_term_borrowing = helper.read_raw_file(
+            tenant_name=tenant_name,
+            project_id=project_id,
+            boto3_session=constants.MY_SESSION,
+            file_name=constants.RawFiles.details_of_long_term_borrowing,
+            set_index=False,
+        )
+
+        details_of_long_term_borrowing = helper.columns_to_snake_case(
+            df=details_of_long_term_borrowing
+        )
+
+        new_funding = pd.DataFrame(
+            new_funding.dict(), index=[details_of_long_term_borrowing.index[-1] + 1]
+        )
+
+        details_of_long_term_borrowing = pd.concat(
+            [details_of_long_term_borrowing, new_funding]
+        )
+
+        helper.upload_file(
+            tenant_name=tenant_name,
+            project_id=project_id,
+            boto3_session=constants.MY_SESSION,
+            file=details_of_long_term_borrowing,
+            file_name=constants.RawFiles.details_of_long_term_borrowing,
+            file_stage=constants.FileStage.raw,
+        )
+
+    if funding_term == constants.FundingTerm.short_term:
+        details_of_short_term_borrowing = helper.read_raw_file(
+            tenant_name=tenant_name,
+            project_id=project_id,
+            boto3_session=constants.MY_SESSION,
+            file_name=constants.RawFiles.details_of_short_term_borrowing,
+            set_index=False,
+        )
+
+        details_of_short_term_borrowing = helper.columns_to_snake_case(
+            df=details_of_short_term_borrowing
+        )
+
+        new_funding = pd.DataFrame(
+            new_funding.dict(), index=[details_of_short_term_borrowing.index[-1] + 1]
+        )
+
+        details_of_short_term_borrowing = pd.concat(
+            [details_of_short_term_borrowing, new_funding]
+        )
+
+        helper.upload_file(
+            tenant_name=tenant_name,
+            project_id=project_id,
+            boto3_session=constants.MY_SESSION,
+            file=details_of_short_term_borrowing,
+            file_name=constants.RawFiles.details_of_short_term_borrowing,
+            file_stage=constants.FileStage.raw,
+        )
+
+    return {"message": "done"}

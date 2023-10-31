@@ -110,21 +110,6 @@ class FileStage(str, Enum):
     final = "final"
 
 
-import boto3
-from decouple import config
-
-AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
-
-S3_CLIENT = boto3.client(
-    "s3",
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name="af-south-1",
-)
-
-MY_SESSION = boto3.Session(
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name="af-south-1",
-)
+class FundingTerm(str, Enum):
+    short_term = "short_term"
+    long_term = "long_term"

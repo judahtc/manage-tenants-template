@@ -216,7 +216,7 @@ class UserLogin(BaseModel):
 
 
 class ProjectUpdate(BaseModel):
-    project_name: str 
+    project_name: str
     description: str
     start_date: date
     imtt: float
@@ -243,3 +243,14 @@ class AuditTrailResponse(AuditTrailBase):
 class ExtractAuditTrail(BaseModel):
     start_date: datetime
     end_date: datetime
+
+
+class NewFunding(BaseModel):
+    effective_date: str
+    institution: str
+    nominal_amount: float
+    interest_rate: float
+    tenure: int
+    repayment_frequency: str
+    frequency: int
+    method: str
