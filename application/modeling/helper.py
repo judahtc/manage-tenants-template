@@ -118,7 +118,7 @@ def read_raw_file(
     project_id: int,
     boto3_session,
     file_name: Enum,
-    set_index: bool = True,
+    set_index: bool = False,
 ):
     try:
         df = wr.s3.read_parquet(
