@@ -16,6 +16,7 @@ from application.modeling import (
     income_statement,
     interest_income,
     loan_book,
+    ratios,
     statement_of_cashflows,
 )
 from application.routes.projects import crud as project_crud
@@ -1189,6 +1190,15 @@ def generate_balance_sheet(
         balance_sheet_df=balance_sheet_df
     )
 
+    ratios_df = ratios.calculate_ratios(
+        start_date=start_date,
+        months_to_forecast=months_to_forecast,
+        income_statement_df=income_statement_df,
+        loan_book_df=loan_book_df,
+        balance_sheet_df=balance_sheet_df,
+        direct_cashflow_df=direct_cashflow_df,
+    )
+
     helper.upload_file(
         tenant_name=tenant_name,
         project_id=project_id,
@@ -1196,6 +1206,15 @@ def generate_balance_sheet(
         file=other_payables_schedule_df,
         file_name=constants.IntermediateFiles.other_payables_schedule_df,
         file_stage=constants.FileStage.intermediate,
+    )
+
+    helper.upload_file(
+        tenant_name=tenant_name,
+        project_id=project_id,
+        boto3_session=constants.MY_SESSION,
+        file=ratios_df,
+        file_name=constants.FinalFiles.ratios_df,
+        file_stage=constants.FileStage.final,
     )
 
     helper.upload_file(

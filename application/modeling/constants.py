@@ -102,6 +102,7 @@ class FinalFiles(str, Enum):
     balance_sheet_yearly_df = "balance_sheet_yearly_df"
     statement_of_cashflow_df = "statement_of_cashflow_df"
     statement_of_cashflow_yearly_df = "statement_of_cashflow_yearly_df"
+    ratios_df = "ratios_df"
 
 
 class FileStage(str, Enum):
