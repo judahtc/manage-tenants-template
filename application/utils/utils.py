@@ -88,6 +88,7 @@ def get_endpoint_details(variable: int):
         f"/projects/{variable}/results/intermediate/view": f"Viewed Intermediate File For Project {variable}",
         f"/projects/{variable}/results/view": f"Viewed Final File For Project {variable}",
         f"/projects/{variable}/results/filenames": f"Retrived Final Filenames For Project {variable}",
+        f"/projects/{variable}/add-new-funding": f"Added New Funding For Project {variable}",
     }
 
 
