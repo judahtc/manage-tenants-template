@@ -63,28 +63,6 @@ class Users(Base):
     projects = relationship("Projects", back_populates="users")
 
 
-# class AdminUser(Base):
-#     __tablename__ = "admin_users"
-
-#     user_id = Column(Integer, primary_key=True, index=True)  # auto generated
-#     email = Column(String, unique=True)  # requires input
-#     # tenant_id = Column(Integer, ForeignKey("tenants.tenant_id")) #stored in a session
-#     first_name = Column(String)  # requires input
-#     last_name = Column(String)  # requires input
-#     hashed_password = Column(String)  # requires input
-#     is_active = Column(Boolean, default=True)
-#     is_admin = Column(Boolean, default=False)
-#     is_creator = Column(Boolean, default=True)
-#     is_viewer = Column(Boolean, default=True)
-#     created_at = Column(DateTime, default=datetime.now)  # auto generated
-#     updated_at = Column(String, default=datetime.now)  # requires input
-#     phone_number = Column(String, default=0)
-#     work_address = Column(String)
-
-#     # tenant = relationship("Tenant", back_populates="users")
-#     # projects = relationship("Projects", back_populates="users")
-
-
 class Projects(Base):
     __tablename__ = "projects"
 
@@ -101,7 +79,6 @@ class Projects(Base):
     )
     created_at = Column(DateTime, default=func.now())  # auto captured
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-
     users = relationship("Users", back_populates="projects")
     tenant = relationship("Tenant", back_populates="projects")
 
@@ -115,31 +92,3 @@ class AuditTrail(Base):
     action = Column(String)
     details = Column(String, nullable=True)
     tenant_id = Column(Integer)
-
-
-# class Assumptions(Base):
-#     __tablename__ = "assumptions"
-#     id = Column(Integer, primary_key=True, index=True)
-#     created_at = Column(DateTime, default=datetime.now)
-#     updated_at = Column(DateTime, default=datetime.now)
-#     project_id = Column(String)
-#     interest_calculation_method = Column(String)
-#     depreciation_method = Column(String)
-#     average_loan_term = Column(String)
-#     inflation_rate = Column(String)
-#     number_of_months_to_focast = Column(String)
-#     administration_fee = Column(String)
-#     isActive = Column(Boolean, default=True)
-
-
-# class Assumptionsfiles(Base):
-#     __tablename__ = "assumptions_files"
-#     id = Column(Integer, primary_key=True, index=True)
-#     created_at = Column(DateTime, default=datetime.now)
-#     updated_at = Column(DateTime, default=datetime.now)
-#     project_id = Column(String)
-#     input_object_key = Column(String)
-#     output_object_key = Column(String)
-#     input_filename = Column(String)
-#     output_filename = Column(String)
-#     isActive = Column(Boolean, default=True)
