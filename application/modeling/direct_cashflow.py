@@ -402,10 +402,10 @@ def calculate_long_and_short_term_borrowing_for_direct_cashflow(
     )
 
     details_of_new_long_term_borrowing = details_of_long_term_borrowing.loc[
-        (details_of_long_term_borrowing["effective_date"] > pd.Timestamp(start_date))
+        (details_of_long_term_borrowing["effective_date"] >= pd.Timestamp(start_date))
     ]
     details_of_new_short_term_borrowing = details_of_short_term_borrowing.loc[
-        (details_of_short_term_borrowing["effective_date"] > pd.Timestamp(start_date))
+        (details_of_short_term_borrowing["effective_date"] >= pd.Timestamp(start_date))
     ]
 
     short_term_borrowing = calculate_direct_cashflow_borrowing(
