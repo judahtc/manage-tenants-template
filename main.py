@@ -21,7 +21,6 @@ from application.utils.database import SessionLocal, engine, get_db
 
 app = FastAPI()
 
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,6 +29,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 handler = Mangum(app)
+
+database.Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")
@@ -40,20 +41,6 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok", "another": [1, 2, 3]}
-
-
-database.Base.metadata.create_all(bind=engine)
-
-origins = ["*"]
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.middleware("http")
@@ -205,9 +192,6 @@ def extract_audit_trail(
     )
 
     return audit_trail_entries
-
-
-
 
 
 app.include_router(tenants_router.router)
