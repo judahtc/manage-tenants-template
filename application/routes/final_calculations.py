@@ -1386,11 +1386,11 @@ def generate_statement_of_cashflows(
         file_name=constants.IntermediateFiles.short_term_loans_schedules_df,
     )
 
-    long_term_loans_schedules_df = helper.read_intermediate_file(
+    long_term_borrowings_capital_repayments_df = helper.read_intermediate_file(
         tenant_name=tenant_name,
         project_id=project_id,
         boto3_session=constants.MY_SESSION,
-        file_name=constants.IntermediateFiles.long_term_loans_schedules_df,
+        file_name=constants.IntermediateFiles.long_term_borrowings_capital_repayments_df,
     )
 
     income_statement_df = helper.read_final_file(
@@ -1439,9 +1439,10 @@ def generate_statement_of_cashflows(
     )
     statement_of_cashflow_df.loc["Interest Paid"] = -finance_costs_df.loc["total"]
     statement_of_cashflow_df.loc["Tax Paid"] = tax_schedule_df.loc["Tax Paid"]
+
     statement_of_cashflow_df.loc[
         "Repayment Of Borrowings"
-    ] = capital_repayment_borrowings_df.loc["total"]
+    ] = -long_term_borrowings_capital_repayments_df.sum()
 
     details_of_assets = helper.columns_to_snake_case(details_of_assets)
 
@@ -1455,8 +1456,6 @@ def generate_statement_of_cashflows(
     statement_of_cashflow_df.loc["Increase/(Decrease) In Borrowings"] = (
         short_term_loans_schedules_df.loc["Closing Balance"]
         - short_term_loans_schedules_df.loc["Opening Balance"]
-        + long_term_loans_schedules_df.loc["Closing Balance"]
-        - long_term_loans_schedules_df.loc["Opening Balance"]
     )
 
     statement_of_cashflow_df.loc[
@@ -1487,7 +1486,6 @@ def generate_statement_of_cashflows(
 
     change_in_loan_book_interest = loan_book_df.loc["Interest Income"]
 
-
     statement_of_cashflow_df.loc[
         "(Increase)/Decrease In Receivables"
     ] = -change_in_receivables
@@ -1498,7 +1496,6 @@ def generate_statement_of_cashflows(
     statement_of_cashflow_df.loc[
         "(Increase)/Decrease In Loan Book (Interest)"
     ] = -change_in_loan_book_interest
-
 
     statement_of_cashflow_df.loc["Cash From Operations After WC"] = (
         statement_of_cashflow_df.loc["Cash From Operations Before WC"]
