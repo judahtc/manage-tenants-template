@@ -1452,19 +1452,17 @@ def generate_statement_of_cashflows(
     )
 
     statement_of_cashflow_df.loc["Purchase Of Fixed Assets"] = capital_expenses
-    statement_of_cashflow_df.loc["Increase/(Decrease) In Short Term Borrowings"] = (
+    statement_of_cashflow_df.loc["Increase/(Decrease) In Borrowings"] = (
         short_term_loans_schedules_df.loc["Closing Balance"]
         - short_term_loans_schedules_df.loc["Opening Balance"]
-    )
-    statement_of_cashflow_df.loc["Increase/(Decrease) In Long Term Borrowings"] = (
-        long_term_loans_schedules_df.loc["Closing Balance"]
+        + long_term_loans_schedules_df.loc["Closing Balance"]
         - long_term_loans_schedules_df.loc["Opening Balance"]
     )
 
     statement_of_cashflow_df.loc[
         "Cash From Operations Before WC"
     ] = statement_of_cashflow_df.iloc[
-        1 : statement_of_cashflow_df.index.get_loc("Cash From Operations Before WC")
+        0 : statement_of_cashflow_df.index.get_loc("Cash From Operations Before WC")
     ].sum()
 
     change_in_receivables = (
@@ -1489,25 +1487,18 @@ def generate_statement_of_cashflows(
 
     change_in_loan_book_interest = loan_book_df.loc["Interest Income"]
 
-    borrowings_schedule = long_term_loans_schedules_df + short_term_loans_schedules_df
-    change_in_borrowings = (
-        borrowings_schedule.loc["Closing Balance"]
-        - borrowings_schedule.loc["Opening Balance"]
-    )
 
     statement_of_cashflow_df.loc[
         "(Increase)/Decrease In Receivables"
-    ] = change_in_receivables
+    ] = -change_in_receivables
     statement_of_cashflow_df.loc["Increase/(Decrease) In Payables"] = change_in_payables
     statement_of_cashflow_df.loc[
         "(Increase)/Decrease In Loan Book (Principle)"
-    ] = change_in_loan_book_principle
+    ] = -change_in_loan_book_principle
     statement_of_cashflow_df.loc[
         "(Increase)/Decrease In Loan Book (Interest)"
-    ] = change_in_loan_book_interest
-    statement_of_cashflow_df.loc[
-        "Increase/(Decrease) In Borrowings"
-    ] = change_in_borrowings
+    ] = -change_in_loan_book_interest
+
 
     statement_of_cashflow_df.loc["Cash From Operations After WC"] = (
         statement_of_cashflow_df.loc["Cash From Operations Before WC"]

@@ -29,8 +29,6 @@ def generate_statement_of_cashflow_template(start_date: str, months_to_forecast:
                 "Purchase Of Fixed Assets",
                 "Cash Flow From Investing Activities",
                 "CASH FLOW FROM FINANCING ACTIVITIES",
-                "Increase/(Decrease) In Long Term Borrowings",
-                "Increase/(Decrease) In Short Term Borrowings",
                 "Repayment Of Borrowings",
                 "Dividend Paid",
                 "Cash Flow From Financing Activities",
