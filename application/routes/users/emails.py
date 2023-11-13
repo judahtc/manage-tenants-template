@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import boto3
-from aiohttp import ClientError
+from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from fastapi.templating import Jinja2Templates
 
@@ -26,8 +26,6 @@ def render_template(template_name: str, **kwargs) -> str:
 def send_email_to_activate_user(
     recipient: str, qrcode_image: str, password: str, token: str
 ):
-    # Create a new SES resource
-    ses = SES_CLIENT
     sender = "admin@claxonbusinesssolutions.com"
 
     account_activation_email = render_template(
@@ -36,13 +34,8 @@ def send_email_to_activate_user(
         qrcode_image=qrcode_image,
     )
 
-    # account_activation_email =  emails_helper.activate_user_html(
-    #                         f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
-    #                         qrcode_image,
-    #                     )
-
     try:
-        response = ses.send_email(
+        response = SES_CLIENT.send_email(
             Source=sender,
             Destination={
                 "ToAddresses": [
@@ -61,23 +54,15 @@ def send_email_to_activate_user(
 
 
 def send_email_to_reset_password(recipient: str, token: str):
-    # Create a new SES resource
-    ses = SES_CLIENT
     sender = "admin@claxonbusinesssolutions.com"
-
-    # Try to send the email
 
     reset_password_email = render_template(
         "reset_password.html",
         url=f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
     )
 
-    # reset_password_email = emails_helper.email_to_change_password(
-    #                         url=f"http://budgeting.claxonfintech.com/reset-password?access-token={token}",
-    #                     )
-
     try:
-        response = ses.send_email(
+        response = SES_CLIENT.send_email(
             Source=sender,
             Destination={
                 "ToAddresses": [

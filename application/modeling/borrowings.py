@@ -148,7 +148,7 @@ def calculate_reducing_balance_loans_schedules(
     tenures: pd.Series,
     amounts: pd.Series,
     is_interest_rate_annual: bool = True,
-):
+) -> dict[str, pd.DataFrame]:
     outstanding_balances_results = []
     interest_payments_results = []
     capital_repayments_results = []

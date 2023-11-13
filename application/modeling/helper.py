@@ -5,7 +5,6 @@ import awswrangler as wr
 import pandas as pd
 from botocore.exceptions import ClientError
 from fastapi import File, HTTPException, Response, UploadFile, status
-
 from application.modeling import constants
 
 
